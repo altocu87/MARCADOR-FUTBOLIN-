@@ -10,7 +10,13 @@ static void tap(int x, int y) {
   sim::touchDown = false; loop();
 }
 static void usb(const char* s) { for (const char* c = s; *c; c++) sim::in.push_back(*c); sim::in.push_back('\n'); loop(); }
-static void aux(const char* s) { for (const char* c = s; *c; c++) sim::auxIn.push_back(*c); sim::auxIn.push_back('\n'); loop(); }
+// Placas sin UART auxiliar (Waveshare 7C): las mismas líneas llegan por el USB.
+static void aux(const char* s) {
+  if (AUX_UART_RX < 0) { usb(s); return; }
+  for (const char* c = s; *c; c++) sim::auxIn.push_back(*c);
+  sim::auxIn.push_back('\n');
+  loop();
+}
 static bool shows(const char* s) { return sim::screen.find(s) != std::string::npos; }
 static bool sent(const char* s) { return sim::out.find(s) != std::string::npos; }
 static size_t count(const std::string& h, const char* s) {
@@ -47,7 +53,8 @@ int main() {
   assert(eng.score().blue == 0);
   run(3000);
   aux("GOL_AZUL");
-  assert(sim::auxOut.find("GOAL AZUL") != std::string::npos && eng.phase() == Phase::PeriodEnd);
+  assert((AUX_UART_RX < 0 ? sim::out : sim::auxOut).find("GOAL AZUL") != std::string::npos);
+  assert(eng.phase() == Phase::PeriodEnd);
   tap(400, 370);  // IR A PRORROGA
   assert(eng.period() == Period::Overtime);
   tap(400, 240);
@@ -78,14 +85,49 @@ int main() {
   usb("PING");
   assert(sent("PONG"));
   run(SLEEP_AFTER_MS + 100);
+#if HAS_ISOLATED_IO
+  assert(dimmed && sim::exioPwm > 0 && sim::exioPwm < 30);  // ~7 %
+  tap(400, 420);  // sobre JUGAR, pero solo despierta
+  assert(!dimmed && sim::exioPwm == 255 && !inMatch);
+#else
   assert(dimmed && sim::brightness == 16);
   tap(400, 420);  // sobre JUGAR, pero solo despierta
   assert(!dimmed && sim::brightness == 255 && !inMatch);
+#endif
+
+#if HAS_ISOLATED_IO
+  // Waveshare 7C: luz encendida por el expansor y sensores en las entradas aisladas DI0/DI1.
+  assert(sim::exioMode == exio::OUTPUT_MASK && (sim::exioOut & (1u << exio::BACKLIGHT)) && sim::exioPwm == 255);
+  for (int i = 0; i < 4; i++) tap(326, 306);  // 5 goles por parte
+  tap(400, 420);  // JUGAR
+  tap(400, 240);  // saltar cuenta atrás
+  run(3000);
+  sim::exioIn ^= (1u << exio::DI1);  // balón cortando el sensor del Azul
+  run(20);
+  assert(eng.score().blue == 0);     // aún no estable (25 ms)
+  run(30);
+  assert(eng.score().blue == 1 && (sim::exioOut & (1u << exio::DO1)));
+  sim::exioIn ^= (1u << exio::DI1);
+  run(1100);
+  assert(!(sim::exioOut & (1u << exio::DO1)));
+  sim::exioIn ^= (1u << exio::DI0);  // dentro del bloqueo de 3 s: no cuenta
+  run(100);
+  sim::exioIn ^= (1u << exio::DI0);
+  run(2000);
+  assert(eng.score().white == 0);
+  sim::exioIn ^= (1u << exio::DI0);
+  run(100);
+  assert(eng.score().white == 1);
+  sim::exioIn ^= (1u << exio::DI0);
+  tap(400, 430); tap(400, 360); tap(400, 360);  // pausa y abandonar
+  assert(!inMatch);
+#endif
 
   // Reinicio: la configuración y el historial salen de la NVS.
-  cfg = mfv3::Config(); historyCount = 0; matchesPlayed = 0;
+  uint8_t savedGoals = cfg.goalsPerPeriod;
+  cfg = mfv3::Config(); cfg.goalsPerPeriod = 9; historyCount = 0; matchesPlayed = 0;
   loadPrefs();
-  assert(cfg.goalsPerPeriod == 1 && historyCount == 1 && matchesPlayed == 1);
+  assert(cfg.goalsPerPeriod == savedGoals && historyCount == 1 && matchesPlayed == 1);
 
-  std::puts("esp32s3_pantalla7.ino: partido simulado con táctil y protocolo OK");
+  std::printf("esp32s3_pantalla7.ino (placa %d): partido simulado con táctil y protocolo OK\n", MFV3_BOARD);
 }

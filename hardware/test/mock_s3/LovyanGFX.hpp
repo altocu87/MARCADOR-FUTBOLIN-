@@ -60,9 +60,32 @@ inline bool touchDown = false;
 inline int32_t touchX = 0, touchY = 0;
 inline uint8_t brightness = 0;
 inline int fullRedraws = 0;
+// Expansor de E/S de la Waveshare 7C (dirección 0x24)
+inline uint16_t exioMode = 0, exioOut = 0, exioIn = 0;
+inline uint8_t exioPwm = 0;
 }  // namespace sim
 namespace lgfx {
 struct IFont {};
+struct I2cResult {
+  bool err;
+  bool has_error() const { return err; }
+};
+namespace i2c {
+inline I2cResult init(int, int, int) { return {false}; }
+inline I2cResult transactionWrite(int, int addr, const uint8_t* d, uint8_t len, uint32_t = 400000) {
+  if (addr != 0x24 || len < 2) return {false};
+  if (d[0] == 0x02) sim::exioMode = (uint16_t)(d[1] | (d[2] << 8));
+  if (d[0] == 0x03) sim::exioOut = (uint16_t)(d[1] | (d[2] << 8));
+  if (d[0] == 0x05) sim::exioPwm = d[1];
+  return {false};
+}
+inline I2cResult transactionWriteRead(int, int addr, const uint8_t* w, uint8_t, uint8_t* r, size_t, uint32_t = 400000) {
+  if (addr != 0x24 || w[0] != 0x04) return {true};
+  r[0] = (uint8_t)(sim::exioIn & 0xFF);
+  r[1] = (uint8_t)(sim::exioIn >> 8);
+  return {false};
+}
+}  // namespace i2c
 namespace fonts {
 inline IFont FreeSans9pt7b, FreeSans12pt7b, FreeSansBold9pt7b, FreeSansBold12pt7b, FreeSansBold18pt7b, FreeSansBold24pt7b, Font7, Font8;
 }

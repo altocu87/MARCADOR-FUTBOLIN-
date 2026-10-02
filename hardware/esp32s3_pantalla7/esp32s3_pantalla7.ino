@@ -5,9 +5,9 @@
 //   - Partido: el número de cada equipo es el botón de gol, −1, DESHACER, PAUSA, reloj, bloqueo de 3 s,
 //     cuenta atrás, 1ª y 2ª parte, prórroga con gol de oro, penaltis y pantalla de victoria.
 //   - Mismas reglas que la app (motor mfv3_engine.h, probado en PC con los criterios A01–A13).
-//   - Pulsadores y sensores: por UART desde un Arduino o ESP32-C3 con el sketch `arduino_usb`
-//     (mismo protocolo MFV3), o por el USB de la propia placa. La placa responde GOAL/LOCK/WIN
-//     para que el Arduino encienda LEDs y zumbador.
+//   - Sensores de gol: en la Waveshare 7C, directamente a las entradas aisladas DI0 (Blanco) y DI1 (Azul);
+//     las salidas DO0/DO1 se activan 1 s con cada gol (luces, relé). En otras placas, por UART desde un
+//     Arduino o ESP32-C3 con el sketch `arduino_usb`. Siempre también por el USB (protocolo MFV3).
 //   - Guarda la configuración y los últimos resultados en la memoria interna (NVS).
 //
 // Antes de compilar: elige tu placa en board_config.h. Bibliotecas: LovyanGFX.
@@ -127,6 +127,28 @@ static int lastCountdownDigit = -1;
 static uint32_t lastClockSecond = 0xFFFFFFFF;
 static bool lastLockShown = false;
 
+static void wakeScreen() {
+  lastActivity = millis();
+  if (dimmed) {
+    dimmed = false;
+    lcd.backlight(255);
+  }
+}
+
+#if HAS_ISOLATED_IO
+// Entradas aisladas: el nivel que tienen al arrancar se toma como «sin balón» (vale para sensores NPN o PNP,
+// normalmente abiertos o cerrados). Cualquier cambio respecto a él, estable 25 ms, es un gol.
+static mfv3::EdgeTrigger diWhite(25, 400), diBlue(25, 400);
+static uint16_t diIdle = 0;
+static bool diReady = false;
+static uint32_t doOffAt = 0;
+
+static void goalOutput(Team t) {
+  lcd.exioWrite(t == Team::White ? exio::DO0 : exio::DO1, true);
+  doOffAt = millis() + 1000;
+}
+#endif
+
 static void beep(uint16_t ms) {
   if (BUZZER_PIN < 0) return;
   digitalWrite(BUZZER_PIN, HIGH);
@@ -160,6 +182,9 @@ static void afterChange(bool goalAccepted, Team goalTeam) {
     flashTeam = goalTeam;
     flashUntil = millis() + 900;
     beep(90);
+#if HAS_ISOLATED_IO
+    goalOutput(goalTeam);
+#endif
   }
   if (now.w != snap.w || now.b != snap.b) {
     snprintf(buf, sizeof(buf), "SCORE %u %u", now.w, now.b);
@@ -219,7 +244,7 @@ static void inputPause() {
 
 // Línea del protocolo MFV3 recibida de una placa auxiliar.
 static void handleBoardLine(const char* line) {
-  lastActivity = millis();
+  wakeScreen();
   char word[16] = {0};
   size_t i = 0;
   while (line[i] && line[i] != ' ' && i < sizeof(word) - 1) {
@@ -598,6 +623,26 @@ static void onTap(int16_t x, int16_t y) {
   }
 }
 
+#if HAS_ISOLATED_IO
+static void pollIsolatedInputs(uint32_t now) {
+  uint16_t v;
+  if (!lcd.exioRead(v)) return;
+  if (!diReady) {
+    diIdle = v;
+    diReady = true;
+    return;
+  }
+  uint16_t changed = v ^ diIdle;
+  if (diWhite.update(changed & (1u << exio::DI0), now)) { wakeScreen(); inputGoal(Team::White); }
+  if (diBlue.update(changed & (1u << exio::DI1), now)) { wakeScreen(); inputGoal(Team::Blue); }
+  if (doOffAt && now > doOffAt) {
+    doOffAt = 0;
+    lcd.exioWrite(exio::DO0, false);
+    lcd.exioWrite(exio::DO1, false);
+  }
+}
+#endif
+
 static bool touching = false;
 
 static void pollTouch() {
@@ -608,7 +653,7 @@ static void pollTouch() {
     if (dimmed) {
       // El toque que despierta se consume.
       dimmed = false;
-      lcd.setBrightness(255);
+      lcd.backlight(255);
     } else {
       onTap((int16_t)x, (int16_t)y);
     }
@@ -620,13 +665,15 @@ static void pollTouch() {
 void setup() {
   Serial.begin(115200);
   if (BUZZER_PIN >= 0) pinMode(BUZZER_PIN, OUTPUT);
-#if MFV3_BOARD == BOARD_WAVESHARE_7
+#if MFV3_BOARD == BOARD_WAVESHARE_7C
+  lcd.expanderInit();
+#elif MFV3_BOARD == BOARD_WAVESHARE_7
   lcd.waveshareExpanderInit();
 #endif
   lcd.detectTouchAddress();
   lcd.init();
   lcd.setRotation(0);
-  lcd.setBrightness(255);
+  lcd.backlight(255);
   initColors();
   if (AUX_UART_RX >= 0) AuxSerial.begin(115200, SERIAL_8N1, AUX_UART_RX, AUX_UART_TX);
   loadPrefs();
@@ -648,6 +695,9 @@ void loop() {
       if (auxRx.push((char)AuxSerial.read())) handleBoardLine(auxRx.line());
 
   pollTouch();
+#if HAS_ISOLATED_IO
+  pollIsolatedInputs(now);
+#endif
 
   if (inMatch && eng.tick(now)) afterChange(false, Team::White);
 
@@ -660,7 +710,7 @@ void loop() {
   bool idleScreen = !inMatch || eng.phase() == Phase::Finished;
   if (idleScreen && !dimmed && now - lastActivity > SLEEP_AFTER_MS) {
     dimmed = true;
-    lcd.setBrightness(16);
+    lcd.backlight(16);
   }
 
   render();

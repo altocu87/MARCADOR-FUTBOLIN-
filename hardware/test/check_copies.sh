@@ -10,4 +10,7 @@ g++ -std=c++11 -Wall -Wextra -Icommon test/core_test.cpp -o /tmp/mfv3_core_test 
 g++ -std=c++11 -Wall -Wextra -Icommon test/engine_test.cpp -o /tmp/mfv3_engine_test && /tmp/mfv3_engine_test
 g++ -std=c++17 -Wall -Wno-unused-variable -Itest/mock -Iarduino_usb -x c++ test/arduino_sim_test.cpp -o /tmp/mfv3_ard_sim && /tmp/mfv3_ard_sim
 g++ -std=c++17 -Wall -Wno-unused-variable -Itest/mock_esp32 -Iesp32_marcador -x c++ test/esp32_sim_test.cpp -o /tmp/mfv3_esp_sim && /tmp/mfv3_esp_sim
-g++ -std=c++17 -Wall -Wno-unused-variable -Itest/mock_s3 -Iesp32s3_pantalla7 -x c++ test/s3_sim_test.cpp -o /tmp/mfv3_s3_sim && /tmp/mfv3_s3_sim
+# Pantalla de 7": Waveshare 7C (4, por defecto), Elecrow (1) y Waveshare 7 (2)
+for b in 4 1 2; do
+  g++ -std=c++17 -Wall -Wno-unused-variable -DMFV3_BOARD=$b -Itest/mock_s3 -Iesp32s3_pantalla7 -x c++ test/s3_sim_test.cpp -o /tmp/mfv3_s3_sim && /tmp/mfv3_s3_sim
+done

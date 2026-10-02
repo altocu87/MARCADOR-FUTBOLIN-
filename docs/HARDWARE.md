@@ -156,7 +156,9 @@ Los pulsadores van a un Arduino por USB o a un ESP32 por Wi-Fi/Bluetooth, igual 
 
 ## 7. ESP32-S3 con pantalla de 7" (versión activa)
 
-Placas tipo «ESP32-S3 7inch Touch Display, 800×480, táctil de 5 puntos, Wi-Fi + BLE 5». El sketch
+Placa de referencia: **Waveshare ESP32-S3-Touch-LCD-7C** (se vende como «ESP32-S3 7inch AI Voice Touch Display,
+800×480, 5-Point Touch, Wi-Fi & BLE 5», también en caja: 7C-BOX). Los pines salen del repositorio oficial del
+fabricante (github.com/waveshareteam/ESP32-S3-Touch-LCD-7C). El sketch
 `hardware/esp32s3_pantalla7/` convierte la placa en **el marcador completo**, sin PC, móvil ni Internet:
 
 - **Inicio:** POR GOLES / POR TIEMPO / AMBAS, goles y minutos por parte con − / +, botón JUGAR. Muestra el último
@@ -167,7 +169,12 @@ Placas tipo «ESP32-S3 7inch Touch Display, 800×480, táctil de 5 puntos, Wi-Fi
 - **Mismas reglas que la app:** usa `mfv3_engine.h`, el motor portado a C++ y probado en PC con los criterios A01–A13.
 - **Memoria:** guarda la configuración y los 8 últimos resultados aunque se apague.
 - **Ahorro:** fuera de partido baja el brillo a los 5 min; el primer toque solo la despierta.
-- **Pulsadores y sensores:** conecta un Arduino o ESP32-C3 con el sketch `arduino_usb` al UART de la placa
+- **Sensores de gol (Waveshare 7C):** van directamente a las **entradas aisladas** de la placa, sin Arduino:
+  **DI0 = gol del Blanco**, **DI1 = gol del Azul** (más su borne común). El estado que tienen al encender se toma
+  como «sin balón», así que vale cualquier sensor (NPN/PNP, normalmente abierto o cerrado): **enciende la placa
+  sin balón delante de los sensores**. Las salidas **DO0 / DO1** se activan 1 segundo con cada gol del Blanco /
+  Azul (luz, tira LED o relé). Comprueba en la wiki de Waveshare la tensión admitida por DI/DO antes de cablear.
+- **Otras placas:** conecta un Arduino o ESP32-C3 con el sketch `arduino_usb` al UART de la placa
   (TX del Arduino → RX de la placa). La placa contesta `GOAL/LOCK/WIN` para que el Arduino encienda LEDs y zumbador.
   ⚠ Un Arduino Uno/Nano trabaja a 5 V: pon un divisor (1 kΩ + 2 kΩ) en su TX antes de entrar al RX de 3,3 V.
   También acepta las mismas órdenes por el USB de la placa (`GB`, `GA`, `PAUSA`, `SALTAR`, `PING`, `HELLO`).
@@ -175,9 +182,10 @@ Placas tipo «ESP32-S3 7inch Touch Display, 800×480, táctil de 5 puntos, Wi-Fi
 ### Cómo cargarlo
 1. IDE de Arduino con el paquete **esp32 de Espressif** y la biblioteca **LovyanGFX** (Gestor de bibliotecas).
 2. Abre `hardware/esp32s3_pantalla7/esp32s3_pantalla7.ino`.
-3. En `board_config.h` elige tu placa: `BOARD_ELECROW_7` (CrowPanel 7.0"), `BOARD_WAVESHARE_7`
-   (ESP32-S3-Touch-LCD-7) o `BOARD_CUSTOM` (rellena los pines con el ejemplo de tu fabricante).
-4. Herramientas → Placa **ESP32S3 Dev Module**, PSRAM **OPI PSRAM**, Flash **16 MB**, particiones **Huge APP**.
+3. `board_config.h` ya viene con **`BOARD_WAVESHARE_7C`**. Otras opciones: `BOARD_ELECROW_7` (CrowPanel 7.0"),
+   `BOARD_WAVESHARE_7` (ESP32-S3-Touch-LCD-7, sin «C») o `BOARD_CUSTOM`.
+4. Herramientas → Placa **ESP32S3 Dev Module**, PSRAM **OPI PSRAM**, Flash **16 MB** (la 7C trae 32 MB: 16 MB
+   basta), particiones **Huge APP**, USB CDC On Boot **Enabled** (para ver los mensajes por el USB).
 5. **Subir.**
 
 ### Limitaciones conocidas
@@ -186,7 +194,8 @@ Placas tipo «ESP32-S3 7inch Touch Display, 800×480, táctil de 5 puntos, Wi-Fi
 - Los pines de pantalla y táctil **cambian según el fabricante**: si la pantalla sale en negro o desplazada, revisa
   el perfil en `board_config.h`.
 - Los textos de la placa van sin tildes (las fuentes integradas no las incluyen).
-- Aún no usa el altavoz/micrófono de las placas «AI Voice» ni el Wi-Fi/Bluetooth (los dos siguen disponibles para
+- En la 7C no queda un UART libre (el audio usa GPIO43/44): los sensores van a DI0/DI1 y el PC por USB.
+- Aún no usa el altavoz/micrófono de las placas «AI Voice» (códec ES8389) ni el Wi-Fi/Bluetooth (los dos siguen disponibles para
   una versión futura: sincronizar con la app o anunciar los goles por voz).
 
 ---
