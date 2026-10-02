@@ -1,22 +1,14 @@
 import { useState } from 'react';
+import { DownloadButton } from '../DownloadButton';
+import { detectPlatform, type Platform } from '../install';
 import { APP_URL, href } from '../router';
-
-type Platform = 'android' | 'iphone' | 'pc';
-
-function detectPlatform(): Platform {
-  const ua = navigator.userAgent;
-  if (/iPhone|iPad|iPod/i.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1)) return 'iphone';
-  if (/Android/i.test(ua)) return 'android';
-  return 'pc';
-}
 
 const STEPS: Record<Platform, { title: string; steps: string[] }> = {
   android: {
     title: 'Android',
     steps: [
-      'Pulsa «Abrir la app» (mejor en Chrome).',
-      'Toca el menú ⋮ de arriba a la derecha.',
-      'Elige «Instalar aplicación» o «Añadir a pantalla de inicio».',
+      'Pulsa «Descargar la app» y confirma con «Instalar».',
+      'Si no sale el aviso: en Chrome, menú ⋮ → «Instalar aplicación» o «Añadir a pantalla de inicio».',
       'Ya tienes el icono del marcador junto a tus apps.',
     ],
   },
@@ -32,28 +24,31 @@ const STEPS: Record<Platform, { title: string; steps: string[] }> = {
   pc: {
     title: 'Ordenador',
     steps: [
-      'Pulsa «Abrir la app» en Chrome o Edge.',
-      'En la barra de direcciones aparece el icono de instalar (una pantalla con una flecha).',
-      'Pulsa «Instalar»: se abre en su propia ventana, como un programa.',
-      'También funciona sin instalar, directamente en el navegador.',
+      'Pulsa «Descargar la app» en Chrome o Edge y confirma con «Instalar».',
+      'Si no sale el aviso: pulsa el icono de instalar de la barra de direcciones.',
+      'Se abre en su propia ventana, como un programa, y queda en el menú de inicio.',
     ],
   },
 };
 
 export function Usar() {
   const [platform, setPlatform] = useState<Platform>(detectPlatform);
+  const showSteps = () => document.getElementById('pasos')?.scrollIntoView({ behavior: 'smooth' });
   return (
     <div className="wrap page">
-      <h1>Usar en el móvil</h1>
+      <p className="kicker">Gratis · Sin registro · Sin Internet</p>
+      <h1>Descarga la app</h1>
       <p className="lead">
-        No hay que descargar nada de ninguna tienda: la app se abre en el navegador y, si quieres, se instala con su icono
-        como cualquier otra.
+        Se instala desde esta web en unos segundos, sin tiendas de aplicaciones. Ocupa muy poco y funciona sin conexión.
       </p>
-      <a className="btn btn-primary btn-lg" href={APP_URL}>
-        Abrir la app
-      </a>
+      <div className="cta-row">
+        <DownloadButton onSteps={showSteps} />
+        <a className="btn btn-ghost btn-lg" href={APP_URL}>
+          Usar en el navegador
+        </a>
+      </div>
 
-      <h2>Instalarla con su icono</h2>
+      <h2 id="pasos">Paso a paso</h2>
       <div className="seg" role="group" aria-label="Tu dispositivo">
         {(Object.keys(STEPS) as Platform[]).map((p) => (
           <button key={p} aria-pressed={platform === p} onClick={() => setPlatform(p)}>

@@ -2,6 +2,7 @@ import rapido from '../../../src/assets/images/modo-rapido.webp';
 import caos from '../../../src/assets/images/modo-caos.webp';
 import clasif from '../../../src/assets/images/modo-clasificatorio.webp';
 import { DIY_LEVELS } from '../../../src/inputs/hardware/catalog';
+import { DownloadButton } from '../DownloadButton';
 import { APP_URL, href } from '../router';
 
 const MODES = [
@@ -46,18 +47,17 @@ export function Home() {
       <section className="hero wrap">
         <p className="eyebrow">Gratis · Sin registro · Sin Internet</p>
         <h1>
-          El marcador
-          <br />
-          para tu futbolín.
+          Descarga el marcador <span className="nowrap-lg">de tu futbolín.</span>
         </h1>
-        <p className="lead">Partidos, torneos y ranking. En el móvil al instante, o en tu mesa con pulsadores y pantalla propia.</p>
-        <div className="cta-row center">
-          <a className="btn btn-primary btn-lg" href={APP_URL}>
-            Abrir la app
-          </a>
-          <a className="btn btn-ghost btn-lg" href={href({ page: 'monta' })}>
-            Montar en mi mesa →
-          </a>
+        <p className="lead">Partidos, torneos, ranking y logros en tu móvil, tablet u ordenador. En un toque y sin tiendas.</p>
+        <div className="hero-cta">
+          <DownloadButton />
+          <p className="hero-note">Android · iPhone · Ordenador</p>
+          <div className="hero-links">
+            <a href={APP_URL}>Usar en el navegador</a>
+            <span aria-hidden="true">·</span>
+            <a href={href({ page: 'monta' })}>Montar en mi mesa</a>
+          </div>
         </div>
         <ScorePreview />
       </section>
@@ -67,8 +67,8 @@ export function Home() {
         <h2>Tres pasos. Cero complicaciones.</h2>
         <ol className="steps">
           <li>
-            <h3>Abre la app</h3>
-            <p>En el navegador del móvil, la tablet o el PC. Sin tiendas.</p>
+            <h3>Descarga la app</h3>
+            <p>Desde esta web, en el móvil, la tablet o el ordenador. Sin tiendas.</p>
           </li>
           <li>
             <h3>Elige jugadores</h3>
@@ -126,9 +126,7 @@ export function Home() {
 
       <section className="wrap section closing">
         <h2>¿Primer partido?</h2>
-        <a className="btn btn-primary btn-lg" href={APP_URL}>
-          Abrir la app
-        </a>
+        <DownloadButton />
       </section>
     </>
   );

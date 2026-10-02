@@ -6,10 +6,10 @@ import { Home } from './pages/Home';
 import { Monta } from './pages/Monta';
 import { Placa } from './pages/Placa';
 import { Usar } from './pages/Usar';
+import { DownloadButton } from './DownloadButton';
 import { APP_URL, href, useRoute } from './router';
 
 const NAV: { label: string; to: string; page: string; anchor?: string }[] = [
-  { label: 'En el móvil', to: href({ page: 'usar' }), page: 'usar' },
   { label: 'Monta tu marcador', to: href({ page: 'monta' }), page: 'monta' },
   { label: 'Sensores', to: href({ page: 'goles' }), page: 'goles' },
   { label: 'Ayuda', to: href({ page: 'ayuda' }), page: 'ayuda' },
@@ -48,9 +48,7 @@ export function Site() {
               {n.label}
             </a>
           ))}
-          <a className="btn btn-primary btn-sm" href={APP_URL}>
-            Abrir app
-          </a>
+          <DownloadButton size="sm" label="Descargar" />
         </nav>
       </header>
 
@@ -66,7 +64,8 @@ export function Site() {
       <footer className="foot">
         <div>Marcador Futbolín V3 · Gratis, sin registro y sin publicidad.</div>
         <div className="foot-links">
-          <a href={APP_URL}>Abrir la app</a>
+          <a href={href({ page: 'usar' })}>Descargar</a>
+          <a href={APP_URL}>Usar en el navegador</a>
           <a href={href({ page: 'monta' })}>Monta tu marcador</a>
           <a href={href({ page: 'ayuda' })}>Ayuda</a>
         </div>

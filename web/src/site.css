@@ -865,3 +865,42 @@ details ol {
 .foot-links a:hover {
   color: var(--text);
 }
+
+/* ---- «Descargar la app»: llamada principal de la portada */
+.hero-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.hero-cta .btn-lg {
+  min-height: 62px;
+  padding: 14px 40px;
+  font-size: 19px;
+  box-shadow: 0 18px 50px -18px rgba(98, 214, 255, 0.55);
+}
+.hero-note {
+  margin: 0;
+  color: var(--text-3);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+.hero-links {
+  display: flex;
+  gap: 10px;
+  color: var(--text-3);
+  font-size: 15px;
+}
+.hero-links a {
+  color: var(--text-2);
+  text-decoration: none;
+}
+.hero-links a:hover {
+  color: var(--text);
+}
+
+@media (min-width: 700px) {
+  .nowrap-lg {
+    display: block;
+  }
+}

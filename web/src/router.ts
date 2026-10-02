@@ -12,6 +12,7 @@ export type Route =
 export function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   switch (parts[0]) {
+    case 'descargar':
     case 'usar':
       return { page: 'usar' };
     case 'monta':
@@ -28,7 +29,7 @@ export function parseHash(hash: string): Route {
 }
 
 export const href = (r: Route): string =>
-  r.page === 'home' ? '#/' : r.page === 'monta' && r.level !== undefined ? `#/monta/${r.level}` : r.page === 'placa' ? `#/placa/${r.id}` : `#/${r.page}`;
+  r.page === 'home' ? '#/' : r.page === 'monta' && r.level !== undefined ? `#/monta/${r.level}` : r.page === 'placa' ? `#/placa/${r.id}` : r.page === 'usar' ? '#/descargar' : `#/${r.page}`;
 
 export function useRoute(): Route {
   const [route, setRoute] = useState(() => parseHash(location.hash));
