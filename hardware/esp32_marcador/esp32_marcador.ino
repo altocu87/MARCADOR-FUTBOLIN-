@@ -18,8 +18,8 @@
 // Subir la app a la placa: compila la app (`npm run build`), copia el contenido de `dist/`
 // en la carpeta `data/` de este sketch y usa «Upload LittleFS» (ver docs/HARDWARE.md).
 //
-// NOTA: este archivo no se ha podido compilar en el entorno de desarrollo (sin acceso a
-// los compiladores de Espressif); la lógica común (mfv3_core.h) sí está probada en PC.
+// NOTA: compila en GitHub Actions (ESP32, C3, S3 y S2) y se prueba en PC con bibliotecas simuladas;
+// todavía no se ha probado en una placa real.
 
 #include <WiFi.h>
 #include <WebServer.h>

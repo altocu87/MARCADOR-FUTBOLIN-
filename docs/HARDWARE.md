@@ -79,10 +79,9 @@ placa** (http://192.168.4.1), se conecta por Wi-Fi sola.
 5. Conecta el móvil/tablet a la red **MARCADOR-FUTBOLIN** (clave `futbolin123`) y abre **http://192.168.4.1**
    (o http://marcador.local). Opcional: rellena `STA_SSID/STA_PASS` para que también se una a tu Wi-Fi.
 
-> Estado de verificación: el núcleo común y el sketch de Arduino se han **probado en PC** con una simulación
-> de pines y tiempo (`npm run test:hardware`). El sketch del ESP32 se ha comprobado contra bibliotecas
-> simuladas, pero **no se ha compilado con el compilador real de Espressif** ni probado en placa (el entorno
-> de desarrollo no tenía acceso a esas herramientas). Haz una primera prueba con la placa por USB y el monitor serie.
+> Estado de verificación: todos los programas se **prueban en PC** con una simulación de pines y tiempo
+> (`npm run test:hardware`) y se **compilan de verdad en GitHub Actions** para las 13 placas del catálogo
+> (flujo «Firmware»). Ninguna placa física se ha probado todavía: haz una primera prueba por USB con el monitor serie.
 
 ---
 
@@ -225,8 +224,8 @@ emparejar. Alcance típico de decenas de metros; de sobra para una mesa.
 5. **Subir.**
 
 ### Limitaciones conocidas
-- No se ha podido compilar con las herramientas de Espressif ni probar en la placa real en este entorno: la lógica
-  (motor, botones, protocolo, memoria) sí se prueba en PC (`npm run test:hardware`), el dibujo en pantalla no.
+- Compila en GitHub (núcleo esp32 3.3 + LovyanGFX 1.2), pero no se ha probado en la placa real: la lógica
+  (motor, botones, protocolo, memoria) se prueba en PC (`npm run test:hardware`); el dibujo en pantalla no.
 - Los pines de pantalla y táctil **cambian según el fabricante**: si la pantalla sale en negro o desplazada, revisa
   el perfil en `board_config.h`.
 - Los textos de la placa van sin tildes (las fuentes integradas no las incluyen).

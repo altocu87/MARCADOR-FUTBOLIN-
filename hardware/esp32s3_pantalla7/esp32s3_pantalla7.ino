@@ -13,8 +13,8 @@
 //   - Guarda la configuración y los últimos resultados en la memoria interna (NVS).
 //
 // Antes de compilar: elige tu placa en board_config.h. Bibliotecas: LovyanGFX.
-// NOTA: no se ha podido compilar con las herramientas de Espressif ni probar en la placa en el
-// entorno de desarrollo; la lógica (motor, protocolo y botones) sí está probada en PC.
+// NOTA: compila en GitHub Actions (núcleo esp32 3.x + LovyanGFX) y la lógica (motor, protocolo, botones)
+// se prueba en PC; todavía no se ha probado en la placa real.
 
 #include <Arduino.h>
 #include <Preferences.h>

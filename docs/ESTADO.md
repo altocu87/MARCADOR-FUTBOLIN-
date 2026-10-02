@@ -42,16 +42,16 @@ Fecha: 02/10/2026 · Versión 0.3.0 · Motor 1.0.0 (`reglas-partido-1`)
 - Web pública (`web/`) con asistente «Monta tu marcador» e instalador desde el navegador (ESP Web Tools). Los
   binarios los genera GitHub Actions (`Firmware`, release `firmware-latest` al subir a `main`).
 - Compilación real en GitHub: Arduino Uno/Nano/Mega/Leonardo, Raspberry Pi Pico, ESP32, C3, S3, S2 y mando
-  compilan. Las 3 pantallas de 7" fallaban por las declaraciones automáticas del IDE (corregido con `s3_types.h`;
-  las pruebas del PC ahora simulan ese paso).
+  compilan, y las 3 pantallas de 7" también tras corregir las declaraciones automáticas del IDE (`s3_types.h`;
+  las pruebas del PC ahora simulan ese paso). Los binarios se recortan (sin relleno 0xFF) para instalar en segundos.
 
 ## Limitaciones conocidas
 
-- El firmware ESP32 no se ha compilado con el compilador real de Espressif (bloqueado en el entorno de desarrollo)
-  ni se ha probado ninguna placa física: primera prueba recomendada por USB con el monitor serie.
+- El firmware compila en GitHub Actions para las 13 placas, pero no se ha probado ninguna placa física:
+  primera prueba recomendada por USB con el monitor serie (y la pantalla de prueba en la de 7").
 - En http://192.168.4.1 (app servida por el ESP32) el navegador no permite instalarla ni USB/Bluetooth web
   (exigen https); la conexión Wi-Fi con la placa sí funciona.
-- ESP32-S3 7": versión nativa activa en `hardware/esp32s3_pantalla7/` (motor C++ + LovyanGFX). Probada en PC con simulación; sin compilar ni probar en la placa real. Configurada para la Waveshare ESP32-S3-Touch-LCD-7C (sensores en DI0/DI1) y mando inalámbrico de 2 pulsadores (ESP-NOW: toque corto = gol, largo = anular).
+- ESP32-S3 7": versión nativa activa en `hardware/esp32s3_pantalla7/` (motor C++ + LovyanGFX). Probada en PC con simulación y compilada en GitHub; sin probar en la placa real. Configurada para la Waveshare ESP32-S3-Touch-LCD-7C (sensores en DI0/DI1) y mando inalámbrico de 2 pulsadores (ESP-NOW: toque corto = gol, largo = anular).
 - «Hazlo tú mismo»: catálogo único de 13 placas (`src/inputs/hardware/diy-catalog.json`) para la guía de la app y `docs/MANUAL_DIY.md`; pines automáticos por modelo (`mfv3_boards.h`) y saludo con capacidades. Todas las placas figuran como «probada en simulador» hasta probarlas en real.
 
 - Los iconos con emoji (🏆, 🎯, 🃏…) dependen de la fuente de emoji del sistema; las imágenes opcionales los sustituyen.
@@ -61,5 +61,5 @@ Fecha: 02/10/2026 · Versión 0.3.0 · Motor 1.0.0 (`reglas-partido-1`)
 - El arranque totalmente sin red tras un reinicio (empaquetado offline/PWA) no está garantizado en
   una web alojada sin caché; se debe validar en el dispositivo final.
 - ESP32-S3 7": versión nativa activa en `hardware/esp32s3_pantalla7/` (motor C++ + LovyanGFX), probada en PC
-  con simulación; no se ha compilado ni probado en la placa real. Configurada para la Waveshare ESP32-S3-Touch-LCD-7C (sensores en DI0/DI1) y mando inalámbrico de 2 pulsadores (ESP-NOW: toque corto = gol, largo = anular).
+  con simulación y compilada en GitHub; sin probar en la placa real. Configurada para la Waveshare ESP32-S3-Touch-LCD-7C (sensores en DI0/DI1) y mando inalámbrico de 2 pulsadores (ESP-NOW: toque corto = gol, largo = anular).
 - Fotos de jugador guardadas como imagen reducida (160×160) dentro del almacenamiento local.
