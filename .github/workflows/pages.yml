@@ -1,0 +1,62 @@
+# Publica la web (con la app en /app/ y los programas del instalador) en GitHub Pages.
+# Se ejecuta al subir a main y cada vez que termina la compilación «Firmware» (para incluir los últimos programas).
+name: Web (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: [Firmware]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Programas para el instalador (release «firmware-latest»)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p web/public/firmware
+          if gh release download firmware-latest -R "${{ github.repository }}" -p firmware.tar.gz -D /tmp; then
+            tar xzf /tmp/firmware.tar.gz -C web/public/firmware
+            ls web/public/firmware
+          else
+            echo "Aún no hay programas publicados: la web saldrá con el instalador en preparación."
+          fi
+      - run: npm run build:web
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-web
+
+  publicar:
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - id: despliegue
+        uses: actions/deploy-pages@v4

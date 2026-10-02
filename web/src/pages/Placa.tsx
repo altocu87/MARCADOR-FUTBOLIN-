@@ -104,8 +104,12 @@ function Installer({ b }: { b: BoardInfo }) {
       <ol>
         <li>Usa Chrome o Edge en un ordenador.</li>
         <li>Conecta la placa por USB con un cable de datos.</li>
-        <li>Pulsa «Instalar», elige el puerto de la placa y espera a que termine (1–2 minutos).</li>
+        <li>Pulsa «Instalar», elige el puerto de la placa (suele llamarse «USB JTAG/serial» o «USB Serial») y espera a que termine (alrededor de 1 minuto).</li>
       </ol>
+      <p className="small muted">
+        ¿No aparece la placa en la lista? Prueba con otro cable (muchos solo cargan) y, si sigue sin salir, mantén pulsado el
+        botón <strong>BOOT</strong> de la placa mientras la conectas.
+      </p>
       {state === 'checking' && <p className="muted">Comprobando…</p>}
       {state === 'no-serial' && (
         <p className="notice warn">Este navegador no puede hablar con placas por USB. Ábrelo en Chrome o Edge en un ordenador (no en iPhone).</p>
