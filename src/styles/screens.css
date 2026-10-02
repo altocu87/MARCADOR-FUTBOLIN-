@@ -1362,3 +1362,76 @@
   filter: drop-shadow(0 0 12px rgba(242, 201, 76, 0.8));
   display: inline-block;
 }
+
+/* ---------- Aviso de orientación ---------- */
+.portrait-hint {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 40px;
+  text-align: center;
+  background: rgba(3, 6, 12, 0.96);
+  font-size: 15px;
+  color: var(--text);
+}
+.portrait-hint strong {
+  font-size: 26px;
+  letter-spacing: 0.06em;
+}
+.portrait-hint span {
+  color: var(--text-2);
+  max-width: 560px;
+}
+.rotate-icon {
+  font-size: 80px;
+  animation: rotate-hint 2.2s ease-in-out infinite;
+}
+@keyframes rotate-hint {
+  0%,
+  30% {
+    transform: rotate(0deg);
+  }
+  60%,
+  100% {
+    transform: rotate(-90deg);
+  }
+}
+
+/* ---------- Conexiones ---------- */
+.conn-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.conn-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.conn-card.on {
+  border-color: var(--ok);
+  box-shadow: 0 0 14px rgba(61, 220, 151, 0.25);
+}
+.conn-bottom {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  min-height: 150px;
+}
+.conn-log {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.log-in {
+  color: var(--ok);
+}
+.log-out {
+  color: var(--accent);
+}

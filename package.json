@@ -1,7 +1,7 @@
 {
   "name": "marcador-futbolin-v3",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "MARCADOR FUTBOLÍN V3 — marcador inteligente para mesa de futbolín (versión local)",
   "scripts": {
@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:esp32": "npm run build && node scripts/copy-to-esp32.mjs",
+    "test:hardware": "sh hardware/test/check_copies.sh"
   },
   "dependencies": {
     "react": "19.3.0",

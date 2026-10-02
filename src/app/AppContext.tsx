@@ -31,6 +31,7 @@ interface AppContextValue {
   refresh(): Promise<void>;
   savePlayer(player: Player): Promise<void>;
   saveMatch(match: StoredMatch): Promise<void>;
+  deleteMatch(id: string): Promise<void>;
   saveTournament(tournament: Tournament): Promise<void>;
   savePrefs(prefs: Preferences): Promise<void>;
   route: Route;
@@ -100,6 +101,16 @@ export function AppProvider({ children, repos: injected }: { children: ReactNode
     [repos],
   );
 
+  // Borrar un partido: estadísticas, ELO, XP, logros y récords se recalculan solos.
+  const deleteMatch = useCallback(
+    async (id: string) => {
+      const list = await repos.matches.list();
+      await repos.matches.saveAll(list.filter((m) => m.id !== id));
+      setMatches(await repos.matches.list());
+    },
+    [repos],
+  );
+
   const saveTournament = useCallback(
     async (t: Tournament) => {
       await repos.tournaments.save(t);
@@ -148,6 +159,7 @@ export function AppProvider({ children, repos: injected }: { children: ReactNode
     refresh,
     savePlayer,
     saveMatch,
+    deleteMatch,
     saveTournament,
     savePrefs,
     route,

@@ -28,6 +28,8 @@ export const DEFAULT_PREFERENCES: Preferences = {
   chaosRules: { doubleLastMinute: true, jokers: true },
   seasonLength: 'month',
   challenges: true,
+  keepAwake: true,
+  hardware: { wsUrl: '', autoConnect: false },
 };
 
 /** Completa preferencias guardadas con valores por defecto (migración suave). */
@@ -41,5 +43,6 @@ export function normalizePreferences(raw: unknown): Preferences {
     formatVersion: STORAGE_FORMAT_VERSION,
     progression: { ...base.progression, ...(r.progression ?? {}) },
     chaosRules: { ...base.chaosRules, ...(r.chaosRules ?? {}) },
+    hardware: { ...base.hardware, ...(r.hardware ?? {}) },
   };
 }

@@ -4,6 +4,8 @@ import { restoreSnapshot } from '../../app/recovery';
 import { getScore, type MatchMode } from '../../match-engine';
 import type { ActiveMatchSnapshot } from '../../services/persistence';
 import { sound } from '../../services/sound/sound';
+import { fullscreenAvailable, toggleFullscreen } from '../../services/system/device';
+import { useHardware } from '../../inputs/hardware/useHardware';
 import { AssetImage } from '../components/assets';
 import { MODE_LABEL, Modal, formatDate } from '../components/common';
 
@@ -17,6 +19,7 @@ export function HomeScreen() {
   const { navigate, repos, persistent, players } = useApp();
   const [snapshot, setSnapshot] = useState<ActiveMatchSnapshot | null>(null);
   const [clock, setClock] = useState(() => new Date());
+  const hub = useHardware();
 
   useEffect(() => {
     void repos.activeMatch.load().then(setSnapshot);
@@ -58,10 +61,20 @@ export function HomeScreen() {
           </div>
         </div>
         <div className="home-status">
+          {hub.connectedCount > 0 && (
+            <button className="status-pill" style={{ color: 'var(--ok)', cursor: 'pointer', background: 'none' }} onClick={() => navigate({ name: 'settings', tab: 'connections' })}>
+              🔌 {hub.connectedCount === 1 ? 'PLACA CONECTADA' : `${hub.connectedCount} PLACAS`}
+            </button>
+          )}
           <span className="status-pill" title="Sin backend: todos los datos se guardan en este dispositivo">
             <span className="dot" style={{ color: persistent ? 'var(--accent)' : 'var(--ranked)' }} />
             {persistent ? 'SISTEMA LOCAL' : 'SIN ALMACENAMIENTO'}
           </span>
+          {fullscreenAvailable() && (
+            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => void toggleFullscreen()} aria-label="Pantalla completa" title="Pantalla completa">
+              ⛶
+            </button>
+          )}
           <span className="home-clock">
             {clock.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
           </span>

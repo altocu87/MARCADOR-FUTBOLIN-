@@ -1,8 +1,11 @@
 /** Navegación principal: cada ruta pinta su pantalla dentro del lienzo 800 × 480. */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { attachKeyboardAdapter, exposeDevInputs } from '../inputs/inputBus';
 import { SleepOverlay } from '../ui/components/SleepOverlay';
 import { Stage } from '../ui/layout/Stage';
+import { wakeLock } from '../services/system/device';
+import { defaultWsUrl, hardwareHub, servedFromBoard } from '../inputs/hardware/hub';
+import { linkSupport } from '../inputs/hardware/links';
 import { HomeScreen } from '../ui/screens/HomeScreen';
 import { MatchScreen } from '../ui/screens/MatchScreen';
 import { PrematchScreen } from '../ui/screens/PrematchScreen';
@@ -37,6 +40,30 @@ function Router() {
     exposeDevInputs();
     return attachKeyboardAdapter();
   }, []);
+
+  // Placas: avisar fuera de partido y reconectar al abrir si está configurado.
+  useEffect(() => {
+    if (route.name !== 'match') hardwareHub.notifyIdle();
+  }, [route.name]);
+  const autoConnected = useRef(false);
+  useEffect(() => {
+    if (!loaded || autoConnected.current || !(prefs.hardware.autoConnect || servedFromBoard())) return;
+    autoConnected.current = true;
+    void hardwareHub.connect('websocket', { url: prefs.hardware.wsUrl || defaultWsUrl() });
+    if (linkSupport.serial()) void hardwareHub.connect('serial', { reuseGranted: true });
+  }, [loaded, prefs.hardware]);
+
+  // Pantalla siempre encendida (si el navegador lo permite).
+  useEffect(() => {
+    if (!prefs.keepAwake) {
+      void wakeLock.disable();
+      return;
+    }
+    void wakeLock.enable();
+    const onVis = () => void wakeLock.onVisible();
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [prefs.keepAwake]);
 
   if (!loaded) return <div className="screen" />;
 
@@ -103,9 +130,7 @@ function Router() {
 export function App() {
   return (
     <AppProvider>
-      <Stage>
-        <Router />
-      </Stage>
+      <Stage>{() => <Router />}</Stage>
     </AppProvider>
   );
 }

@@ -137,6 +137,17 @@ export interface Preferences {
   seasonLength: SeasonLength;
   /** Retos diarios y semanales. */
   challenges: boolean;
+  /** Mantener la pantalla encendida mientras la app está abierta. */
+  keepAwake: boolean;
+  /** Conexión con placas (Arduino/ESP32). */
+  hardware: HardwarePrefs;
+}
+
+export interface HardwarePrefs {
+  /** Dirección WebSocket de la placa (p. ej. ws://192.168.4.1:81/). Vacío = automática. */
+  wsUrl: string;
+  /** Reconectar al abrir la app (Wi-Fi y puertos USB ya autorizados). */
+  autoConnect: boolean;
 }
 
 /** Snapshot versionado de la partida en curso para ofrecer reanudar o descartar. */

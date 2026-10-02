@@ -1,13 +1,52 @@
+import { useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import { MatchReport } from '../components/MatchReport';
-import { ScreenFrame } from '../components/common';
+import { Modal, ScreenFrame } from '../components/common';
 
 export function MatchDetailScreen({ matchId }: { matchId: string }) {
-  const { matches, navigate } = useApp();
+  const { matches, navigate, deleteMatch, toast } = useApp();
+  const [confirm, setConfirm] = useState(false);
   const match = matches.find((m) => m.id === matchId);
+  const remove = async () => {
+    try {
+      await deleteMatch(matchId);
+      toast('Partido eliminado · estadísticas recalculadas');
+      navigate({ name: 'ranking', tab: 'history' });
+    } catch {
+      toast('No se pudo eliminar');
+    }
+  };
   return (
-    <ScreenFrame title="Detalle del partido" onBack={() => navigate({ name: 'ranking', tab: 'history' })}>
+    <ScreenFrame
+      title="Detalle del partido"
+      onBack={() => navigate({ name: 'ranking', tab: 'history' })}
+      right={
+        match &&
+        !match.tournament && (
+          <button className="btn btn-danger btn-sm" onClick={() => setConfirm(true)}>
+            Eliminar
+          </button>
+        )
+      }
+    >
       {match ? <MatchReport match={match} /> : <div className="empty">Partido no encontrado.</div>}
+      {confirm && (
+        <Modal
+          title="¿Eliminar este partido?"
+          onClose={() => setConfirm(false)}
+          actions={
+            <>
+              <button className="btn btn-ghost" onClick={() => setConfirm(false)}>Cancelar</button>
+              <button className="btn btn-danger" onClick={remove}>Eliminar</button>
+            </>
+          }
+        >
+          <p style={{ margin: 0 }}>
+            Se borra del historial y se recalculan automáticamente estadísticas, ELO, XP, logros y récords de todos los
+            jugadores. No se puede deshacer (salvo con una copia de seguridad).
+          </p>
+        </Modal>
+      )}
     </ScreenFrame>
   );
 }

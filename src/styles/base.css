@@ -46,6 +46,7 @@ body,
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   touch-action: manipulation;
+  overscroll-behavior: none;
 }
 
 button {
@@ -67,6 +68,8 @@ select {
 .viewport {
   position: fixed;
   inset: 0;
+  /* Respeta muescas y barras del sistema en móviles. */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   display: grid;
   place-items: center;
   background: radial-gradient(ellipse at center, #0b1424 0%, #000 75%);
@@ -76,8 +79,6 @@ select {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 800px;
-  height: 480px;
   transform-origin: center center;
   overflow: hidden;
   background:

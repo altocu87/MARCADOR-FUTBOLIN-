@@ -1,0 +1,3 @@
+Copia aquí el contenido de la carpeta dist/ (después de `npm run build`)
+o ejecuta `npm run build:esp32`, que lo hace automáticamente.
+Después usa «Upload LittleFS» en el IDE de Arduino.

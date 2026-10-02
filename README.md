@@ -14,6 +14,8 @@ npm run dev        # servidor de desarrollo → http://localhost:5173
 npm test           # pruebas unitarias (Vitest)
 npm run build      # comprobación TypeScript + compilación a dist/
 npm run preview    # sirve la compilación de dist/
+npm run build:esp32    # compila y copia la app comprimida a hardware/esp32_marcador/data/
+npm run test:hardware  # pruebas en PC del firmware (núcleo + simulación de Arduino/ESP32)
 ```
 
 La interfaz es un lienzo de **800 × 480** en horizontal: se centra en pantallas grandes y se escala
@@ -55,6 +57,18 @@ Todas las entradas llegan al mismo motor y respetan el bloqueo de 3 s.
   melodía de victoria por jugador y **locutor** con la voz del navegador. **Efectos** de gol
   (completos / reducidos / desactivados).
 
+### Añadidos de la versión 0.3 · cualquier pantalla y hardware
+
+- **Cualquier resolución**: el lienzo se adapta a la proporción (16:9, 21:9, 4:3…) sin franjas; en móvil vertical
+  aviso con opción **«Girar el marcador»** (usa toda la pantalla aunque la rotación esté bloqueada).
+- **Pantalla completa** (⛶) y **pantalla siempre encendida**. Respeta muescas de móviles.
+- **Instalable y sin conexión (PWA)** en PC, Android e iPhone.
+- **Placas Arduino / ESP32**: Ajustes → **Conexiones** por **USB**, **Wi-Fi** o **Bluetooth**, con registro de mensajes
+  y reconexión automática. La app avisa a la placa de los goles aceptados (LEDs/zumbador).
+- **Programas para placas** en `hardware/` (Arduino USB y ESP32 con red propia que sirve la app):
+  guía completa en [`docs/HARDWARE.md`](docs/HARDWARE.md). `npm run build:esp32` prepara la app para la placa.
+- **Eliminar partidos** del historial (se recalcula todo).
+
 ### Añadidos de la versión 0.2
 
 - **Partido**: paneles de cristal con línea de luz, cuenta atrás con anillo, rótulos animados (inicio de parte,
@@ -81,7 +95,7 @@ Todas las entradas llegan al mismo motor y respetan el bloqueo de 3 s.
 src/
   app/                 composición: contexto, navegación, finalización y recuperación
   match-engine/        MatchEngine puro: reglas, estados, reloj, bloqueo, correcciones, penaltis
-  inputs/              bus de entradas común (pantalla, teclado, simulador, futuro hardware)
+  inputs/              bus de entradas común + hardware/ (protocolo MFV3, USB, Wi-Fi, Bluetooth)
   services/players/    validación y gestión de jugadores
   services/persistence/contratos de repositorio, adaptador local (localStorage) y backup
   services/statistics/ estadísticas derivadas del historial
@@ -91,7 +105,8 @@ src/
   ui/                  layout (lienzo 800×480), componentes y pantallas
   styles/              CSS por áreas
 tests/                 pruebas de motor (A01–A13), progresión y persistencia
-docs/                  decisiones, estado y límites
+docs/                  decisiones, estado, hardware y prompts de imágenes
+hardware/              firmware Arduino/ESP32 y sus pruebas en PC
 ```
 
 Flujo: **entrada → bus → validación del motor → estado/evento aceptado → interfaz y efectos**.

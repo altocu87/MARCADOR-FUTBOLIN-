@@ -20,12 +20,14 @@ import { setPlayerActive, sortPlayers } from '../../services/players';
 import { PROGRESSION_RULES_VERSION } from '../../services/progression';
 import { GOAL_SOUNDS, sound } from '../../services/sound/sound';
 import { voice } from '../../services/sound/voice';
+import { fullscreenAvailable, toggleFullscreen, wakeLock } from '../../services/system/device';
 import { STATS_DEFINITIONS_VERSION } from '../../services/statistics';
 import { Avatar, Modal, ScreenFrame, Stepper, Tabs, Toggle } from '../components/common';
 import { downloadJson } from '../components/download';
 import { PlayerEditor } from '../components/PlayerEditor';
+import { ConnectionsTab } from './ConnectionsTab';
 
-export const APP_VERSION = '0.2.0';
+export const APP_VERSION = '0.3.0';
 
 export function SettingsScreen({ tab: initialTab }: { tab?: SettingsTab }) {
   const { navigate } = useApp();
@@ -41,6 +43,7 @@ export function SettingsScreen({ tab: initialTab }: { tab?: SettingsTab }) {
           { id: 'players', label: 'Jugadores' },
           { id: 'audio', label: 'Audio/Efectos' },
           { id: 'progression', label: 'Progresión' },
+          { id: 'connections', label: 'Conexiones' },
           { id: 'system', label: 'Sistema' },
           { id: 'info', label: 'Información' },
         ]}
@@ -50,6 +53,7 @@ export function SettingsScreen({ tab: initialTab }: { tab?: SettingsTab }) {
         {tab === 'players' && <Players />}
         {tab === 'audio' && <Audio />}
         {tab === 'progression' && <Progression />}
+        {tab === 'connections' && <ConnectionsTab />}
         {tab === 'system' && <SystemTab />}
         {tab === 'info' && <Info />}
       </div>
@@ -156,6 +160,20 @@ function General() {
           label="Retos diarios y semanales"
           description="Conceden XP extra (recalculado desde el historial)."
         />
+      </div>
+      <div className="card">
+        <div className="label">Pantalla</div>
+        <Toggle
+          checked={prefs.keepAwake}
+          onChange={(v) => update({ keepAwake: v })}
+          label="Mantener pantalla encendida"
+          description={wakeLock.available ? 'Evita que el móvil o la tablet se apague con la app abierta.' : 'Este navegador no lo permite.'}
+        />
+        {fullscreenAvailable() && (
+          <button className="btn btn-sm" style={{ marginTop: 6 }} onClick={() => void toggleFullscreen()}>
+            ⛶ Pantalla completa
+          </button>
+        )}
       </div>
       <div className="card">
         <div className="label">Reposo tras inactividad</div>

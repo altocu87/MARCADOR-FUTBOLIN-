@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import { makeSnapshot } from '../../app/recovery';
 import type { MatchExtras } from '../../app/routes';
+import { hardwareHub } from '../../inputs/hardware/hub';
 import { teamFromCommand, inputBus } from '../../inputs/inputBus';
 import {
   advance,
@@ -98,6 +99,11 @@ export function useMatchController(
 
   useEffect(() => () => window.clearTimeout(bannerTimer.current), []);
 
+  // Las placas conectadas reciben el estado inicial (p. ej. «STATE countdown»).
+  useEffect(() => {
+    hardwareHub.notifyMatch(stateRef.current, []);
+  }, []);
+
   const saveSnapshot = useCallback(
     (s: MatchState, t: number) => {
       if (s.config.testMode || s.phase === 'finished') return;
@@ -159,6 +165,7 @@ export function useMatchController(
         voice.say('¡Bola de partido!', { interrupt: false });
       }
       matchPointKey.current = key;
+      hardwareHub.notifyMatch(next, events);
       saveSnapshot(next, t);
     },
     [saveSnapshot, showBanner],
