@@ -137,6 +137,7 @@ struct LGFX_Device {
   void drawCircle(int, int, int, uint16_t) {}
   void fillCircle(int, int, int, uint16_t) {}
   void drawFastHLine(int, int, int, uint16_t) {}
+  void drawLine(int, int, int, int, uint16_t) {}
   void setFont(const IFont*) {}
   void setTextSize(float) {}
   void setTextColor(uint16_t) {}

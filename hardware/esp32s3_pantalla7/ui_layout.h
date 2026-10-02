@@ -23,6 +23,8 @@ enum class Btn : uint8_t {
   PenWhiteGoal, PenWhiteMiss, PenBlueGoal, PenBlueMiss, PenUndo,
   // Final
   NewMatch, Rematch,
+  // Pantalla de prueba
+  Test, TestDone,
 };
 
 struct Rect {
@@ -41,7 +43,12 @@ const Button HOME[] = {
     {Btn::GoalsMinus, {40, 270, 72, 72}},   {Btn::GoalsPlus, {290, 270, 72, 72}},
     {Btn::MinutesMinus, {438, 270, 72, 72}}, {Btn::MinutesPlus, {688, 270, 72, 72}},
     {Btn::Play, {240, 380, 320, 80}},
+    {Btn::Test, {20, 396, 170, 64}},
 };
+
+// ---- Pantalla de prueba (primer arranque): 4 esquinas para comprobar el táctil y botón TERMINAR
+const Rect TEST_CORNERS[4] = {{0, 0, 90, 90}, {710, 0, 90, 90}, {0, 390, 90, 90}, {710, 390, 90, 90}};
+const Button TEST[] = {{Btn::TestDone, {290, 396, 220, 70}}};
 
 // ---- Partido (paneles de marcador = botones de gol)
 const Rect PANEL_WHITE = {12, 52, 296, 332};

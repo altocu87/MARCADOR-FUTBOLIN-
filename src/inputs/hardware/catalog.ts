@@ -43,7 +43,12 @@ export interface BoardInfo {
   status: BoardStatus;
   pins: Partial<Record<PinFunction, string>>;
   notes: string[];
+  /** Compilación automática (GitHub Actions). Con chipFamily, se puede instalar desde el navegador. */
+  build: { fqbn: string; chipFamily?: string; defines?: string };
 }
+
+/** Placas que se pueden instalar desde el navegador (familia ESP32, con Web Serial). */
+export const webInstallable = (b: BoardInfo) => Boolean(b.build.chipFamily);
 
 export interface DetectionOption {
   id: string;

@@ -17,6 +17,8 @@ struct Preferences {
   uint8_t getUChar(const char* k, uint8_t d) { return get<uint8_t>(k, d); }
   uint32_t getULong(const char* k, uint32_t d) { return get<uint32_t>(k, d); }
   void putUChar(const char* k, uint8_t v) { put(k, v); }
+  bool getBool(const char* k, bool d) { return get<uint8_t>(k, d ? 1 : 0) != 0; }
+  void putBool(const char* k, bool v) { put<uint8_t>(k, v ? 1 : 0); }
   void putULong(const char* k, uint32_t v) { put(k, v); }
   size_t getBytes(const char* k, void* buf, size_t len) {
     auto it = sim::nvs.find(k);

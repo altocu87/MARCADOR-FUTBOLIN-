@@ -31,7 +31,39 @@ int main() {
   setup();
   loop();
   assert(sent("HELLO " S3_BOARD_ID " 1.0 caps=goles,anular,pausa,pantalla") && sent("STATE idle"));
-  assert(shows("MARCADOR FUTBOLIN V3") && shows("JUGAR"));
+  // Primer arranque: pantalla de prueba, que no toca el marcador.
+  assert(test.active && shows("PRUEBA DE LA PLACA") && shows("Toca las 4 esquinas") && sent("STATE test"));
+  tap(400, 200);                   // un toque en medio: se registra, no juega
+  assert(!inMatch && test.touches == 1 && !testCornersOk());
+  tap(20, 20); tap(780, 20); tap(20, 460); tap(780, 460);
+  assert(testCornersOk() && shows("OK"));
+  {
+    uint8_t mac[6] = {0xAB, 0, 0, 0, 0, 1};
+    std::vector<uint8_t> pk(mfv3::RADIO_PACKET_SIZE);
+    mfv3::radioEncode(pk.data(), GRUPO_MESA, 7, mfv3::RadioCmd::GoalWhite);
+    sim::radioDeliver(mac, pk);
+    mfv3::radioEncode(pk.data(), GRUPO_MESA, 8, mfv3::RadioCmd::AnnulBlue);  // también vale el toque largo
+    sim::radioDeliver(mac, pk);
+    loop();
+    assert(test.remoteWhite && test.remoteBlue && !inMatch && shows("Mando oido"));
+  }
+#if HAS_ISOLATED_IO
+  run(20);
+  sim::exioIn ^= (1u << exio::DI0);
+  run(20);
+  sim::exioIn ^= (1u << exio::DI0);
+  run(20);
+  assert(test.sensorWhite && !test.sensorBlue && !inMatch);
+#endif
+  tap(400, 430);                   // TERMINAR
+  assert(!test.active && sim::nvs.count("tested") && sent("STATE idle"));
+  loop();
+  assert(shows("MARCADOR FUTBOLIN V3") && shows("JUGAR") && shows("PRUEBA"));
+  tap(100, 428);                   // botón PRUEBA de inicio: vuelve a la prueba
+  assert(test.active);
+  tap(400, 430);
+  assert(!test.active);
+  loop();
 
   // Configuración: POR GOLES, 1 gol por parte (desde 5).
   for (int i = 0; i < 4; i++) tap(76, 306);

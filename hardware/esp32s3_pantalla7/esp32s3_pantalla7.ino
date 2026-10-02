@@ -148,6 +148,31 @@ static int lastCountdownDigit = -1;
 static uint32_t lastClockSecond = 0xFFFFFFFF;
 static bool lastLockShown = false;
 
+// ---------------------------------------------------------------- pantalla de prueba (primer arranque)
+// Comprueba el táctil (4 esquinas), el mando (pulsador BLANCO y AZUL) y los sensores, sin afectar al marcador.
+// Sale sola la primera vez que se enciende la placa; después, con el botón PRUEBA de la pantalla de inicio.
+struct TestState {
+  bool active;
+  bool corner[4];
+  bool remoteWhite, remoteBlue;
+  bool sensorWhite, sensorBlue;
+  bool usbSeen;
+  int16_t lastX, lastY;
+  uint16_t touches;
+};
+static TestState test = {};
+
+static bool testCornersOk() { return test.corner[0] && test.corner[1] && test.corner[2] && test.corner[3]; }
+
+static void enterTest() {
+  test = TestState();
+  test.active = true;
+  test.lastX = test.lastY = -1;
+  sendLine("STATE test");
+}
+
+static void leaveTest();
+
 static void wakeScreen() {
   lastActivity = millis();
   if (dimmed) {
@@ -238,6 +263,12 @@ static void goHome() {
   lastKey = 0xFFFFFFFF;
 }
 
+static void leaveTest() {
+  test.active = false;
+  prefs.putBool("tested", true);  // ya no sale sola al encender (sigue en el botón PRUEBA)
+  goHome();
+}
+
 // Entrada común (táctil, UART, USB): misma lógica que el controlador de la app.
 static void inputGoal(Team t) {
   if (!inMatch) return;
@@ -282,6 +313,7 @@ static void sendHello() {
 // Línea del protocolo MFV3 recibida de una placa auxiliar.
 static void handleBoardLine(const char* line) {
   wakeScreen();
+  if (test.active) test.usbSeen = true;
   char word[16] = {0};
   size_t i = 0;
   while (line[i] && line[i] != ' ' && i < sizeof(word) - 1) {
@@ -339,6 +371,10 @@ static void radioPoll() {
   while (radioTail != radioHead) {
     mfv3::RadioCmd c = radioQueue[radioTail];
     radioTail = (uint8_t)((radioTail + 1) % 8);
+    if (test.active) {
+      if (c == mfv3::RadioCmd::GoalWhite || c == mfv3::RadioCmd::AnnulWhite) test.remoteWhite = true;
+      if (c == mfv3::RadioCmd::GoalBlue || c == mfv3::RadioCmd::AnnulBlue) test.remoteBlue = true;
+    }
     handleBoardLine(mfv3::radioLine(c));
   }
 }
@@ -409,6 +445,52 @@ static void drawHome() {
   snprintf(v, sizeof(v), "%u", cfg.minutesPerPeriod);
   text(v, 599, 306, &lgfx::fonts::FreeSansBold24pt7b, useTime ? C_TEXT : C_LINE);
   button(ui::HOME[7].r, "JUGAR", C_ACCENT, C_BG, C_ACCENT, &lgfx::fonts::FreeSansBold24pt7b);
+  button(ui::HOME[8].r, "PRUEBA", C_SURFACE, C_TEXT2, C_LINE, &lgfx::fonts::FreeSansBold12pt7b);
+}
+
+static void testLine(int y, const char* label, bool ok, bool optional) {
+  lcd.fillRoundRect(130, y - 18, 540, 36, 10, C_SURFACE);
+  lcd.fillCircle(156, y, 11, ok ? C_OK : (optional ? C_LINE : C_DANGER));
+  lcd.setFont(&lgfx::fonts::FreeSansBold12pt7b);
+  lcd.setTextSize(1);
+  lcd.setTextColor(ok ? C_TEXT : C_TEXT2);
+  lcd.setTextDatum(lgfx::textdatum_t::middle_left);
+  lcd.drawString(label, 180, y);
+  lcd.setTextDatum(lgfx::textdatum_t::middle_right);
+  lcd.setTextColor(ok ? C_OK : C_TEXT2);
+  lcd.drawString(ok ? "OK" : (optional ? "opcional" : "pendiente"), 655, y);
+}
+
+static void drawTest() {
+  lcd.fillScreen(C_BG);
+  for (int i = 0; i < 4; i++) {
+    const ui::Rect& r = ui::TEST_CORNERS[i];
+    lcd.fillRoundRect(r.x + 6, r.y + 6, r.w - 12, r.h - 12, 14, test.corner[i] ? C_OK : C_CARD);
+    lcd.drawRoundRect(r.x + 6, r.y + 6, r.w - 12, r.h - 12, 14, test.corner[i] ? C_OK : C_ACCENT);
+    text(test.corner[i] ? "OK" : "TOCA", r.x + r.w / 2, r.y + r.h / 2, &lgfx::fonts::FreeSansBold9pt7b, test.corner[i] ? C_BG : C_ACCENT);
+  }
+  text("PRUEBA DE LA PLACA", ui::W / 2, 34, &lgfx::fonts::FreeSansBold18pt7b, C_ACCENT);
+  text("Comprueba cada punto. No afecta al marcador.", ui::W / 2, 70, &lgfx::fonts::FreeSans9pt7b, C_TEXT2);
+  testLine(120, "Toca las 4 esquinas", testCornersOk(), false);
+  testLine(165, "Mando: pulsa el BLANCO", test.remoteWhite, false);
+  testLine(210, "Mando: pulsa el AZUL", test.remoteBlue, false);
+#if HAS_ISOLATED_IO
+  testLine(255, "Sensor BLANCO (DI0)", test.sensorWhite, true);
+  testLine(300, "Sensor AZUL (DI1)", test.sensorBlue, true);
+#endif
+  char buf[64];
+  snprintf(buf, sizeof(buf), "Radio %s  |  Mando %s  |  USB %s", radioOk ? "OK" : "ERROR", remoteLinked() ? "oido" : "sin senal",
+           test.usbSeen ? "con datos" : "-");
+  text(buf, ui::W / 2, 342, &lgfx::fonts::FreeSans9pt7b, radioOk ? C_TEXT2 : C_DANGER);
+  if (test.lastX >= 0) {
+    snprintf(buf, sizeof(buf), "Ultimo toque: %d, %d", test.lastX, test.lastY);
+    text(buf, ui::W / 2, 366, &lgfx::fonts::FreeSans9pt7b, C_TEXT2);
+    lcd.drawLine(test.lastX - 12, test.lastY, test.lastX + 12, test.lastY, C_GOLD);
+    lcd.drawLine(test.lastX, test.lastY - 12, test.lastX, test.lastY + 12, C_GOLD);
+  }
+  bool ready = testCornersOk();
+  button(ui::TEST[0].r, "TERMINAR", ready ? C_ACCENT : C_CARD, ready ? C_BG : C_TEXT, ready ? C_ACCENT : C_LINE,
+         &lgfx::fonts::FreeSansBold18pt7b);
 }
 
 static const char* periodLabel(Period p) {
@@ -592,6 +674,13 @@ static void drawFinished() {
 
 // Clave de lo que hay en pantalla: si cambia, se redibuja todo.
 static uint32_t screenKey(uint32_t now) {
+  if (test.active) {
+    uint32_t k = 0x40000000UL | ((uint32_t)test.touches << 12);
+    for (int i = 0; i < 4; i++) k |= (uint32_t)test.corner[i] << i;
+    k |= (uint32_t)test.remoteWhite << 4 | (uint32_t)test.remoteBlue << 5 | (uint32_t)test.sensorWhite << 6 |
+         (uint32_t)test.sensorBlue << 7 | (uint32_t)test.usbSeen << 8 | (uint32_t)remoteLinked() << 9 | (uint32_t)radioOk << 10;
+    return k;
+  }
   if (!inMatch)
     return 0x80000000UL | (remoteLinked() ? 0x01000000UL : 0) | ((uint32_t)cfg.endCondition << 16) | (cfg.goalsPerPeriod << 8) |
            cfg.minutesPerPeriod;
@@ -608,7 +697,8 @@ static void render() {
   uint32_t key = screenKey(now);
   if (key != lastKey) {
     lastKey = key;
-    if (!inMatch) drawHome();
+    if (test.active) drawTest();
+    else if (!inMatch) drawHome();
     else {
       switch (eng.phase()) {
         case Phase::Countdown: drawCountdown(now); break;
@@ -638,6 +728,18 @@ static void render() {
 // ---------------------------------------------------------------- toques
 static void onTap(int16_t x, int16_t y) {
   uint32_t now = millis();
+  if (test.active) {
+    if (ui::hit(ui::TEST, x, y) == Btn::TestDone) {
+      leaveTest();
+      return;
+    }
+    for (int i = 0; i < 4; i++)
+      if (ui::TEST_CORNERS[i].contains(x, y)) test.corner[i] = true;
+    test.lastX = x;
+    test.lastY = y;
+    test.touches++;
+    return;
+  }
   if (!inMatch) {
     Btn b = ui::hit(ui::HOME, x, y);
     bool useGoals = cfg.endCondition != mfv3::EndCondition::Time;
@@ -651,6 +753,7 @@ static void onTap(int16_t x, int16_t y) {
       case Btn::MinutesMinus: if (useTime && cfg.minutesPerPeriod > 1) cfg.minutesPerPeriod--; break;
       case Btn::MinutesPlus: if (useTime && cfg.minutesPerPeriod < 30) cfg.minutesPerPeriod++; break;
       case Btn::Play: saveConfig(); startMatch(); return;
+      case Btn::Test: enterTest(); return;
       default: return;
     }
     return;
@@ -718,6 +821,10 @@ static void pollIsolatedInputs(uint32_t now) {
     return;
   }
   uint16_t changed = v ^ diIdle;
+  if (test.active) {
+    if (changed & (1u << exio::DI0)) test.sensorWhite = true;
+    if (changed & (1u << exio::DI1)) test.sensorBlue = true;
+  }
   if (diWhite.update(changed & (1u << exio::DI0), now)) { wakeScreen(); inputGoal(Team::White); }
   if (diBlue.update(changed & (1u << exio::DI1), now)) { wakeScreen(); inputGoal(Team::Blue); }
   if (doOffAt && now > doOffAt) {
@@ -766,6 +873,7 @@ void setup() {
   lastActivity = millis();
   sendHello();
   sendLine("STATE idle");
+  if (!prefs.getBool("tested", false)) enterTest();  // primer arranque: asistente de prueba
 }
 
 void loop() {

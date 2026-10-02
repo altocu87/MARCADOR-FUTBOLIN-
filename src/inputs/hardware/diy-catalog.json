@@ -128,7 +128,10 @@
       },
       "notes": [
         "La más fácil para empezar. Solo por cable USB (PC, Mac o Android con Chrome/Edge)."
-      ]
+      ],
+      "build": {
+        "fqbn": "arduino:avr:uno"
+      }
     },
     {
       "id": "arduino-nano",
@@ -158,7 +161,10 @@
       },
       "notes": [
         "Pequeño: cabe dentro de la mesa o en una caja con los pulsadores."
-      ]
+      ],
+      "build": {
+        "fqbn": "arduino:avr:nano"
+      }
     },
     {
       "id": "arduino-mega",
@@ -188,7 +194,10 @@
       },
       "notes": [
         "Funciona igual que el Uno; solo tiene sentido si ya lo tienes."
-      ]
+      ],
+      "build": {
+        "fqbn": "arduino:avr:mega"
+      }
     },
     {
       "id": "arduino-leonardo",
@@ -218,7 +227,10 @@
       },
       "notes": [
         "El Pro Micro de 3,3 V/8 MHz también vale, pero alimenta los sensores a 3,3 V."
-      ]
+      ],
+      "build": {
+        "fqbn": "arduino:avr:leonardo"
+      }
     },
     {
       "id": "rp2040",
@@ -248,7 +260,10 @@
       },
       "notes": [
         "Placa de 3,3 V: los sensores de 5 V con salida «push-pull» necesitan un divisor de tensión."
-      ]
+      ],
+      "build": {
+        "fqbn": "rp2040:rp2040:rpipico"
+      }
     },
     {
       "id": "esp32",
@@ -264,7 +279,7 @@
         "bluetooth"
       ],
       "sketch": "esp32_marcador",
-      "ideBoard": "ESP32 Dev Module",
+      "ideBoard": "ESP32 Dev Module · Partition Scheme «Huge APP»",
       "core": "esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler",
       "price": "≈ 6–12 €",
       "status": "simulada",
@@ -280,7 +295,11 @@
       },
       "notes": [
         "Crea la red «MARCADOR-FUTBOLIN» y sirve la app: válido para cualquier móvil, también iPhone."
-      ]
+      ],
+      "build": {
+        "fqbn": "esp32:esp32:esp32:PartitionScheme=huge_app",
+        "chipFamily": "ESP32"
+      }
     },
     {
       "id": "esp32c3",
@@ -296,7 +315,7 @@
         "bluetooth"
       ],
       "sketch": "esp32_marcador",
-      "ideBoard": "ESP32C3 Dev Module («USB CDC On Boot: Enabled»)",
+      "ideBoard": "ESP32C3 Dev Module · «Huge APP» · «USB CDC On Boot: Enabled»",
       "core": "esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler",
       "price": "≈ 3–6 €",
       "status": "simulada",
@@ -312,7 +331,11 @@
       },
       "notes": [
         "Diminuta y barata. No uses GPIO 8 (LED de la placa) ni GPIO 9 (botón BOOT)."
-      ]
+      ],
+      "build": {
+        "fqbn": "esp32:esp32:esp32c3:PartitionScheme=huge_app,CDCOnBoot=cdc",
+        "chipFamily": "ESP32-C3"
+      }
     },
     {
       "id": "esp32s3",
@@ -328,7 +351,7 @@
         "bluetooth"
       ],
       "sketch": "esp32_marcador",
-      "ideBoard": "ESP32S3 Dev Module («USB CDC On Boot: Enabled»)",
+      "ideBoard": "ESP32S3 Dev Module · «Huge APP» · «USB CDC On Boot: Enabled»",
       "core": "esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler",
       "price": "≈ 8–15 €",
       "status": "simulada",
@@ -344,7 +367,11 @@
       },
       "notes": [
         "No uses GPIO 19/20 (USB) ni 0, 3, 45 y 46 (arranque)."
-      ]
+      ],
+      "build": {
+        "fqbn": "esp32:esp32:esp32s3:PartitionScheme=huge_app,CDCOnBoot=cdc",
+        "chipFamily": "ESP32-S3"
+      }
     },
     {
       "id": "esp32s2",
@@ -359,7 +386,7 @@
         "wifi"
       ],
       "sketch": "esp32_marcador",
-      "ideBoard": "ESP32S2 Dev Module («USB CDC On Boot: Enabled»)",
+      "ideBoard": "ESP32S2 Dev Module · «Huge APP» · «USB CDC On Boot: Enabled»",
       "core": "esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler",
       "price": "≈ 4–8 €",
       "status": "simulada",
@@ -375,7 +402,11 @@
       },
       "notes": [
         "Sin Bluetooth (el chip no lo tiene): conecta por Wi-Fi o USB."
-      ]
+      ],
+      "build": {
+        "fqbn": "esp32:esp32:esp32s2:PartitionScheme=huge_app,CDCOnBoot=cdc",
+        "chipFamily": "ESP32-S2"
+      }
     },
     {
       "id": "mando-c3",
@@ -401,7 +432,11 @@
         "Envía los toques por radio ESP-NOW a la pantalla de mesa: sin Wi-Fi ni router.",
         "LED de la placa: 1 destello = gol, 3 = anulación.",
         "Mismo «GRUPO_MESA» en el mando y en la pantalla."
-      ]
+      ],
+      "build": {
+        "fqbn": "esp32:esp32:esp32c3:CDCOnBoot=cdc",
+        "chipFamily": "ESP32-C3"
+      }
     },
     {
       "id": "waveshare-7c",
@@ -430,7 +465,12 @@
         "Marcador completo en la propia pantalla táctil, sin móvil.",
         "Pulsadores: con el mando inalámbrico. Sensores: entradas aisladas DI0/DI1 (más su común).",
         "Las salidas DO0/DO1 se activan 1 s con cada gol (luz o relé)."
-      ]
+      ],
+      "build": {
+        "fqbn": "esp32:esp32:esp32s3:PSRAM=opi,FlashSize=16M,PartitionScheme=huge_app,CDCOnBoot=cdc",
+        "chipFamily": "ESP32-S3",
+        "defines": "-DMFV3_BOARD=4"
+      }
     },
     {
       "id": "elecrow-7",
@@ -445,14 +485,19 @@
         "radio"
       ],
       "sketch": "esp32s3_pantalla7",
-      "ideBoard": "ESP32S3 Dev Module · PSRAM «OPI PSRAM» · «Huge APP» (cambia MFV3_BOARD a BOARD_ELECROW_7)",
+      "ideBoard": "ESP32S3 Dev Module · PSRAM «OPI PSRAM» · «Huge APP» · «USB CDC On Boot: Enabled» (cambia MFV3_BOARD a BOARD_ELECROW_7)",
       "core": "esp32 de Espressif + biblioteca LovyanGFX",
       "price": "≈ 40–60 €",
       "status": "simulada",
       "pins": {},
       "notes": [
         "Pulsadores con el mando inalámbrico, o con un Arduino por el conector UART (RX 18 / TX 17)."
-      ]
+      ],
+      "build": {
+        "fqbn": "esp32:esp32:esp32s3:PSRAM=opi,FlashSize=4M,PartitionScheme=huge_app,CDCOnBoot=cdc",
+        "chipFamily": "ESP32-S3",
+        "defines": "-DMFV3_BOARD=1"
+      }
     },
     {
       "id": "waveshare-7",
@@ -467,14 +512,19 @@
         "radio"
       ],
       "sketch": "esp32s3_pantalla7",
-      "ideBoard": "ESP32S3 Dev Module · PSRAM «OPI PSRAM» · «Huge APP» (cambia MFV3_BOARD a BOARD_WAVESHARE_7)",
+      "ideBoard": "ESP32S3 Dev Module · PSRAM «OPI PSRAM» · «Huge APP» · «USB CDC On Boot: Enabled» (cambia MFV3_BOARD a BOARD_WAVESHARE_7)",
       "core": "esp32 de Espressif + biblioteca LovyanGFX",
       "price": "≈ 40–60 €",
       "status": "simulada",
       "pins": {},
       "notes": [
         "Pulsadores con el mando inalámbrico, o con un Arduino por el UART (RX 44 / TX 43)."
-      ]
+      ],
+      "build": {
+        "fqbn": "esp32:esp32:esp32s3:PSRAM=opi,FlashSize=8M,PartitionScheme=huge_app,CDCOnBoot=cdc",
+        "chipFamily": "ESP32-S3",
+        "defines": "-DMFV3_BOARD=2"
+      }
     }
   ],
   "detection": [

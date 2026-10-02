@@ -315,7 +315,7 @@ radio y protocolo). Cuando alguien la pruebe en una placa real, pasará a «Prob
 1. Instala el IDE de Arduino (arduino.cc/en/software) en tu PC.
 2. Prepara el IDE: esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler.
 3. Abre el programa hardware/esp32_marcador/esp32_marcador.ino de este proyecto (la carpeta entera, con sus archivos .h).
-4. Herramientas → Placa: «ESP32 Dev Module». Herramientas → Puerto: el de tu placa.
+4. Herramientas → Placa: «ESP32 Dev Module · Partition Scheme «Huge APP»». Herramientas → Puerto: el de tu placa.
 5. Pulsa «Subir» (la flecha). Al terminar, la placa arranca sola.
 6. Conéctate a la red Wi-Fi «MARCADOR-FUTBOLIN» (clave futbolin123) y abre http://192.168.4.1, o usa Bluetooth o USB.
 7. La app reconoce la placa sola y muestra su nombre y lo que sabe hacer.
@@ -342,7 +342,7 @@ radio y protocolo). Cuando alguien la pruebe en una placa real, pasará a «Prob
 1. Instala el IDE de Arduino (arduino.cc/en/software) en tu PC.
 2. Prepara el IDE: esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler.
 3. Abre el programa hardware/esp32_marcador/esp32_marcador.ino de este proyecto (la carpeta entera, con sus archivos .h).
-4. Herramientas → Placa: «ESP32C3 Dev Module («USB CDC On Boot: Enabled»)». Herramientas → Puerto: el de tu placa.
+4. Herramientas → Placa: «ESP32C3 Dev Module · «Huge APP» · «USB CDC On Boot: Enabled»». Herramientas → Puerto: el de tu placa.
 5. Pulsa «Subir» (la flecha). Al terminar, la placa arranca sola.
 6. Conéctate a la red Wi-Fi «MARCADOR-FUTBOLIN» (clave futbolin123) y abre http://192.168.4.1, o usa Bluetooth o USB.
 7. La app reconoce la placa sola y muestra su nombre y lo que sabe hacer.
@@ -369,7 +369,7 @@ radio y protocolo). Cuando alguien la pruebe en una placa real, pasará a «Prob
 1. Instala el IDE de Arduino (arduino.cc/en/software) en tu PC.
 2. Prepara el IDE: esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler.
 3. Abre el programa hardware/esp32_marcador/esp32_marcador.ino de este proyecto (la carpeta entera, con sus archivos .h).
-4. Herramientas → Placa: «ESP32S3 Dev Module («USB CDC On Boot: Enabled»)». Herramientas → Puerto: el de tu placa.
+4. Herramientas → Placa: «ESP32S3 Dev Module · «Huge APP» · «USB CDC On Boot: Enabled»». Herramientas → Puerto: el de tu placa.
 5. Pulsa «Subir» (la flecha). Al terminar, la placa arranca sola.
 6. Conéctate a la red Wi-Fi «MARCADOR-FUTBOLIN» (clave futbolin123) y abre http://192.168.4.1, o usa Bluetooth o USB.
 7. La app reconoce la placa sola y muestra su nombre y lo que sabe hacer.
@@ -396,7 +396,7 @@ radio y protocolo). Cuando alguien la pruebe en una placa real, pasará a «Prob
 1. Instala el IDE de Arduino (arduino.cc/en/software) en tu PC.
 2. Prepara el IDE: esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler.
 3. Abre el programa hardware/esp32_marcador/esp32_marcador.ino de este proyecto (la carpeta entera, con sus archivos .h).
-4. Herramientas → Placa: «ESP32S2 Dev Module («USB CDC On Boot: Enabled»)». Herramientas → Puerto: el de tu placa.
+4. Herramientas → Placa: «ESP32S2 Dev Module · «Huge APP» · «USB CDC On Boot: Enabled»». Herramientas → Puerto: el de tu placa.
 5. Pulsa «Subir» (la flecha). Al terminar, la placa arranca sola.
 6. Conéctate a la red Wi-Fi «MARCADOR-FUTBOLIN» (clave futbolin123) y abre http://192.168.4.1, o usa Bluetooth o USB.
 7. La app reconoce la placa sola y muestra su nombre y lo que sabe hacer.
@@ -462,7 +462,7 @@ radio y protocolo). Cuando alguien la pruebe en una placa real, pasará a «Prob
 1. Instala el IDE de Arduino (arduino.cc/en/software) en tu PC.
 2. Prepara el IDE: esp32 de Espressif + biblioteca LovyanGFX.
 3. Abre el programa hardware/esp32s3_pantalla7/esp32s3_pantalla7.ino de este proyecto (la carpeta entera, con sus archivos .h).
-4. Herramientas → Placa: «ESP32S3 Dev Module · PSRAM «OPI PSRAM» · «Huge APP» (cambia MFV3_BOARD a BOARD_ELECROW_7)». Herramientas → Puerto: el de tu placa.
+4. Herramientas → Placa: «ESP32S3 Dev Module · PSRAM «OPI PSRAM» · «Huge APP» · «USB CDC On Boot: Enabled» (cambia MFV3_BOARD a BOARD_ELECROW_7)». Herramientas → Puerto: el de tu placa.
 5. Pulsa «Subir» (la flecha). Al terminar, la placa arranca sola.
 6. La pantalla arranca directamente en el marcador. Toca JUGAR.
 
@@ -477,7 +477,7 @@ radio y protocolo). Cuando alguien la pruebe en una placa real, pasará a «Prob
 1. Instala el IDE de Arduino (arduino.cc/en/software) en tu PC.
 2. Prepara el IDE: esp32 de Espressif + biblioteca LovyanGFX.
 3. Abre el programa hardware/esp32s3_pantalla7/esp32s3_pantalla7.ino de este proyecto (la carpeta entera, con sus archivos .h).
-4. Herramientas → Placa: «ESP32S3 Dev Module · PSRAM «OPI PSRAM» · «Huge APP» (cambia MFV3_BOARD a BOARD_WAVESHARE_7)». Herramientas → Puerto: el de tu placa.
+4. Herramientas → Placa: «ESP32S3 Dev Module · PSRAM «OPI PSRAM» · «Huge APP» · «USB CDC On Boot: Enabled» (cambia MFV3_BOARD a BOARD_WAVESHARE_7)». Herramientas → Puerto: el de tu placa.
 5. Pulsa «Subir» (la flecha). Al terminar, la placa arranca sola.
 6. La pantalla arranca directamente en el marcador. Toca JUGAR.
 

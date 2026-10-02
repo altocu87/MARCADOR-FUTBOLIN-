@@ -1,0 +1,92 @@
+# Compila de verdad el programa de cada placa del catálogo (src/inputs/hardware/diy-catalog.json).
+# Las placas ESP32 generan además el binario y el manifiesto del instalador web.
+# Publicar (release «firmware-latest»): ejecútalo a mano con «publicar» marcado, o al subir a main.
+name: Firmware
+
+on:
+  push:
+    paths:
+      - 'hardware/**'
+      - 'src/inputs/hardware/diy-catalog.json'
+      - 'scripts/firmware-manifests.mjs'
+      - '.github/workflows/firmware.yml'
+  workflow_dispatch:
+    inputs:
+      publicar:
+        description: 'Publicar los binarios en la release «firmware-latest»'
+        type: boolean
+        default: false
+
+jobs:
+  placas:
+    runs-on: ubuntu-latest
+    outputs:
+      lista: ${{ steps.lista.outputs.lista }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: lista
+        run: |
+          echo "lista=$(jq -c '[.boards[] | {id, sketch, fqbn: .build.fqbn, chip: (.build.chipFamily // ""), defines: (.build.defines // "")}]' src/inputs/hardware/diy-catalog.json)" >> "$GITHUB_OUTPUT"
+
+  compilar:
+    needs: placas
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        placa: ${{ fromJson(needs.placas.outputs.lista) }}
+    name: ${{ matrix.placa.id }}
+    env:
+      URLS: https://espressif.github.io/arduino-esp32/package_esp32_index.json,https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Núcleo de la placa
+        run: |
+          CORE=$(echo "${{ matrix.placa.fqbn }}" | cut -d: -f1,2)
+          arduino-cli core update-index --additional-urls "$URLS"
+          arduino-cli core install "$CORE" --additional-urls "$URLS"
+      - name: Bibliotecas
+        run: arduino-cli lib install WebSockets LovyanGFX
+      - name: Compilar
+        run: |
+          mkdir -p salida
+          arduino-cli compile --fqbn "${{ matrix.placa.fqbn }}" \
+            --build-property "compiler.cpp.extra_flags=${{ matrix.placa.defines }}" \
+            --output-dir salida --warnings default \
+            "hardware/${{ matrix.placa.sketch }}"
+          ls -la salida
+      - name: Binario y manifiesto del instalador web
+        if: matrix.placa.chip != ''
+        env:
+          FW_VERSION: ${{ github.sha }}
+        run: |
+          mkdir -p firmware/${{ matrix.placa.id }}
+          cp "salida/${{ matrix.placa.sketch }}.ino.merged.bin" "firmware/${{ matrix.placa.id }}/${{ matrix.placa.id }}.bin"
+          node scripts/firmware-manifests.mjs firmware "${{ matrix.placa.id }}"
+      - uses: actions/upload-artifact@v4
+        if: matrix.placa.chip != ''
+        with:
+          name: fw-${{ matrix.placa.id }}
+          path: firmware
+
+  publicar:
+    needs: compilar
+    if: ${{ inputs.publicar || github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: fw-*
+          merge-multiple: true
+          path: firmware
+      - name: Release «firmware-latest»
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view firmware-latest >/dev/null 2>&1 || gh release create firmware-latest --title "Firmware (última compilación)" --notes "Binarios para el instalador web. Se actualiza solo." --prerelease
+          (cd firmware && tar czf ../firmware.tar.gz .)
+          gh release upload firmware-latest firmware.tar.gz firmware/*/*.bin --clobber
