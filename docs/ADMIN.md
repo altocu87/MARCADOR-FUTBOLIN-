@@ -1,0 +1,65 @@
+# Panel de administración
+
+Dirección: **`/admin/`** de la web (por ejemplo `https://altocu87.github.io/MARCADOR-FUTBOLIN-CLAUDE/admin/`).
+No aparece en el menú de la web y pide a los buscadores que no lo indexen.
+
+## Hoy: modo demostración
+
+- El panel funciona **completo** con **datos de ejemplo** (un año ficticio de negocio) guardados **solo en tu navegador**.
+- La primera vez te pide crear tu cuenta de administrador (correo + contraseña de 8 caracteres o más).
+- **No es seguridad real**: la contraseña solo evita miradas casuales. No hay datos reales que proteger: cada
+  navegador tiene sus propios datos de ejemplo y nadie ve los tuyos.
+- Ajustes → Datos → «Restablecer datos de demostración» vuelve a empezar.
+
+## Qué se puede hacer
+
+| Sección | Para qué |
+|---|---|
+| **Resumen** | Ingresos del mes (comparados con los mismos días del mes anterior), ingresos recurrentes de bares, usuarios, % Pro, tareas pendientes, ingresos por mes y por tipo, últimas ventas |
+| **Ventas** | Buscar y filtrar pedidos (periodo, estado, tipo), ver detalle, **reembolsar** (revoca sus licencias Pro), exportar CSV |
+| **Envíos** | Kits por estado: pendiente → grabando → probado → enviado → entregado. No deja enviar sin marcar placa grabada y probada y sin nº de seguimiento |
+| **Usuarios** | Buscar, filtrar por rol y plan, dar o quitar Pro, cambiar rol, bloquear, notas internas, ver compras y licencias, exportar CSV |
+| **Bares y clubes** | Plan, mesas, estado de la suscripción y cuota (se calcula con los precios de Ajustes) |
+| **Licencias Pro** | Generar códigos (se descargan en CSV), comprobar un código (detecta errores de tecleo), asignar a un cliente, revocar, reactivar, reiniciar activaciones |
+| **Tienda y cupones** | Productos (precio, a la venta u oculto, stock de kits) y cupones (porcentaje o importe, usos máximos, caducidad) |
+| **Avisos** | Mensajes para los usuarios de la app (novedades, mantenimiento) con fechas y vista previa |
+| **Actividad** | Registro de todo lo que se cambia en el panel: quién, cuándo y qué. No se puede editar. Exportar CSV |
+| **Ajustes** | Nombre y correo de soporte, precios, IVA incluido, modo mantenimiento, plataforma de pagos, equipo, conexión con la base de datos, exportar todo |
+
+## Roles
+
+| Rol | Panel | Puede |
+|---|---|---|
+| **Administrador** | Sí | Todo |
+| **Soporte** | Sí | Usuarios, bares, envíos y licencias. **No**: reembolsos, cambiar roles, tienda, avisos ni ajustes |
+| **Dueño de bar** | No | (Su local, en la app, cuando exista el servicio online) |
+| **Jugador** | No | (Su perfil y sus compras) |
+
+En modo real los permisos los comprueba **el servidor** (`supabase/schema.sql`), no el panel: aunque alguien
+modificara la página, sin el rol adecuado la base de datos no le devuelve nada.
+
+## Cuando el servicio sea de pago: puesta en marcha
+
+1. **Base de datos**: crea un proyecto en [Supabase](https://supabase.com) (región UE, p. ej. Frankfurt).
+2. En **SQL Editor**, pega y ejecuta `supabase/schema.sql`. Crea las tablas, los roles y los permisos.
+3. **Tu cuenta**: en *Authentication → Users → Add user*, crea tu usuario. Después, en el SQL Editor:
+   `update public.profiles set role = 'admin' where email = 'tu-correo@ejemplo.com';`
+4. **Conectar el panel**: entra en el panel (modo demo) → *Ajustes → Conexión*, pega la URL del proyecto y la
+   clave **anon** (Project Settings → API) y pulsa «Conectar con la base de datos real». Entra con tu usuario de Supabase.
+5. **Activa la verificación en dos pasos** en Supabase y en GitHub.
+6. **Pagos** (siguiente bloque de trabajo): elegir plataforma (Lemon Squeezy o Paddle si no quieres gestionar el IVA
+   de cada país; Stripe si sí) y crear su *webhook* como función de Supabase. Ese webhook es el que crea los pedidos y
+   las licencias al cobrar, con la clave de **servicio** de Supabase. Esa clave y la de la plataforma de pagos
+   **nunca** van en la web ni en el repositorio: se guardan como secretos de la función.
+7. **Legal antes de cobrar**: alta de la actividad, política de privacidad (RGPD), condiciones de venta y, para los
+   kits, marcado CE, RAEE y garantía. Consúltalo con un gestor.
+
+## Notas técnicas
+
+- Código: `web/admin/src/` (React). Reglas de negocio en `logic.ts`, datos de ejemplo en `seed.ts`,
+  modo demo en `backend.ts`, conector real en `supabase.ts`. Pruebas: `tests/admin.test.ts`.
+- El conector real habla con la API REST de Supabase sin bibliotecas extra. Para modificar usa `PATCH` y solo
+  crea con `POST` si no existía (así Soporte puede actualizar envíos sin permiso de crear pedidos).
+- Importes en céntimos, fechas en milisegundos, columnas en `snake_case`. Una prueba comprueba que cada columna
+  que guarda el panel existe en `schema.sql`.
+- Los gráficos son SVG propios, de una sola serie y con alternativa en tabla. El color se ha validado sobre el fondo oscuro.

@@ -51,6 +51,13 @@ Todas las entradas llegan al mismo motor y respetan el bloqueo de 3 s.
 - **Pantalla de prueba** en la placa de 7": sale sola el primer arranque (táctil en las 4 esquinas, mando, sensores)
   y después con el botón PRUEBA.
 
+## Panel de administración
+
+En `/admin/` de la web (guía: [`docs/ADMIN.md`](docs/ADMIN.md)): resumen con gráficos, ventas y reembolsos, envíos de
+kits, usuarios y roles, bares, licencias Pro, tienda y cupones, avisos, registro de actividad y ajustes. Hoy funciona en
+**modo demostración** (datos de ejemplo en el navegador). La base de datos real está preparada en
+`supabase/schema.sql` (tablas, roles y permisos en el servidor) y **no se ha aplicado**.
+
 ## Qué incluye
 
 - **Inicio**: Rápido, Caos y Clasificatorio + TORNEO, RANKING y AJUSTES. Indicador «SISTEMA LOCAL».

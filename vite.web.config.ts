@@ -13,6 +13,10 @@ export default defineConfig({
     outDir: '../dist-web',
     emptyOutDir: true,
     chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      // Dos páginas: la web pública y el panel de administración (en /admin/, fuera del menú y sin indexar).
+      input: { web: 'web/index.html', admin: 'web/admin/index.html' },
+    },
   },
   preview: { port: 4180 },
 });
