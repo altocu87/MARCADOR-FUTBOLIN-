@@ -28,6 +28,7 @@ proporcionalmente en pequeñas, sin scroll general.
 | `P` / `L` | Gol AZUL |
 | `Espacio` | Pausa / continuar |
 | `Intro` | Saltar la cuenta atrás |
+| (Caos) botón 🃏 | Armar el comodín: el siguiente gol del equipo vale doble |
 | Consola: `marcador.enviar('GOL_AZUL', 'sensor')` | Simula un pulsador o sensor |
 
 Todas las entradas llegan al mismo motor y respetan el bloqueo de 3 s.
@@ -50,8 +51,29 @@ Todas las entradas llegan al mismo motor y respetan el bloqueo de 3 s.
 - **Reposo** tras inactividad (configurable): reloj y fecha; el toque que despierta se consume.
 - **Recuperación**: si se cierra o recarga en mitad de un partido real, al abrir se ofrece
   reanudar (en pausa) o descartar.
-- **Sonidos** sintetizados en local (Web Audio, sin archivos con licencia) y **efectos** de gol
+- **Sonidos** sintetizados en local (Web Audio, sin archivos con licencia): 4 sonidos de gol a elegir,
+  melodía de victoria por jugador y **locutor** con la voz del navegador. **Efectos** de gol
   (completos / reducidos / desactivados).
+
+### Añadidos de la versión 0.2
+
+- **Partido**: paneles de cristal con línea de luz, cuenta atrás con anillo, rótulos animados (inicio de parte,
+  prórroga, penaltis, muerte súbita), aviso de **bola de partido**, **racha 🔥 x3**, celebraciones de
+  **empate / por delante / remontada / gol doble**, cartel de **clásico** entre rivales habituales y
+  **pantalla de victoria** con confeti, fotos y títulos. Penaltis con portería de neón y foco.
+- **Reglas Caos** (propuesta): comodín x2 por equipo y goles x2 en el último minuto (con tiempo).
+- **Sorteo de equipos**: equilibrado por ELO o aleatorio. **Revancha** con cambio de lado.
+- **Pronósticos** amistosos de espectadores en el Clasificatorio (sin dinero).
+- **Goleador opcional** por gol en el resumen (automático en 1v1) → pichichi.
+- **Resumen**: celebración de subida de nivel, ascenso de categoría, logros y retos.
+- **Ranking**: temporada actual o histórico, podios en Hall of Fame, campeones de temporada, parejas,
+  resumen semanal/mensual y comparador **cara a cara**.
+- **Perfil**: tarjeta tipo cromo, gráfica de ELO, hábitos (lado, días, franjas), 54 logros por categorías,
+  títulos elegibles y melodía de victoria.
+- **Retos** diarios y semanales con XP. **Torneos**: liguilla o cuadro de 3–8 equipos (1v1 o parejas).
+- **Reposo** con líder y último resultado. Fondo animado en el inicio.
+- **Imágenes opcionales**: ver [`docs/PROMPTS_IMAGENES.md`](docs/PROMPTS_IMAGENES.md); se copian en
+  `src/assets/images/` y la app las usa automáticamente.
 
 ## Arquitectura
 
@@ -63,7 +85,8 @@ src/
   services/players/    validación y gestión de jugadores
   services/persistence/contratos de repositorio, adaptador local (localStorage) y backup
   services/statistics/ estadísticas derivadas del historial
-  services/progression/ELO, XP, niveles, logros, récords, Hall of Fame y previsión
+  services/progression/ELO, XP, niveles, logros, retos, temporadas, récords, Hall of Fame y previsión
+  services/tournaments/liguilla y cuadro eliminatorio
   services/sound/      audio sintetizado
   ui/                  layout (lienzo 800×480), componentes y pantallas
   styles/              CSS por áreas

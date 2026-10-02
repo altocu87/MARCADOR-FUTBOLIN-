@@ -7,7 +7,7 @@ import { useMemo, type CSSProperties } from 'react';
 import type { Team } from '../../match-engine';
 import type { EffectsLevel } from '../../services/persistence';
 
-export function GoalEffect({ team, level, seed }: { team: Team; level: EffectsLevel; seed: string }) {
+export function GoalEffect({ team, level, seed, label }: { team: Team; level: EffectsLevel; seed: string; label?: string | null }) {
   const particles = useMemo(() => {
     let x = 0;
     for (const ch of seed) x = (x * 31 + ch.charCodeAt(0)) % 9973;
@@ -57,6 +57,7 @@ export function GoalEffect({ team, level, seed }: { team: Team; level: EffectsLe
       <div className="fx-text" style={{ color: team === 'white' ? '#176DBC' : '#FFFFFF' }}>
         ¡GOL!
       </div>
+      {label && <div className="fx-moment">{label}</div>}
     </div>
   );
 }

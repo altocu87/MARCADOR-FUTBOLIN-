@@ -11,19 +11,21 @@ import {
   previewImport,
   type BackupFile,
   type EffectsLevel,
+  type GoalSoundId,
   type ImportPreview,
   type Player,
   type Preferences,
 } from '../../services/persistence';
 import { setPlayerActive, sortPlayers } from '../../services/players';
 import { PROGRESSION_RULES_VERSION } from '../../services/progression';
-import { sound } from '../../services/sound/sound';
+import { GOAL_SOUNDS, sound } from '../../services/sound/sound';
+import { voice } from '../../services/sound/voice';
 import { STATS_DEFINITIONS_VERSION } from '../../services/statistics';
 import { Avatar, Modal, ScreenFrame, Stepper, Tabs, Toggle } from '../components/common';
 import { downloadJson } from '../components/download';
 import { PlayerEditor } from '../components/PlayerEditor';
 
-export const APP_VERSION = '0.1.0';
+export const APP_VERSION = '0.2.0';
 
 export function SettingsScreen({ tab: initialTab }: { tab?: SettingsTab }) {
   const { navigate } = useApp();
@@ -124,6 +126,38 @@ function General() {
         </div>
       </div>
       <div className="card">
+        <div className="label">Reglas Caos por defecto (propuesta caos-1)</div>
+        <Toggle
+          checked={prefs.chaosRules.jokers}
+          onChange={(v) => update({ chaosRules: { ...prefs.chaosRules, jokers: v } })}
+          label="Comodín x2"
+          description="Un uso por equipo y partido."
+        />
+        <Toggle
+          checked={prefs.chaosRules.doubleLastMinute}
+          onChange={(v) => update({ chaosRules: { ...prefs.chaosRules, doubleLastMinute: v } })}
+          label="Último minuto x2"
+          description="Solo en partidos con tiempo."
+        />
+      </div>
+      <div className="card">
+        <div className="label">Temporadas y retos</div>
+        <div className="segmented" style={{ margin: '6px 0' }}>
+          <button className="seg seg-compact" aria-pressed={prefs.seasonLength === 'month'} onClick={() => update({ seasonLength: 'month' })}>
+            MENSUAL
+          </button>
+          <button className="seg seg-compact" aria-pressed={prefs.seasonLength === 'quarter'} onClick={() => update({ seasonLength: 'quarter' })}>
+            TRIMESTRAL
+          </button>
+        </div>
+        <Toggle
+          checked={prefs.challenges}
+          onChange={(v) => update({ challenges: v })}
+          label="Retos diarios y semanales"
+          description="Conceden XP extra (recalculado desde el historial)."
+        />
+      </div>
+      <div className="card">
         <div className="label">Reposo tras inactividad</div>
         <Stepper
           label="minutos de reposo"
@@ -212,13 +246,37 @@ function Audio() {
           aria-label="Volumen"
         />
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <button className="btn btn-sm" onClick={() => { sound.unlock(); sound.play('goal'); }}>Probar gol</button>
           <button className="btn btn-sm" onClick={() => { sound.unlock(); sound.play('periodEnd'); }}>Final parte</button>
           <button className="btn btn-sm" onClick={() => { sound.unlock(); sound.play('matchEnd'); }}>Final partido</button>
         </div>
       </div>
       <div className="card">
-        <div className="label">Efectos visuales de gol</div>
+        <div className="label">Sonido de gol</div>
+        <div className="chip-wrap" style={{ margin: '6px 0 10px' }}>
+          {(Object.keys(GOAL_SOUNDS) as GoalSoundId[]).map((id) => (
+            <button
+              key={id}
+              className={`pick-chip ${prefs.goalSound === id ? 'pick-blue' : ''}`}
+              onClick={() => {
+                sound.unlock();
+                sound.playGoalVariant(id);
+                void update({ goalSound: id });
+              }}
+            >
+              ♪ {GOAL_SOUNDS[id].label}
+            </button>
+          ))}
+        </div>
+        <Toggle
+          checked={prefs.voice}
+          onChange={(v) => update({ voice: v })}
+          label="Locutor"
+          description={voice.available ? 'Voz del navegador: goles, bola de partido, finales.' : 'Este navegador no tiene síntesis de voz.'}
+        />
+        <button className="btn btn-sm" style={{ marginTop: 6 }} onClick={() => voice.test('¡Gol del equipo blanco! Dos a uno.')}>
+          Probar locutor
+        </button>
+        <div className="label" style={{ marginTop: 10 }}>Efectos visuales de gol</div>
         <div className="segmented" style={{ marginTop: 6 }}>
           {levels.map((l) => (
             <button key={l.id} className="seg" aria-pressed={prefs.effects === l.id} onClick={() => update({ effects: l.id })}>
@@ -427,8 +485,10 @@ function SystemTab() {
 }
 
 const PENDING = [
-  ['Caos', 'Reglas especiales y relación con progresión.'],
-  ['Torneos', 'Formato, participantes, desempates y premios.'],
+  ['Caos', 'Implementada propuesta caos-1 (comodín x2, último minuto x2). Pendiente de aprobación.'],
+  ['Torneos', 'Implementada propuesta torneos-1 (liguilla y cuadro 3–8 equipos). Pendiente de aprobación.'],
+  ['Goleador', 'Asignación opcional tras el partido (1v1 automática). El documento original no lo registraba.'],
+  ['Retos y temporadas', 'Propuestas retos-1 y temporadas mensuales/trimestrales. Pendientes de aprobación.'],
   ['Correcciones', 'Operaciones permitidas al finalizar parte/partido y corrección de penaltis.'],
   ['Penaltis', 'Equipo que inicia (propuesta: Blanco configurable) y política de corrección.'],
   ['XP y niveles', 'Acumulación, fórmula de nivel, redondeos y tope.'],

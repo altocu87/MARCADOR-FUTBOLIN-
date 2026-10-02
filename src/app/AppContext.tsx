@@ -11,9 +11,11 @@ import {
   type Preferences,
   type Repositories,
   type StoredMatch,
+  type Tournament,
 } from '../services/persistence';
 import { computeProgression, type ProgressionSnapshot } from '../services/progression';
 import { sound } from '../services/sound/sound';
+import { voice } from '../services/sound/voice';
 import type { Route } from './routes';
 
 interface AppContextValue {
@@ -22,11 +24,14 @@ interface AppContextValue {
   loaded: boolean;
   players: Player[];
   matches: StoredMatch[];
+  tournaments: Tournament[];
   prefs: Preferences;
   /** null cuando la progresión está desactivada («Clasificación pendiente»). */
   progression: ProgressionSnapshot | null;
   refresh(): Promise<void>;
   savePlayer(player: Player): Promise<void>;
+  saveMatch(match: StoredMatch): Promise<void>;
+  saveTournament(tournament: Tournament): Promise<void>;
   savePrefs(prefs: Preferences): Promise<void>;
   route: Route;
   navigate(route: Route): void;
@@ -51,14 +56,21 @@ export function AppProvider({ children, repos: injected }: { children: ReactNode
   const [loaded, setLoaded] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<StoredMatch[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFERENCES);
   const [route, setRoute] = useState<Route>({ name: 'home' });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const [p, m, pr] = await Promise.all([repos.players.list(), repos.matches.list(), repos.preferences.load()]);
+    const [p, m, pr, t] = await Promise.all([
+      repos.players.list(),
+      repos.matches.list(),
+      repos.preferences.load(),
+      repos.tournaments.list(),
+    ]);
     setPlayers(p);
     setMatches(m);
+    setTournaments(t);
     setPrefs(pr);
     setLoaded(true);
   }, [repos]);
@@ -68,13 +80,30 @@ export function AppProvider({ children, repos: injected }: { children: ReactNode
   }, [refresh]);
 
   useEffect(() => {
-    sound.configure(prefs.volume, prefs.muted);
-  }, [prefs.volume, prefs.muted]);
+    sound.configure(prefs.volume, prefs.muted, prefs.goalSound);
+    voice.configure(prefs.voice && !prefs.muted);
+  }, [prefs.volume, prefs.muted, prefs.goalSound, prefs.voice]);
 
   const savePlayer = useCallback(
     async (player: Player) => {
       await repos.players.save(player);
       setPlayers(await repos.players.list());
+    },
+    [repos],
+  );
+
+  const saveMatch = useCallback(
+    async (match: StoredMatch) => {
+      await repos.matches.save(match);
+      setMatches(await repos.matches.list());
+    },
+    [repos],
+  );
+
+  const saveTournament = useCallback(
+    async (t: Tournament) => {
+      await repos.tournaments.save(t);
+      setTournaments(await repos.tournaments.list());
     },
     [repos],
   );
@@ -94,9 +123,10 @@ export function AppProvider({ children, repos: injected }: { children: ReactNode
             players.map((p) => p.id),
             matches,
             prefs.progression,
+            { tournaments, challenges: prefs.challenges },
           )
         : null,
-    [players, matches, prefs.progression],
+    [players, matches, tournaments, prefs.progression, prefs.challenges],
   );
 
   const toast = useCallback((message: string) => {
@@ -112,10 +142,13 @@ export function AppProvider({ children, repos: injected }: { children: ReactNode
     loaded,
     players,
     matches,
+    tournaments,
     prefs,
     progression,
     refresh,
     savePlayer,
+    saveMatch,
+    saveTournament,
     savePrefs,
     route,
     navigate,

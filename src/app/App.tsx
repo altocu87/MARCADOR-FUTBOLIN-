@@ -11,7 +11,9 @@ import { RankingScreen } from '../ui/screens/RankingScreen';
 import { SelectPlayersScreen } from '../ui/screens/SelectPlayersScreen';
 import { SettingsScreen } from '../ui/screens/SettingsScreen';
 import { SetupScreen } from '../ui/screens/SetupScreen';
-import { MatchDetailScreen, TournamentScreen } from '../ui/screens/SimpleScreens';
+import { ChallengesScreen } from '../ui/screens/ChallengesScreen';
+import { MatchDetailScreen } from '../ui/screens/SimpleScreens';
+import { TournamentDetailScreen, TournamentListScreen, TournamentNewScreen } from '../ui/screens/TournamentScreens';
 import { SummaryScreen } from '../ui/screens/SummaryScreen';
 import { AppProvider, useApp } from './AppContext';
 
@@ -50,13 +52,13 @@ function Router() {
       screen = <SelectPlayersScreen config={route.config} initial={route.participants} />;
       break;
     case 'prematch':
-      screen = <PrematchScreen config={route.config} participants={route.participants} />;
+      screen = <PrematchScreen config={route.config} participants={route.participants} extras={route.extras} />;
       break;
     case 'match':
-      screen = <MatchScreen key={routeKey(route)} config={route.config} participants={route.participants} resume={route.resume} />;
+      screen = <MatchScreen key={routeKey(route)} config={route.config} participants={route.participants} resume={route.resume} extras={route.extras} />;
       break;
     case 'summary':
-      screen = <SummaryScreen match={route.match} save={route.save} live={route.live} />;
+      screen = <SummaryScreen match={route.match} save={route.save} live={route.live} extras={route.extras} />;
       break;
     case 'ranking':
       screen = <RankingScreen tab={route.tab} />;
@@ -68,7 +70,16 @@ function Router() {
       screen = <ProfileScreen key={route.playerId} playerId={route.playerId} />;
       break;
     case 'tournament':
-      screen = <TournamentScreen />;
+      screen = <TournamentListScreen />;
+      break;
+    case 'tournamentNew':
+      screen = <TournamentNewScreen />;
+      break;
+    case 'tournamentDetail':
+      screen = <TournamentDetailScreen key={route.id} id={route.id} />;
+      break;
+    case 'challenges':
+      screen = <ChallengesScreen />;
       break;
     case 'settings':
       screen = <SettingsScreen tab={route.tab} />;

@@ -64,10 +64,29 @@ Todo lo derivado (estadísticas, ELO, XP, niveles, logros, récords) se **recalc
 historial** con reglas versionadas (`progresion-propuesta-1`, `estadisticas-1`): no existen totales
 guardados sin origen y reprocesar no duplica premios.
 
+## Propuestas añadidas en la versión 0.2 (a petición del propietario, pendientes de aprobación final)
+
+- **Caos «caos-1»**: comodín por equipo y partido (armar/desarmar; el siguiente gol vale +1) y goles del
+  último minuto x2 en partidos con límite de tiempo (no en prórroga). Se acumulan (máx. x3). El valor del gol
+  cuenta para el objetivo de goles de la parte. −1 y Deshacer anulan/restauran el gol con su valor.
+  Deshacer un gol de comodín **no** devuelve el comodín.
+- **Goleador opcional**: se asigna en el resumen o en el detalle del historial; en 1v1 es automático.
+  No modifica resultado, ELO ni XP del partido; solo estadísticas personales y logros de goleador.
+- **Pronósticos de espectadores** (Clasificatorio): solo jugadores que no juegan; cuentan aciertos y dan
+  logros «Ojo clínico» y «Vidente».
+- **Retos «retos-1»**: 1 diario (+40 XP) y 3 semanales (+100 XP), elegidos de forma determinista por fecha
+  (semana ISO). Se conceden una vez por jugador y reto, al completar el partido que los cumple.
+- **Temporadas**: mensuales (o trimestrales). El ranking de temporada recalcula el ELO desde 1200 solo con
+  sus clasificatorios; el campeón de cada temporada terminada pasa al Hall of Fame.
+- **Torneos «torneos-1»**: liguilla a una vuelta (3–8 equipos, victoria 3 puntos; desempate diferencia de
+  goles → goles a favor → enfrentamiento directo → nombre) o cuadro eliminatorio 3–8 con pases directos y
+  siembra por ELO o sorteo. Parejas automáticas equilibradas (mejor ELO con peor). Si «cuenta para ELO», los
+  partidos son Clasificatorio. Ganar el torneo da +300 XP una vez. Cancelar conserva los partidos jugados.
+- **Logros**: 54 (10 secretos) con títulos elegibles. **Sorteo de equipos**: el reparto con menor diferencia
+  de ELO medio. **Avisos**: bola de partido = el siguiente gol daría la victoria (2ª parte con goles, o prórroga).
+
 ## Pendiente de decisión del propietario (no inventado)
 
-- **Caos**: usa el motor normal; reglas especiales pendientes (indicado en la interfaz).
-- **Torneos**: pantalla informativa «Pendiente de definición».
 - Correcciones tras finalizar parte o partido, política de edición de historial.
 - Umbrales finales, histéresis, desempates de ranking y muestras mínimas.
 - Hardware ESP32-S3/C3, sensores, Wi-Fi, OTA, administración por red.

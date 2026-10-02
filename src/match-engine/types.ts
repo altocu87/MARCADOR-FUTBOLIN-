@@ -41,7 +41,20 @@ export interface MatchConfig {
   penaltyFirstTeam: Team;
   /** Partido de prueba: no guarda historial ni progresión. Se fija al empezar. */
   testMode: boolean;
+  /** Reglas especiales de Partido Caos (propuesta «caos-1»). Solo se aplican en modo 'chaos'. */
+  chaos?: ChaosRules;
 }
+
+export interface ChaosRules {
+  /** Los goles en el último minuto de una parte con límite de tiempo valen doble. */
+  doubleLastMinute: boolean;
+  /** Cada equipo tiene un comodín por partido: su siguiente gol vale doble. */
+  jokers: boolean;
+}
+
+export const CHAOS_LAST_MINUTE_MS = 60_000;
+
+export type JokerState = 'available' | 'armed' | 'used';
 
 export interface ParticipantRef {
   playerId: string;
@@ -63,7 +76,8 @@ export type EngineCommand =
   | { type: 'RESUME' }
   | { type: 'CONTINUE' } // desde final de periodo: siguiente fase
   | { type: 'PENALTY'; team: Team; scored: boolean; source?: InputSource }
-  | { type: 'UNDO_PENALTY' };
+  | { type: 'UNDO_PENALTY' }
+  | { type: 'TOGGLE_JOKER'; team: Team };
 
 export type EventType =
   | 'MATCH_START'
@@ -78,6 +92,7 @@ export type EventType =
   | 'SHOOTOUT_START'
   | 'PENALTY'
   | 'PENALTY_UNDO'
+  | 'JOKER'
   | 'MATCH_END';
 
 export interface Score {
@@ -105,6 +120,10 @@ export interface MatchEvent {
   refEventId?: string;
   /** Para PENALTY. */
   scored?: boolean;
+  /** Valor del gol (1 normal; 2 o 3 con reglas Caos). */
+  value?: number;
+  /** Motivos del valor extra del gol. */
+  bonus?: ('joker' | 'last_minute')[];
   source?: InputSource;
   reason?: string;
 }
@@ -165,6 +184,8 @@ export interface MatchState {
   penalties: PenaltyKick[];
   /** Pila de acciones corregibles del periodo actual (ids de evento). */
   undoStack: string[];
+  /** Comodines Caos por equipo. */
+  jokers?: Record<Team, JokerState>;
   result?: MatchResult;
   seq: number;
 }
@@ -175,7 +196,8 @@ export type RejectReason =
   | 'no_goal_to_remove'
   | 'nothing_to_undo'
   | 'wrong_turn'
-  | 'shootout_decided';
+  | 'shootout_decided'
+  | 'rule_disabled';
 
 export interface CommandOutcome {
   state: MatchState;

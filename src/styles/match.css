@@ -561,3 +561,385 @@
 .goal-fx.reduced .fx-text {
   text-shadow: none;
 }
+
+/* ---------- Paneles de cristal y avisos ---------- */
+.score-btn {
+  isolation: isolate;
+}
+.score-btn::after {
+  /* Línea de luz que recorre el borde */
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  padding: 2px;
+  background: conic-gradient(from var(--sweep, 0deg), transparent 0 70%, rgba(98, 214, 255, 0.9) 82%, transparent 92%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: sweep 5s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+@property --sweep {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes sweep {
+  to {
+    --sweep: 360deg;
+  }
+}
+.score-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.28) 45%, transparent 60%);
+  background-size: 250% 100%;
+  animation: sheen 6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes sheen {
+  0%,
+  60% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+.score-btn.match-point {
+  box-shadow: 0 0 0 3px var(--danger), 0 0 32px rgba(255, 90, 110, 0.55);
+  animation: mp-pulse 1.1s ease-in-out infinite;
+}
+@keyframes mp-pulse {
+  50% {
+    box-shadow: 0 0 0 3px var(--danger), 0 0 12px rgba(255, 90, 110, 0.25);
+  }
+}
+.match-point-badge {
+  animation: mp-pulse 1.1s ease-in-out infinite;
+}
+.score-btn.joker-armed {
+  box-shadow: 0 0 0 3px var(--chaos), 0 0 34px rgba(214, 92, 255, 0.6);
+}
+.streak-badge,
+.joker-tag {
+  position: absolute;
+  top: 38px;
+  z-index: 3;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 120, 40, 0.95);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(255, 120, 40, 0.7);
+  animation: pop-in 0.3s ease-out;
+}
+.joker-tag {
+  top: auto;
+  bottom: 26px;
+  background: var(--chaos);
+  box-shadow: 0 0 14px rgba(214, 92, 255, 0.8);
+}
+@keyframes pop-in {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+.score-num {
+  position: relative;
+  z-index: 3;
+}
+.score-team {
+  z-index: 3;
+}
+.joker-btn {
+  height: 48px;
+  min-width: 56px;
+  flex: none;
+  border-radius: 12px;
+  border: 1px solid var(--chaos);
+  background: var(--chaos-soft);
+  color: #f3d6ff;
+  font-weight: 900;
+  font-size: 16px;
+  cursor: pointer;
+}
+.joker-btn.armed {
+  background: var(--chaos);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(214, 92, 255, 0.7);
+}
+.joker-btn:disabled {
+  opacity: 0.3;
+}
+
+/* ---------- Cuenta atrás con anillo ---------- */
+.countdown-stack {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 250px;
+  height: 250px;
+}
+.countdown-stack > * {
+  grid-area: 1 / 1;
+}
+.countdown-ring circle:last-child {
+  filter: drop-shadow(0 0 10px rgba(98, 214, 255, 0.8));
+}
+.rivalry {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: var(--ranked);
+  padding: 6px 14px;
+  border: 1px solid var(--ranked);
+  border-radius: 999px;
+  background: var(--ranked-soft);
+}
+
+/* ---------- Rótulos animados ---------- */
+.banner {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.banner-strip {
+  width: 120%;
+  padding: 14px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: skewY(-4deg);
+  background: linear-gradient(90deg, transparent, rgba(7, 11, 18, 0.92) 15%, rgba(7, 11, 18, 0.92) 85%, transparent);
+  border-top: 2px solid var(--bc);
+  border-bottom: 2px solid var(--bc);
+  box-shadow: 0 0 40px var(--bg-glow);
+  animation: banner-in 1.6s cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+.banner-accent {
+  --bc: var(--accent);
+  --bg-glow: rgba(98, 214, 255, 0.35);
+}
+.banner-gold {
+  --bc: var(--ranked);
+  --bg-glow: rgba(242, 201, 76, 0.35);
+}
+.banner-danger {
+  --bc: var(--danger);
+  --bg-glow: rgba(255, 90, 110, 0.4);
+}
+.banner-chaos {
+  --bc: var(--chaos);
+  --bg-glow: rgba(214, 92, 255, 0.45);
+}
+.banner-text {
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: var(--text);
+  text-shadow: 0 0 22px var(--bc);
+  font-style: italic;
+}
+.banner-sub {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--bc);
+}
+@keyframes banner-in {
+  0% {
+    transform: skewY(-4deg) translateX(-110%);
+    opacity: 0;
+  }
+  18% {
+    transform: skewY(-4deg) translateX(0);
+    opacity: 1;
+  }
+  80% {
+    transform: skewY(-4deg) translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: skewY(-4deg) translateX(110%);
+    opacity: 0;
+  }
+}
+
+/* ---------- Texto de momento del gol ---------- */
+.fx-moment {
+  position: absolute;
+  bottom: 22%;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--ranked);
+  text-shadow: 0 0 16px rgba(242, 201, 76, 0.8);
+  animation: fx-text 1.6s ease-out forwards;
+  opacity: 0;
+}
+
+/* ---------- Victoria ---------- */
+.overlay-victory {
+  background: radial-gradient(ellipse at center, rgba(15, 40, 70, 0.95), rgba(4, 8, 15, 0.97) 70%);
+  overflow: hidden;
+  gap: 8px;
+}
+.victory-rays {
+  position: absolute;
+  inset: -50%;
+  background: repeating-conic-gradient(from 0deg, rgba(98, 214, 255, 0.07) 0 10deg, transparent 10deg 20deg);
+  animation: rays 24s linear infinite;
+  pointer-events: none;
+}
+.victory-white .victory-rays {
+  background: repeating-conic-gradient(from 0deg, rgba(238, 246, 255, 0.07) 0 10deg, transparent 10deg 20deg);
+}
+@keyframes rays {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.victory-kicker {
+  position: relative;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--text-2);
+}
+.victory-title {
+  position: relative;
+  font-size: 62px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  animation: victory-pop 0.7s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.victory-white .victory-title {
+  color: var(--white-team);
+  text-shadow: 0 0 26px rgba(238, 246, 255, 0.7);
+}
+.victory-blue .victory-title {
+  color: #6fb6f5;
+  text-shadow: 0 0 26px rgba(23, 109, 188, 0.9);
+}
+@keyframes victory-pop {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+.victory-score {
+  position: relative;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ranked);
+}
+.victory-people {
+  position: relative;
+  display: flex;
+  gap: 30px;
+  margin: 6px 0;
+}
+.victory-person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: pop-in 0.5s 0.3s both;
+}
+.victory-person .avatar {
+  border: 3px solid var(--ranked);
+  box-shadow: 0 0 24px rgba(242, 201, 76, 0.6);
+}
+.player-title {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ranked);
+}
+.overlay-victory .overlay-cta {
+  position: relative;
+}
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+.confetti span {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation-name: confetti-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: 2;
+}
+@keyframes confetti-fall {
+  from {
+    transform: translate(0, 0) rotate(var(--rot));
+  }
+  to {
+    transform: translate(var(--drift), 520px) rotate(calc(var(--rot) + 720deg));
+  }
+}
+
+/* ---------- Portería de neón y foco ---------- */
+.neon-goal {
+  width: 170px;
+  filter: drop-shadow(0 0 6px rgba(98, 214, 255, 0.6));
+}
+.neon-goal .ball {
+  filter: drop-shadow(0 0 6px #fff);
+}
+.neon-goal .ball.goal {
+  animation: ball-goal 0.7s ease-out forwards;
+}
+.neon-goal .ball.miss {
+  animation: ball-miss 0.8s ease-out forwards;
+}
+@keyframes ball-goal {
+  to {
+    transform: translate(18px, -60px);
+  }
+}
+@keyframes ball-miss {
+  60% {
+    transform: translate(95px, -98px);
+  }
+  100% {
+    transform: translate(120px, -40px);
+    opacity: 0.3;
+  }
+}
+.pen-col {
+  position: relative;
+  overflow: hidden;
+}
+.spotlight {
+  position: absolute;
+  inset: -20% -10% auto;
+  height: 80%;
+  background: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.18), transparent 70%);
+  pointer-events: none;
+  animation: spot 2.4s ease-in-out infinite;
+}
+@keyframes spot {
+  50% {
+    opacity: 0.55;
+  }
+}
+.pen-center {
+  padding-top: 4px;
+}

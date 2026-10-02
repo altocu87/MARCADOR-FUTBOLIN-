@@ -23,6 +23,11 @@ export const DEFAULT_PREFERENCES: Preferences = {
   defaultMinutesPerPeriod: 5,
   penaltyFirstTeam: 'white',
   progression: DEFAULT_PROGRESSION,
+  voice: false,
+  goalSound: 'arcade',
+  chaosRules: { doubleLastMinute: true, jokers: true },
+  seasonLength: 'month',
+  challenges: true,
 };
 
 /** Completa preferencias guardadas con valores por defecto (migración suave). */
@@ -35,5 +40,6 @@ export function normalizePreferences(raw: unknown): Preferences {
     ...r,
     formatVersion: STORAGE_FORMAT_VERSION,
     progression: { ...base.progression, ...(r.progression ?? {}) },
+    chaosRules: { ...base.chaosRules, ...(r.chaosRules ?? {}) },
   };
 }

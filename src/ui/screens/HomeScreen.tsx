@@ -4,6 +4,7 @@ import { restoreSnapshot } from '../../app/recovery';
 import { getScore, type MatchMode } from '../../match-engine';
 import type { ActiveMatchSnapshot } from '../../services/persistence';
 import { sound } from '../../services/sound/sound';
+import { AssetImage } from '../components/assets';
 import { MODE_LABEL, Modal, formatDate } from '../components/common';
 
 const MODES: { mode: MatchMode; title: string; text: string; tag: string }[] = [
@@ -35,7 +36,7 @@ export function HomeScreen() {
   const resume = () => {
     if (!snapshot) return;
     const state = restoreSnapshot(snapshot, Date.now());
-    navigate({ name: 'match', config: state.config, participants: state.participants, resume: state });
+    navigate({ name: 'match', config: state.config, participants: state.participants, resume: state, extras: snapshot.extras });
   };
 
   const discard = async () => {
@@ -45,9 +46,12 @@ export function HomeScreen() {
 
   return (
     <section className="screen home">
+      <div className="home-bg" aria-hidden="true">
+        <AssetImage name="fondo-inicio" className="home-bg-img" fallback={<div className="tron-grid" />} />
+      </div>
       <header className="home-top">
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true" />
+          <AssetImage name="logo" alt="" className="brand-logo" fallback={<span className="brand-mark" aria-hidden="true" />} />
           <div>
             <div className="brand-name">MARCADOR FUTBOLÍN <span>V3</span></div>
             <div className="brand-sub">Marcador inteligente de mesa</div>
@@ -68,9 +72,15 @@ export function HomeScreen() {
       <div className="mode-cards">
         {MODES.map((m) => (
           <button key={m.mode} className={`mode-card mode-${m.mode}`} onClick={() => start(m.mode)}>
-            <span className="mode-icon" aria-hidden="true">
-              {m.mode === 'quick' ? '⚡' : m.mode === 'chaos' ? '✦' : '♛'}
-            </span>
+            <AssetImage
+              name={`modo-${m.mode === 'quick' ? 'rapido' : m.mode === 'chaos' ? 'caos' : 'clasificatorio'}`}
+              className="mode-art"
+              fallback={
+                <span className="mode-icon" aria-hidden="true">
+                  {m.mode === 'quick' ? '⚡' : m.mode === 'chaos' ? '✦' : '♛'}
+                </span>
+              }
+            />
             <span className="mode-title">{m.title}</span>
             <span className="mode-text">{m.text}</span>
             <span className="mode-tag">{m.tag}</span>
@@ -84,6 +94,9 @@ export function HomeScreen() {
         </button>
         <button className="menu-btn" onClick={() => navigate({ name: 'ranking' })}>
           <span aria-hidden="true">📊</span> RANKING
+        </button>
+        <button className="menu-btn" onClick={() => navigate({ name: 'challenges' })}>
+          <span aria-hidden="true">🎯</span> RETOS
         </button>
         <button className="menu-btn" onClick={() => navigate({ name: 'settings' })}>
           <span aria-hidden="true">⚙</span> AJUSTES

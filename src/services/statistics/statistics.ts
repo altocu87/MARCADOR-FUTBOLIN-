@@ -10,7 +10,7 @@
  *   el campo existe por si una regla futura lo permite.
  * - Remontada: máxima desventaja en el marcador ordinario superada por el ganador.
  */
-import { validGoalsFromEvents, type MatchMode, type Team } from '../../match-engine';
+import { goalValue, validGoalsFromEvents, type MatchMode, type Team } from '../../match-engine';
 import type { StoredMatch } from '../persistence';
 
 export const STATS_DEFINITIONS_VERSION = 'estadisticas-1';
@@ -181,7 +181,7 @@ export function comebackSize(match: StoredMatch): number {
   let maxDeficit = 0;
   for (const g of validGoalsFromEvents(match.events)) {
     if (!g.team) continue;
-    score[g.team] += 1;
+    score[g.team] += goalValue(g);
     maxDeficit = Math.max(maxDeficit, score[loser] - score[winner]);
   }
   return maxDeficit;

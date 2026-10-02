@@ -7,8 +7,8 @@
 import { COUNTDOWN_MS, advance, periodElapsed, type MatchState } from '../match-engine';
 import { STORAGE_FORMAT_VERSION, type ActiveMatchSnapshot } from '../services/persistence';
 
-export function makeSnapshot(state: MatchState, now: number): ActiveMatchSnapshot {
-  return { formatVersion: STORAGE_FORMAT_VERSION, savedAt: now, state };
+export function makeSnapshot(state: MatchState, now: number, extras?: ActiveMatchSnapshot['extras']): ActiveMatchSnapshot {
+  return { formatVersion: STORAGE_FORMAT_VERSION, savedAt: now, state, ...(extras ? { extras } : {}) };
 }
 
 export function restoreSnapshot(snapshot: ActiveMatchSnapshot, now: number): MatchState {

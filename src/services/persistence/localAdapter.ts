@@ -12,6 +12,7 @@ import {
   type Preferences,
   type Repositories,
   type StoredMatch,
+  type Tournament,
 } from './types';
 
 export interface KeyValueStore {
@@ -33,6 +34,7 @@ export const KEYS = {
   matches: `${PREFIX}matches`,
   preferences: `${PREFIX}preferences`,
   activeMatch: `${PREFIX}activeMatch`,
+  tournaments: `${PREFIX}tournaments`,
 } as const;
 
 export function createMemoryStore(): KeyValueStore & { data: Map<string, string> } {
@@ -82,6 +84,17 @@ export function createLocalRepositories(store: KeyValueStore): Repositories {
       },
       async saveAll(players) {
         write(store, KEYS.players, players);
+      },
+    },
+    tournaments: {
+      async list() {
+        return read<Tournament[]>(store, KEYS.tournaments, []);
+      },
+      async save(t) {
+        write(store, KEYS.tournaments, upsert(read<Tournament[]>(store, KEYS.tournaments, []), t));
+      },
+      async saveAll(list) {
+        write(store, KEYS.tournaments, list);
       },
     },
     matches: {

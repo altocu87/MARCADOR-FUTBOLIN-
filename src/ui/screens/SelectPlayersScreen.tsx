@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import { validateParticipants, type MatchConfig, type ParticipantRef, type Team } from '../../match-engine';
 import type { Player } from '../../services/persistence';
-import { sortPlayers } from '../../services/players';
+import { balancedTeams, randomTeams, sortPlayers } from '../../services/players';
+import { displayTitle } from '../../services/progression';
 import { Avatar, MODE_LABEL, ScreenFrame, TestModeBadge } from '../components/common';
 import { PlayerEditor } from '../components/PlayerEditor';
 
@@ -70,6 +71,16 @@ export function SelectPlayersScreen({ config, initial }: { config: MatchConfig; 
           ? 'Selección incompleta: faltan jugadores para 2 contra 2 o sobra uno para 1 contra 1.'
           : 'Selección incompleta: cada equipo necesita el mismo número de jugadores.';
 
+  // Sorteo de equipos con los 4 jugadores elegidos (en cualquier plaza).
+  const chosen = ORDER.map((k) => slots[k]).filter(Boolean) as string[];
+  const applySplit = (kind: 'balanced' | 'random') => {
+    const split =
+      kind === 'balanced'
+        ? balancedTeams(chosen, (id) => progression?.players.get(id)?.elo ?? 1200)
+        : randomTeams(chosen);
+    setSlots({ white1: split.white[0], white2: split.white[1], blue1: split.blue[0], blue2: split.blue[1] });
+  };
+
   const go = () => {
     if (!valid) return;
     if (config.mode === 'ranked') navigate({ name: 'prematch', config, participants });
@@ -115,6 +126,7 @@ export function SelectPlayersScreen({ config, initial }: { config: MatchConfig; 
         <span className="pcard-meta">
           {assignedTo ? SLOT_INFO[assignedTo].label : prog ? `Nv ${prog.level}${prog.rankedPlayed ? ` · ${prog.elo}` : ''}` : ' '}
         </span>
+        {displayTitle(prog, p.titleId) && <span className="pcard-title">{displayTitle(prog, p.titleId)}</span>}
       </button>
     );
   };
@@ -137,6 +149,16 @@ export function SelectPlayersScreen({ config, initial }: { config: MatchConfig; 
           <span className={`notice ${valid ? '' : count > 0 ? 'warn' : ''}`} style={{ marginRight: 'auto' }} role="status">
             {status}
           </span>
+          {chosen.length === 4 && (
+            <>
+              <button className="btn btn-sm" onClick={() => applySplit('balanced')} title="Reparte por ELO para que los equipos estén igualados">
+                ⚖ Equilibrar
+              </button>
+              <button className="btn btn-sm" onClick={() => applySplit('random')}>
+                🎲 Aleatorio
+              </button>
+            </>
+          )}
           <button className="btn btn-primary btn-lg" disabled={!valid} onClick={go}>
             Continuar
           </button>

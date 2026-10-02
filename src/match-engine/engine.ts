@@ -6,6 +6,7 @@
  * (marcas `now` en ms), nunca contando renderizados.
  */
 import {
+  CHAOS_LAST_MINUTE_MS,
   COUNTDOWN_MS,
   ENGINE_VERSION,
   GOAL_LOCK_MS,
@@ -65,6 +66,7 @@ export function createMatch(
     periods: [],
     penalties: [],
     undoStack: [],
+    jokers: chaosActive(config, 'jokers') ? { white: 'available', blue: 'available' } : undefined,
     seq: 0,
   };
   return pushEvent(state, [], now, { type: 'MATCH_START' });
@@ -102,15 +104,21 @@ export function validGoalsFromEvents(events: MatchEvent[]): MatchEvent[] {
   return events.filter((e) => e.type === 'GOAL' && !annulled.has(e.id));
 }
 
+export const goalValue = (e: MatchEvent): number => e.value ?? 1;
+
+export function chaosActive(config: MatchConfig, rule: keyof NonNullable<MatchConfig['chaos']>): boolean {
+  return config.mode === 'chaos' && !!config.chaos?.[rule];
+}
+
 export function getScore(state: MatchState): Score {
   const score: Score = { white: 0, blue: 0 };
-  for (const g of validGoals(state)) if (g.team) score[g.team] += 1;
+  for (const g of validGoals(state)) if (g.team) score[g.team] += goalValue(g);
   return score;
 }
 
 export function getPeriodScore(state: MatchState, period: Period = state.period): Score {
   const score: Score = { white: 0, blue: 0 };
-  for (const g of validGoals(state)) if (g.team && g.period === period) score[g.team] += 1;
+  for (const g of validGoals(state)) if (g.team && g.period === period) score[g.team] += goalValue(g);
   return score;
 }
 
@@ -251,16 +259,31 @@ export function dispatch(state: MatchState, command: EngineCommand, now: number)
     case 'GOAL': {
       if (s.phase !== 'playing') return reject('invalid_state');
       if (goalLockRemaining(s, now) > 0) return reject('goal_lock');
+      // Reglas Caos: comodín armado y/o último minuto suman un punto extra cada uno.
+      const bonus: ('joker' | 'last_minute')[] = [];
+      if (s.jokers?.[command.team] === 'armed') bonus.push('joker');
+      const remaining = getClock(s, now).remainingMs;
+      if (
+        chaosActive(s.config, 'doubleLastMinute') &&
+        s.period !== 'overtime' &&
+        remaining !== null &&
+        remaining <= CHAOS_LAST_MINUTE_MS
+      ) {
+        bonus.push('last_minute');
+      }
+      const value = 1 + bonus.length;
       const score = getScore(s);
-      score[command.team] += 1;
+      score[command.team] += value;
       let next = pushEvent(s, events, now, {
         type: 'GOAL',
         team: command.team,
         source: command.source,
         scoreAfter: score,
+        ...(value > 1 ? { value, bonus } : {}),
       });
       const goalId = next.events[next.events.length - 1].id;
       next = { ...next, lastGoalAt: now, undoStack: [...next.undoStack, goalId] };
+      if (bonus.includes('joker') && next.jokers) next = { ...next, jokers: { ...next.jokers, [command.team]: 'used' } };
       return accept(checkGoalEnd(next, events, now));
     }
 
@@ -272,7 +295,7 @@ export function dispatch(state: MatchState, command: EngineCommand, now: number)
         .find((g) => g.team === command.team && g.period === s.period);
       if (!target) return reject('no_goal_to_remove');
       const score = getScore(s);
-      score[command.team] -= 1;
+      score[command.team] -= goalValue(target);
       const next = pushEvent(s, events, now, {
         type: 'CORRECTION',
         team: command.team,
@@ -290,8 +313,10 @@ export function dispatch(state: MatchState, command: EngineCommand, now: number)
       const target = s.events.find((e) => e.id === lastId);
       if (!target) return reject('nothing_to_undo');
       const score = getScore(s);
-      if (target.type === 'GOAL' && target.team) score[target.team] -= 1;
-      if (target.type === 'CORRECTION' && target.team) score[target.team] += 1;
+      const ref = target.type === 'CORRECTION' ? s.events.find((e) => e.id === target.refEventId) : target;
+      const v = ref ? goalValue(ref) : 1;
+      if (target.type === 'GOAL' && target.team) score[target.team] -= v;
+      if (target.type === 'CORRECTION' && target.team) score[target.team] += v;
       let next = pushEvent(s, events, now, {
         type: 'UNDO',
         team: target.team,
@@ -364,6 +389,17 @@ export function dispatch(state: MatchState, command: EngineCommand, now: number)
       const winner = shootoutWinner(next.penalties, next.config.penaltyRounds);
       if (winner) next = finishMatch(next, events, now, winner, 'penalties');
       return accept(next);
+    }
+
+    case 'TOGGLE_JOKER': {
+      // Propuesta Caos: armar/desarmar el comodín; se consume con el siguiente gol del equipo.
+      if (!s.jokers) return reject('rule_disabled');
+      if (s.phase !== 'playing' && s.phase !== 'paused') return reject('invalid_state');
+      const current = s.jokers[command.team];
+      if (current === 'used') return reject('invalid_state');
+      const nextJoker = current === 'available' ? 'armed' : 'available';
+      const next: MatchState = { ...s, jokers: { ...s.jokers, [command.team]: nextJoker } };
+      return accept(pushEvent(next, events, now, { type: 'JOKER', team: command.team, reason: nextJoker }));
     }
 
     case 'UNDO_PENALTY': {

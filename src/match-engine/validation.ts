@@ -40,6 +40,9 @@ export function validateConfig(config: MatchConfig): string[] {
     errors.push('Equipo inicial de penaltis no válido.');
   }
   if (typeof config.testMode !== 'boolean') errors.push('Modo prueba no válido.');
+  if (config.chaos && (typeof config.chaos.doubleLastMinute !== 'boolean' || typeof config.chaos.jokers !== 'boolean')) {
+    errors.push('Reglas Caos no válidas.');
+  }
   return errors;
 }
 

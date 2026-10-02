@@ -73,12 +73,14 @@ describe('XP y niveles', () => {
   it('victoria clasificatoria: 50 + 100 + 50 + logros únicos una sola vez', () => {
     const m1 = makeMatch({ white: ['a'], blue: ['b'], goals: 'W', at: 1 });
     const m2 = makeMatch({ white: ['a'], blue: ['b'], goals: 'W', at: 2 });
-    const prog = computeProgression(['a', 'b'], [m1, m2], DEFAULT_PROGRESSION);
+    const prog = computeProgression(['a', 'b'], [m1, m2], DEFAULT_PROGRESSION, { challenges: false });
     const e1 = prog.byMatch.get(m1.id)!.get('a')!;
     const e2 = prog.byMatch.get(m2.id)!.get('a')!;
     expect(e1.unlocked).toEqual(expect.arrayContaining(['debut', 'first_win', 'ranked_debut', 'shutout']));
     expect(e2.unlocked).not.toContain('debut');
-    expect(e2.xpGained).toBe(200); // 50 + 100 + 50, sin logros nuevos
+    const base = e2.xpBreakdown.filter((l) => !l.label.startsWith('Logro')).reduce((a, l) => a + l.xp, 0);
+    expect(base).toBe(200); // 50 + 100 + 50
+    expect(e2.unlocked.filter((id) => e1.unlocked.includes(id))).toEqual([]);
   });
 });
 

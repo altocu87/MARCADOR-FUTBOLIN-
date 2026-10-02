@@ -4,7 +4,14 @@
  * siempre a partir del historial.
  */
 import { normalizePreferences } from './defaults';
-import { STORAGE_FORMAT_VERSION, type Player, type Preferences, type Repositories, type StoredMatch } from './types';
+import {
+  STORAGE_FORMAT_VERSION,
+  type Player,
+  type Preferences,
+  type Repositories,
+  type StoredMatch,
+  type Tournament,
+} from './types';
 
 export const BACKUP_APP_ID = 'marcador-futbolin-v3';
 
@@ -14,6 +21,7 @@ export interface BackupFile {
   exportedAt: string;
   players: Player[];
   matches: StoredMatch[];
+  tournaments: Tournament[];
   preferences: Preferences;
 }
 
@@ -31,6 +39,7 @@ export async function buildBackup(repos: Repositories, now = new Date()): Promis
     exportedAt: now.toISOString(),
     players: await repos.players.list(),
     matches: await repos.matches.list(),
+    tournaments: await repos.tournaments.list(),
     preferences: await repos.preferences.load(),
   };
 }
@@ -79,6 +88,7 @@ export function parseBackup(text: string): { ok: true; backup: BackupFile } | { 
       exportedAt: String(data.exportedAt ?? ''),
       players: data.players as Player[],
       matches: data.matches as StoredMatch[],
+      tournaments: Array.isArray(data.tournaments) ? (data.tournaments as Tournament[]) : [],
       preferences: normalizePreferences(data.preferences),
     },
   };
@@ -103,6 +113,7 @@ export async function applyImport(repos: Repositories, backup: BackupFile, strat
   if (strategy === 'replace') {
     await repos.players.saveAll(backup.players);
     await repos.matches.saveAll(backup.matches);
+    await repos.tournaments.saveAll(backup.tournaments);
     await repos.preferences.save(backup.preferences);
     return;
   }
@@ -112,4 +123,7 @@ export async function applyImport(repos: Repositories, backup: BackupFile, strat
   const matches = await repos.matches.list();
   const mIds = new Set(matches.map((m) => m.id));
   await repos.matches.saveAll([...matches, ...backup.matches.filter((m) => !mIds.has(m.id))]);
+  const tournaments = await repos.tournaments.list();
+  const tIds = new Set(tournaments.map((t) => t.id));
+  await repos.tournaments.saveAll([...tournaments, ...backup.tournaments.filter((t) => !tIds.has(t.id))]);
 }

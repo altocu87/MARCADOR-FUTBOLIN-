@@ -28,6 +28,7 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
         minutesPerPeriod: prefs.defaultMinutesPerPeriod,
         penaltyFirstTeam: prefs.penaltyFirstTeam,
         testMode: prefs.testModeDefault,
+        ...(mode === 'chaos' ? { chaos: { ...prefs.chaosRules } } : {}),
       },
   );
   const set = (patch: Partial<MatchConfig>) => setConfig((c) => ({ ...c, ...patch }));
@@ -48,7 +49,15 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
       }
       footer={
         <>
-          {errors.length > 0 && <span className="notice error" style={{ marginRight: 'auto' }}>{errors[0]}</span>}
+          <div style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Toggle
+              checked={config.testMode}
+              onChange={(v) => set({ testMode: v })}
+              label="Modo prueba"
+              description={config.testMode ? 'No se guarda ni cuenta para estadísticas, XP ni ELO.' : 'Se guardará en el historial local.'}
+            />
+            {errors.length > 0 && <span className="notice error">{errors[0]}</span>}
+          </div>
           <button className="btn btn-ghost btn-lg" onClick={() => navigate({ name: 'home' })}>
             Volver
           </button>
@@ -62,9 +71,23 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
         </>
       }
     >
-      {mode === 'chaos' && (
-        <div className="notice" style={{ borderColor: 'var(--chaos)' }}>
-          Partido Caos usa el motor normal: sus reglas especiales están <strong>pendientes de definición</strong>.
+      {mode === 'chaos' && config.chaos && (
+        <div className="card chaos-rules">
+          <div className="label" style={{ color: 'var(--chaos)' }}>Reglas Caos (propuesta caos-1)</div>
+          <div style={{ display: 'flex', gap: 18 }}>
+            <Toggle
+              checked={config.chaos.jokers}
+              onChange={(v) => set({ chaos: { ...config.chaos!, jokers: v } })}
+              label="Comodín"
+              description="Un uso por equipo: su siguiente gol vale doble."
+            />
+            <Toggle
+              checked={config.chaos.doubleLastMinute}
+              onChange={(v) => set({ chaos: { ...config.chaos!, doubleLastMinute: v } })}
+              label="Último minuto x2"
+              description="Con tiempo: los goles del último minuto valen doble."
+            />
+          </div>
         </div>
       )}
       <div>
@@ -113,18 +136,6 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
         </div>
       </div>
 
-      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <Toggle
-          checked={config.testMode}
-          onChange={(v) => set({ testMode: v })}
-          label="Modo prueba"
-          description={
-            config.testMode
-              ? 'Activado: el partido muestra resumen pero NO se guarda ni cuenta para estadísticas, XP ni ELO.'
-              : 'Desactivado: el partido se guardará en el historial local.'
-          }
-        />
-      </div>
     </ScreenFrame>
   );
 }

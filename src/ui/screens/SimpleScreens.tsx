@@ -11,26 +11,3 @@ export function MatchDetailScreen({ matchId }: { matchId: string }) {
     </ScreenFrame>
   );
 }
-
-/** Torneo: pantalla informativa honesta hasta aprobar su formato. */
-export function TournamentScreen() {
-  const { navigate } = useApp();
-  return (
-    <ScreenFrame title="Torneo" onBack={() => navigate({ name: 'home' })}>
-      <div className="empty">
-        <div style={{ maxWidth: 520 }}>
-          <div style={{ fontSize: 46 }} aria-hidden="true">🏆</div>
-          <strong>Pendiente de definición</strong>
-          <p style={{ margin: '6px 0' }}>
-            El formato de torneo todavía no está aprobado. No se asume eliminación directa, liga, grupos,
-            emparejamientos automáticos ni premios.
-          </p>
-          <p className="dim" style={{ fontSize: 12, margin: 0 }}>
-            Antes de desarrollarlo hay que cerrar: participantes (individual o parejas), mínimo/máximo, formato,
-            siembra, sorteos, desempates, ausencias, duración, reglas de cada partido y relación con XP/ELO.
-          </p>
-        </div>
-      </div>
-    </ScreenFrame>
-  );
-}

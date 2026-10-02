@@ -2,13 +2,28 @@
  * Reposo: tras inactividad fuera de una partida activa muestra fondo casi negro,
  * reloj y fecha. El toque que despierta se consume y no activa lo que hay debajo.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useApp } from '../../app/AppContext';
+import { sortMatches } from '../../services/statistics';
 import { SevenSegment } from './SevenSegment';
 
 export function SleepOverlay({ minutes, enabled }: { minutes: number; enabled: boolean }) {
   const [asleep, setAsleep] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const lastActivity = useRef(Date.now());
+  const { players, matches, progression } = useApp();
+  const info = useMemo(() => {
+    const leader = [...(progression?.players.values() ?? [])]
+      .filter((p) => p.rankedPlayed > 0)
+      .sort((a, b) => b.elo - a.elo)[0];
+    const last = sortMatches(matches).pop();
+    const names = (t: 'white' | 'blue') =>
+      last?.participants.filter((p) => p.team === t).map((p) => p.nameSnapshot).join(' + ');
+    return {
+      leader: leader ? `${players.find((p) => p.id === leader.playerId)?.name ?? '?'} · ${leader.elo}` : null,
+      last: last ? `${names('white')} ${last.result.score.white}–${last.result.score.blue} ${names('blue')}` : null,
+    };
+  }, [players, matches, progression]);
 
   useEffect(() => {
     const mark = () => {
@@ -68,6 +83,20 @@ export function SleepOverlay({ minutes, enabled }: { minutes: number; enabled: b
       <div className="sleep-date">
         {now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
       </div>
+      {(info.leader || info.last) && (
+        <div className="sleep-info">
+          {info.leader && (
+            <span>
+              👑 Líder: <strong>{info.leader}</strong>
+            </span>
+          )}
+          {info.last && (
+            <span>
+              Último: <strong>{info.last}</strong>
+            </span>
+          )}
+        </div>
+      )}
       <div className="sleep-hint">Toca para despertar</div>
     </div>
   );

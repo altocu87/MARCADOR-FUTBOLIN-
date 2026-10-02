@@ -1,7 +1,7 @@
 /** Informe de un partido terminado: resumen, cronología, evolución y progresión. */
 import { useState } from 'react';
 import { useApp } from '../../app/AppContext';
-import { annulledGoalIdsFromEvents, type MatchEvent, type Period, type Team } from '../../match-engine';
+import { annulledGoalIdsFromEvents, validGoalsFromEvents, type MatchEvent, type Period, type Team } from '../../match-engine';
 import type { StoredMatch } from '../../services/persistence';
 import { ACHIEVEMENTS } from '../../services/progression';
 import { formatDuration } from '../../services/statistics';
@@ -25,7 +25,12 @@ function describeEvent(e: MatchEvent, byId: Map<string, MatchEvent>): { text: st
   const sc = `${e.scoreAfter.white}–${e.scoreAfter.blue}`;
   switch (e.type) {
     case 'GOAL':
-      return { text: `Gol ${TEAM[e.team!]} · ${t} · ${sc}`, kind: 'goal' };
+      return {
+        text: `${(e.value ?? 1) > 1 ? `Gol x${e.value} (${e.bonus?.map((b) => (b === 'joker' ? 'comodín' : 'último minuto')).join(' + ')})` : 'Gol'} ${TEAM[e.team!]} · ${t} · ${sc}`,
+        kind: 'goal',
+      };
+    case 'JOKER':
+      return { text: `Comodín ${TEAM[e.team!]} ${e.reason === 'armed' ? 'activado' : 'desactivado'} · ${t}`, kind: 'minor' };
     case 'CORRECTION': {
       const g = byId.get(e.refEventId ?? '');
       return { text: `−1 ${TEAM[e.team!]}: anula gol de ${g ? formatDuration(g.periodTimeMs) : '?'} · ${t} · ${sc}`, kind: 'corr' };
@@ -54,10 +59,13 @@ function describeEvent(e: MatchEvent, byId: Map<string, MatchEvent>): { text: st
   }
 }
 
-type ReportTab = 'summary' | 'timeline' | 'chart' | 'progress';
+type ReportTab = 'summary' | 'timeline' | 'chart' | 'scorers' | 'progress';
 
-export function MatchReport({ match }: { match: StoredMatch }) {
-  const { progression, players } = useApp();
+export function MatchReport({ match: given }: { match: StoredMatch }) {
+  const { progression, players, matches } = useApp();
+  // Versión guardada (incluye goleadores editados después).
+  const saved = matches.find((m) => m.id === given.id);
+  const match = saved ?? given;
   const [tab, setTab] = useState<ReportTab>('summary');
   const photos = new Map(players.map((p) => [p.id, p.photo]));
   const r = match.result;
@@ -92,6 +100,7 @@ export function MatchReport({ match }: { match: StoredMatch }) {
           { id: 'summary', label: 'Resumen' },
           { id: 'timeline', label: 'Cronología' },
           { id: 'chart', label: 'Evolución' },
+          { id: 'scorers', label: 'Goleadores' },
           { id: 'progress', label: 'Progresión' },
         ]}
       />
@@ -156,6 +165,7 @@ export function MatchReport({ match }: { match: StoredMatch }) {
         </ol>
       )}
       {tab === 'chart' && <ScoreChart events={match.events} totalTimeMs={r.totalTimeMs} />}
+      {tab === 'scorers' && <ScorersEditor match={match} editable={!!saved} />}
       {tab === 'progress' && (
         <div className="scroll" style={{ flex: 1, minHeight: 0 }}>
           {!progression ? (
@@ -204,6 +214,59 @@ export function MatchReport({ match }: { match: StoredMatch }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Goleador opcional: se asigna tras el partido, sin obligar. En 1v1 es automático. */
+function ScorersEditor({ match, editable }: { match: StoredMatch; editable: boolean }) {
+  const { saveMatch, toast } = useApp();
+  const goals = validGoalsFromEvents(match.events);
+  const assign = async (goalId: string, playerId: string | null) => {
+    const scorers = { ...(match.scorers ?? {}) };
+    if (playerId) scorers[goalId] = playerId;
+    else delete scorers[goalId];
+    try {
+      await saveMatch({ ...match, scorers });
+    } catch {
+      toast('No se pudo guardar el goleador');
+    }
+  };
+  if (goals.length === 0) return <div className="muted">Sin goles ordinarios.</div>;
+  return (
+    <div className="scroll" style={{ flex: 1, minHeight: 0 }}>
+      <div className="dim" style={{ fontSize: 12, marginBottom: 6 }}>
+        Opcional: indica quién marcó cada gol para las estadísticas personales (pichichi). No afecta al resultado, ELO ni XP del partido.
+        {!editable && ' Este partido no está guardado (modo prueba): no se puede asignar.'}
+      </div>
+      <div className="list">
+        {goals.map((g) => {
+          const options = match.participants.filter((p) => p.team === g.team);
+          const current = match.scorers?.[g.id];
+          return (
+            <div key={g.id} className="row">
+              <span className={`badge ${g.team === 'white' ? '' : 'badge-accent'}`}>{TEAM[g.team!]}</span>
+              <span className="muted" style={{ width: 150, fontSize: 13 }}>
+                {PERIOD[g.period]} · {formatDuration(g.periodTimeMs)}
+              </span>
+              <span style={{ fontWeight: 800, width: 50 }}>
+                {g.scoreAfter.white}–{g.scoreAfter.blue}
+              </span>
+              <span style={{ flex: 1 }} />
+              {options.map((p) => (
+                <button
+                  key={p.playerId}
+                  className={`btn btn-sm ${current === p.playerId ? 'btn-primary' : ''}`}
+                  disabled={!editable || options.length === 1}
+                  onClick={() => assign(g.id, current === p.playerId ? null : p.playerId)}
+                >
+                  ⚽ {p.nameSnapshot}
+                </button>
+              ))}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

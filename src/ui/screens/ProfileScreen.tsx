@@ -1,11 +1,33 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../../app/AppContext';
-import { ACHIEVEMENTS, RARITY_LABEL, levelProgress, xpForLevel } from '../../services/progression';
-import { RIVAL_MIN_MATCHES, computePlayerStats, formatDuration, sortMatches, type RivalStat, type StatBlock } from '../../services/statistics';
+import {
+  ACHIEVEMENTS,
+  CATEGORY_LABEL,
+  RARITY_LABEL,
+  availableTitles,
+  categoryFor,
+  displayTitle,
+  levelProgress,
+  xpForLevel,
+  type AchievementCategory,
+} from '../../services/progression';
+import { ANTHEMS, sound } from '../../services/sound/sound';
+import {
+  RIVAL_MIN_MATCHES,
+  computePlayerStats,
+  formatDuration,
+  habits,
+  personalGoals,
+  sideStats,
+  sortMatches,
+  type RivalStat,
+  type StatBlock,
+} from '../../services/statistics';
 import { Avatar, FormChips, MODE_LABEL, ScreenFrame, StatTile, Tabs, formatDate, pct } from '../components/common';
+import { AchievementIcon, CategoryBadge, EloChart } from '../components/graphics';
 import { resultLine } from '../components/MatchReport';
 
-type ProfileTab = 'general' | 'ranked' | 'tournaments' | 'rivals' | 'achievements' | 'history';
+type ProfileTab = 'general' | 'ranked' | 'habits' | 'tournaments' | 'rivals' | 'achievements' | 'history' | 'style';
 
 function Block({ b }: { b: StatBlock }) {
   return (
@@ -22,11 +44,26 @@ function Block({ b }: { b: StatBlock }) {
   );
 }
 
+function Bar({ label, played, winPct }: { label: string; played: number; winPct: number | null }) {
+  return (
+    <div className="hbar">
+      <span className="hbar-label">{label}</span>
+      <span className="hbar-track">
+        <span style={{ width: `${winPct ?? 0}%` }} />
+      </span>
+      <span className="hbar-value">{played ? `${pct(winPct)} · ${played} PJ` : '—'}</span>
+    </div>
+  );
+}
+
 export function ProfileScreen({ playerId }: { playerId: string }) {
-  const { players, matches, progression, navigate, prefs } = useApp();
+  const { players, matches, progression, navigate, prefs, tournaments, savePlayer, toast } = useApp();
   const [tab, setTab] = useState<ProfileTab>('general');
   const player = players.find((p) => p.id === playerId);
   const stats = useMemo(() => computePlayerStats(playerId, matches), [playerId, matches]);
+  const sides = useMemo(() => sideStats(playerId, matches), [playerId, matches]);
+  const hab = useMemo(() => habits(playerId, matches), [playerId, matches]);
+  const goals = useMemo(() => personalGoals(matches).get(playerId) ?? 0, [playerId, matches]);
   const prog = progression?.players.get(playerId);
   const myMatches = useMemo(
     () => sortMatches(matches.filter((m) => m.participants.some((p) => p.playerId === playerId))).reverse(),
@@ -41,6 +78,16 @@ export function ProfileScreen({ playerId }: { playerId: string }) {
     );
   }
 
+  const title = displayTitle(prog, player.titleId);
+  const category = prog?.category ?? categoryFor(prefs.progression.eloInitial);
+  const update = async (patch: Partial<typeof player>) => {
+    try {
+      await savePlayer({ ...player, ...patch, updatedAt: Date.now() });
+    } catch {
+      toast('No se pudo guardar');
+    }
+  };
+
   const rivalRow = (r: RivalStat) => (
     <div key={r.playerId} className="row">
       <span style={{ flex: 1 }}>{r.name}</span>
@@ -50,21 +97,27 @@ export function ProfileScreen({ playerId }: { playerId: string }) {
     </div>
   );
 
+  const myTournaments = tournaments.filter((t) => t.teams.some((tt) => tt.playerIds.includes(playerId)));
+
   return (
     <ScreenFrame title="Perfil" onBack={() => navigate({ name: 'ranking', tab: 'players' })}>
-      <div className="profile-head">
-        <Avatar name={player.name} photo={player.photo} size={64} />
+      <div className={`player-card cat-${category.id}`} style={{ ['--cat' as string]: category.color }}>
+        <div className="pc-photo">
+          <Avatar name={player.name} photo={player.photo} size={72} />
+          {prog && <span className="pc-level">{prog.level}</span>}
+        </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 22, fontWeight: 800 }}>
-            {player.name} {player.alias && <span className="muted" style={{ fontSize: 15 }}>«{player.alias}»</span>}
+          <div className="pc-name">
+            {player.name} {player.alias && <span className="muted" style={{ fontSize: 14 }}>«{player.alias}»</span>}
             {!player.active && <span className="badge" style={{ marginLeft: 8 }}>Inactivo</span>}
           </div>
+          {title && <div className="player-title">{title}</div>}
           {prog ? (
             <>
-              <div className="muted" style={{ fontSize: 13 }}>
-                Nivel {prog.level} · {prog.xp} XP · siguiente nivel a {xpForLevel(prog.level + 1)} XP
+              <div className="muted" style={{ fontSize: 12 }}>
+                Nivel {prog.level} · {prog.xp} XP · siguiente a {xpForLevel(prog.level + 1)} XP · {goals} goles asignados
               </div>
-              <div className="xpbar" style={{ marginTop: 4, maxWidth: 320 }}>
+              <div className="xpbar" style={{ marginTop: 4, maxWidth: 300 }}>
                 <span style={{ width: `${levelProgress(prog.xp) * 100}%` }} />
               </div>
             </>
@@ -73,10 +126,13 @@ export function ProfileScreen({ playerId }: { playerId: string }) {
           )}
         </div>
         {prog && (
-          <div className="profile-elo">
-            <div style={{ color: prog.category.color, fontWeight: 800 }}>{prog.category.name}</div>
-            <div style={{ fontSize: 26, fontWeight: 800 }}>{prog.elo}</div>
-            <div className="dim" style={{ fontSize: 11 }}>ELO · máx {prog.maxElo}</div>
+          <div className="pc-elo">
+            <CategoryBadge category={category} size={46} />
+            <div>
+              <div style={{ color: category.color, fontWeight: 800, fontSize: 13 }}>{category.name}</div>
+              <div style={{ fontSize: 24, fontWeight: 900 }}>{prog.elo}</div>
+              <div className="dim" style={{ fontSize: 10 }}>ELO · máx {prog.maxElo}</div>
+            </div>
           </div>
         )}
       </div>
@@ -87,17 +143,19 @@ export function ProfileScreen({ playerId }: { playerId: string }) {
         tabs={[
           { id: 'general', label: 'General' },
           { id: 'ranked', label: 'Clasificatorio' },
+          { id: 'habits', label: 'Hábitos' },
           { id: 'tournaments', label: 'Torneos' },
           { id: 'rivals', label: 'Rivales' },
-          { id: 'achievements', label: 'Logros' },
+          { id: 'achievements', label: `Logros ${prog ? prog.achievements.length : 0}/${ACHIEVEMENTS.length}` },
           { id: 'history', label: 'Historial' },
+          { id: 'style', label: 'Estilo' },
         ]}
       />
       <div className="scroll" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {tab === 'general' && (
           <>
             <Block b={stats.general} />
-            <div className="grid-3">
+            <div className="grid-4">
               <StatTile
                 k="Racha actual"
                 v={
@@ -108,9 +166,10 @@ export function ProfileScreen({ playerId }: { playerId: string }) {
               />
               <StatTile k="Mejor racha" v={stats.bestWinStreak} />
               <StatTile k="Tiempo jugado" v={formatDuration(stats.totalPlayTimeMs)} />
+              <StatTile k="Goles personales" v={goals} />
             </div>
             <div className="muted" style={{ fontSize: 12 }}>
-              Últimos partidos: <FormChips form={stats.recent} /> · Los goles son del equipo mientras participaba (no se registra goleador).
+              Últimos partidos: <FormChips form={stats.recent} /> · Goles del perfil = goles del equipo mientras participaba; los personales solo cuentan si se asignan.
             </div>
           </>
         )}
@@ -120,21 +179,57 @@ export function ProfileScreen({ playerId }: { playerId: string }) {
             <div className="muted" style={{ fontSize: 13 }}>
               Forma (últimas 5 clasificatorias): <FormChips form={stats.form} empty="Sin clasificatorios" />
             </div>
-            {prog && prog.eloHistory.length > 0 && (
-              <div className="dim" style={{ fontSize: 12 }}>
-                Evolución ELO: {[prefs.progression.eloInitial, ...prog.eloHistory.map((h) => h.elo)].slice(-12).join(' → ')}
+            {prog && (
+              <div className="card">
+                <div className="label">Evolución del ELO</div>
+                <EloChart points={prog.eloHistory} initial={prefs.progression.eloInitial} />
               </div>
             )}
           </>
         )}
-        {tab === 'tournaments' && (
-          <div className="empty">
-            <div>
-              <strong>Torneos pendientes de definición</strong>
-              Las estadísticas de torneo aparecerán cuando se apruebe su formato.
+        {tab === 'habits' && (
+          <div className="grid-2" style={{ alignItems: 'start' }}>
+            <div className="card">
+              <div className="label">Lado de la mesa</div>
+              <Bar label="Blanco (izq.)" played={sides.white.played} winPct={sides.white.winPct} />
+              <Bar label="Azul (dcha.)" played={sides.blue.played} winPct={sides.blue.winPct} />
+              <div className="label" style={{ marginTop: 10 }}>Franja horaria</div>
+              {hab.byDayPart.map((d) => (
+                <Bar key={d.label} label={d.label} played={d.rec.played} winPct={d.rec.winPct} />
+              ))}
+              <div className="dim" style={{ fontSize: 11, marginTop: 4 }}>
+                {hab.bestDayPart ? `Rinde mejor por la ${hab.bestDayPart}.` : 'Mejor franja: se necesitan 3 partidos en alguna.'}
+              </div>
+            </div>
+            <div className="card">
+              <div className="label">Días de la semana</div>
+              {hab.byWeekday.map((d) => (
+                <Bar key={d.label} label={d.label} played={d.rec.played} winPct={d.rec.winPct} />
+              ))}
+              <div className="dim" style={{ fontSize: 11, marginTop: 4 }}>
+                {hab.favoriteDay ? `Día favorito: ${hab.favoriteDay}.` : 'Sin partidos aún.'}
+              </div>
             </div>
           </div>
         )}
+        {tab === 'tournaments' &&
+          (myTournaments.length === 0 ? (
+            <div className="muted">No ha participado en torneos.</div>
+          ) : (
+            <div className="list">
+              {myTournaments.map((t) => {
+                const won = t.teams.find((x) => x.id === t.winnerTeamId)?.playerIds.includes(playerId);
+                return (
+                  <button key={t.id} className="row" onClick={() => navigate({ name: 'tournamentDetail', id: t.id })}>
+                    <span style={{ flex: 1 }}>
+                      <strong>{t.name}</strong> <span className="muted">· {t.format === 'league' ? 'Liguilla' : 'Cuadro'}</span>
+                    </span>
+                    {t.status === 'finished' ? (won ? <span className="badge badge-ranked">🏆 Campeón</span> : <span className="badge">Terminado</span>) : <span className="badge badge-accent">En juego</span>}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         {tab === 'rivals' && (
           <>
             <div className="grid-2">
@@ -166,25 +261,31 @@ export function ProfileScreen({ playerId }: { playerId: string }) {
         )}
         {tab === 'achievements' && (
           <>
-            <div className="dim" style={{ fontSize: 11 }}>Catálogo propuesto pendiente de aprobación.</div>
-            <div className="ach-grid">
-              {ACHIEVEMENTS.map((a) => {
-                const got = prog?.achievements.find((x) => x.id === a.id);
-                const hidden = a.secret && !got;
-                return (
-                  <div key={a.id} className={`ach ${got ? 'got' : ''} rarity-${a.rarity}`}>
-                    <span className="ach-icon" aria-hidden="true">{hidden ? '?' : a.icon}</span>
-                    <span style={{ minWidth: 0 }}>
-                      <strong>{hidden ? 'Logro secreto' : a.name}</strong>
-                      <div className="muted" style={{ fontSize: 11 }}>
-                        {hidden ? '???' : a.description} · {RARITY_LABEL[a.rarity]}
-                        {got && ` · ${formatDate(got.at)}`}
+            <div className="dim" style={{ fontSize: 11 }}>Catálogo propuesto pendiente de aprobación · los secretos se revelan al conseguirlos.</div>
+            {(Object.keys(CATEGORY_LABEL) as AchievementCategory[]).map((cat) => (
+              <div key={cat}>
+                <div className="label" style={{ margin: '4px 0' }}>{CATEGORY_LABEL[cat]}</div>
+                <div className="ach-grid">
+                  {ACHIEVEMENTS.filter((a) => a.category === cat).map((a) => {
+                    const got = prog?.achievements.find((x) => x.id === a.id);
+                    const hidden = a.secret && !got;
+                    return (
+                      <div key={a.id} className={`ach ${got ? 'got' : ''} rarity-${a.rarity}`}>
+                        <AchievementIcon id={a.id} glyph={a.icon} rarity={a.rarity} locked={hidden} />
+                        <span style={{ minWidth: 0 }}>
+                          <strong>{hidden ? 'Logro secreto' : a.name}</strong>
+                          {a.title && !hidden && <span className="player-title" style={{ marginLeft: 6 }}>«{a.title}»</span>}
+                          <div className="muted" style={{ fontSize: 11 }}>
+                            {hidden ? '???' : a.description} · {RARITY_LABEL[a.rarity]}
+                            {got && ` · ${formatDate(got.at)}`}
+                          </div>
+                        </span>
                       </div>
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </>
         )}
         {tab === 'history' &&
@@ -206,6 +307,43 @@ export function ProfileScreen({ playerId }: { playerId: string }) {
               })}
             </div>
           ))}
+        {tab === 'style' && (
+          <div className="grid-2" style={{ alignItems: 'start' }}>
+            <div className="card">
+              <div className="label">Título visible</div>
+              <p className="dim" style={{ fontSize: 12, margin: '4px 0 8px' }}>Se desbloquean con algunos logros y aparecen bajo el nombre.</p>
+              <div className="chip-wrap">
+                <button className={`pick-chip ${!player.titleId ? 'pick-blue' : ''}`} onClick={() => update({ titleId: undefined })}>Automático</button>
+                <button className={`pick-chip ${player.titleId === 'none' ? 'pick-blue' : ''}`} onClick={() => update({ titleId: 'none' })}>Sin título</button>
+                {availableTitles(prog).map((t) => (
+                  <button key={t.id} className={`pick-chip ${player.titleId === t.id ? 'pick-blue' : ''}`} onClick={() => update({ titleId: t.id })}>
+                    {t.title}
+                  </button>
+                ))}
+              </div>
+              {availableTitles(prog).length === 0 && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Aún no tiene títulos.</div>}
+            </div>
+            <div className="card">
+              <div className="label">Melodía de victoria</div>
+              <p className="dim" style={{ fontSize: 12, margin: '4px 0 8px' }}>Suena en la pantalla de victoria cuando gana.</p>
+              <div className="chip-wrap">
+                {Object.entries(ANTHEMS).map(([id, a]) => (
+                  <button
+                    key={id}
+                    className={`pick-chip ${(player.anthem ?? 'fanfare') === id ? 'pick-blue' : ''}`}
+                    onClick={() => {
+                      sound.unlock();
+                      sound.playAnthem(id);
+                      void update({ anthem: id });
+                    }}
+                  >
+                    ♪ {a.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ScreenFrame>
   );

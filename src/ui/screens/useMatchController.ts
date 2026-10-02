@@ -1,27 +1,56 @@
 /**
  * Controlador del partido en la interfaz: mantiene el estado del motor, avanza
- * el reloj con tiempo real, traduce entradas a comandos y dispara sonido/efectos
- * SOLO tras la validación del motor. Guarda snapshots de recuperación.
+ * el reloj con tiempo real, traduce entradas a comandos y dispara sonido, voz y
+ * efectos SOLO tras la validación del motor. Guarda snapshots de recuperación.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import { makeSnapshot } from '../../app/recovery';
+import type { MatchExtras } from '../../app/routes';
 import { teamFromCommand, inputBus } from '../../inputs/inputBus';
 import {
   advance,
   createMatch,
   dispatch,
+  getScore,
+  goalMoment,
+  isSuddenDeath,
+  matchPointTeams,
   type CommandOutcome,
   type EngineCommand,
   type MatchConfig,
   type MatchEvent,
   type MatchState,
   type ParticipantRef,
+  type Period,
+  type Team,
 } from '../../match-engine';
 import { newId } from '../../services/ids';
 import { sound } from '../../services/sound/sound';
+import { voice } from '../../services/sound/voice';
 
 const SNAPSHOT_EVERY_MS = 5000;
+
+const TEAM_VOICE: Record<Team, string> = { white: 'equipo blanco', blue: 'equipo azul' };
+const PERIOD_VOICE: Record<Period, string> = {
+  first: 'primera parte',
+  second: 'segunda parte',
+  overtime: 'prórroga',
+  shootout: 'tanda de penaltis',
+};
+const PERIOD_BANNER: Record<Period, string> = {
+  first: '1ª PARTE',
+  second: '2ª PARTE',
+  overtime: 'PRÓRROGA',
+  shootout: 'PENALTIS',
+};
+
+export interface Celebration {
+  id: string;
+  text: string;
+  sub?: string;
+  tone: 'accent' | 'gold' | 'danger' | 'chaos';
+}
 
 export interface MatchController {
   state: MatchState;
@@ -29,14 +58,22 @@ export interface MatchController {
   send(command: EngineCommand): CommandOutcome;
   /** Último gol aceptado (para efectos). */
   lastGoal: MatchEvent | null;
+  /** Texto especial del último gol (empate, remontada…). */
+  goalLabel: string | null;
+  /** Rótulo animado en curso (inicio de parte, muerte súbita…). */
+  banner: Celebration | null;
   /** Marca de tiempo del último rechazo por bloqueo (feedback visual). */
   lockFlashAt: number;
+  matchPoint: Team[];
 }
+
+const MOMENT_LABEL = { equalizer: '¡EMPATE!', lead: '¡POR DELANTE!', comeback: '¡REMONTADA!', double: '¡GOL DOBLE!' } as const;
 
 export function useMatchController(
   config: MatchConfig,
   participants: ParticipantRef[],
   resume?: MatchState,
+  extras?: MatchExtras,
 ): MatchController {
   const { repos } = useApp();
   const [state, setState] = useState<MatchState>(
@@ -44,37 +81,87 @@ export function useMatchController(
   );
   const [now, setNow] = useState(() => Date.now());
   const [lastGoal, setLastGoal] = useState<MatchEvent | null>(null);
+  const [goalLabel, setGoalLabel] = useState<string | null>(null);
+  const [banner, setBanner] = useState<Celebration | null>(null);
   const [lockFlashAt, setLockFlashAt] = useState(0);
   const stateRef = useRef(state);
   const lastSnapshotAt = useRef(0);
+  const matchPointKey = useRef('');
+  const bannerTimer = useRef<number | undefined>(undefined);
+
+  const showBanner = useCallback((b: Omit<Celebration, 'id'>, ms = 1800) => {
+    window.clearTimeout(bannerTimer.current);
+    setBanner({ ...b, id: newId('b') });
+    sound.play('whoosh');
+    bannerTimer.current = window.setTimeout(() => setBanner(null), ms);
+  }, []);
+
+  useEffect(() => () => window.clearTimeout(bannerTimer.current), []);
 
   const saveSnapshot = useCallback(
     (s: MatchState, t: number) => {
       if (s.config.testMode || s.phase === 'finished') return;
       lastSnapshotAt.current = t;
       // Un fallo de snapshot no detiene el partido.
-      void repos.activeMatch.save(makeSnapshot(s, t)).catch(() => undefined);
+      void repos.activeMatch.save(makeSnapshot(s, t, extras)).catch(() => undefined);
     },
-    [repos],
+    [repos, extras],
   );
 
   const commit = useCallback(
     (next: MatchState, events: MatchEvent[], t: number) => {
       if (next === stateRef.current) return;
+      const prev = stateRef.current;
       stateRef.current = next;
       setState(next);
       for (const e of events) {
-        if (e.type === 'GOAL') {
+        if (e.type === 'GOAL' && e.team) {
           setLastGoal(e);
+          const moment = goalMoment(next, e);
+          setGoalLabel(moment ? MOMENT_LABEL[moment] : null);
           sound.play('goal');
-        } else if (e.type === 'MATCH_END') sound.play('matchEnd');
-        else if (e.type === 'PERIOD_END' && next.phase !== 'finished') sound.play('periodEnd');
-        else if (e.type === 'PERIOD_START') sound.play('countdownGo');
-        else if (e.type === 'PENALTY') sound.play(e.scored ? 'goal' : 'error');
+          if (next.phase !== 'finished') {
+            const sc = e.scoreAfter;
+            voice.say(`¡Gol del ${TEAM_VOICE[e.team]}! ${moment ? MOMENT_LABEL[moment].replace(/[¡!]/g, '') + '. ' : ''}${sc.white} a ${sc.blue}.`);
+          }
+        } else if (e.type === 'MATCH_END' && e.team) {
+          sound.play('matchEnd');
+          voice.say(`¡Final del partido! Gana el ${TEAM_VOICE[e.team]}.`);
+        } else if (e.type === 'PERIOD_END' && next.phase !== 'finished') {
+          sound.play('periodEnd');
+          voice.say(`Final de la ${PERIOD_VOICE[e.period]}.`);
+        } else if (e.type === 'PERIOD_START') {
+          sound.play('countdownGo');
+          showBanner(
+            e.period === 'overtime'
+              ? { text: 'PRÓRROGA', sub: 'GOL DE ORO', tone: 'gold' }
+              : { text: PERIOD_BANNER[e.period], sub: '¡A JUGAR!', tone: next.config.mode === 'chaos' ? 'chaos' : 'accent' },
+            1500,
+          );
+        } else if (e.type === 'SHOOTOUT_START') {
+          showBanner({ text: 'PENALTIS', sub: 'TANDA', tone: 'gold' });
+          voice.say('Tanda de penaltis.');
+        } else if (e.type === 'PENALTY') {
+          sound.play(e.scored ? 'goal' : 'error');
+          voice.say(e.scored ? '¡Gol!' : '¡Falla!');
+          if (!isSuddenDeath(prev) && isSuddenDeath(next) && next.phase === 'penalties') {
+            showBanner({ text: 'MUERTE SÚBITA', tone: 'danger' });
+          }
+        } else if (e.type === 'JOKER' && e.team && e.reason === 'armed') {
+          showBanner({ text: 'COMODÍN', sub: `${e.team === 'white' ? 'BLANCO' : 'AZUL'} · SIGUIENTE GOL x2`, tone: 'chaos' }, 1400);
+        }
       }
+      // Bola de partido: aviso al aparecer.
+      const mp = matchPointTeams(next);
+      const key = mp.length ? `${next.period}:${getScore(next).white}-${getScore(next).blue}` : '';
+      if (key && key !== matchPointKey.current && next.period !== 'overtime') {
+        sound.play('matchPoint');
+        voice.say('¡Bola de partido!', { interrupt: false });
+      }
+      matchPointKey.current = key;
       saveSnapshot(next, t);
     },
-    [saveSnapshot],
+    [saveSnapshot, showBanner],
   );
 
   const send = useCallback(
@@ -144,5 +231,5 @@ export function useMatchController(
     [send],
   );
 
-  return { state, now, send, lastGoal, lockFlashAt };
+  return { state, now, send, lastGoal, goalLabel, banner, lockFlashAt, matchPoint: matchPointTeams(state) };
 }

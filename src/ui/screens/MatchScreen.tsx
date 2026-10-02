@@ -1,26 +1,31 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/AppContext';
-import { persistFinishedMatch, toStoredMatch } from '../../app/matchFinalizer';
+import { persistFinishedMatch, toStoredMatch, type SaveStatus } from '../../app/matchFinalizer';
+import type { MatchExtras } from '../../app/routes';
 import {
+  COUNTDOWN_MS,
+  GOAL_LOCK_MS,
   countdownRemaining,
   getClock,
   getPenaltyScore,
   getPeriodScore,
   getScore,
   goalLockRemaining,
+  goalStreak,
   isSuddenDeath,
   nextPenaltyTeam,
-  GOAL_LOCK_MS,
   type MatchConfig,
   type MatchState,
   type ParticipantRef,
   type Period,
   type Team,
 } from '../../match-engine';
+import { displayTitle } from '../../services/progression';
 import { sound } from '../../services/sound/sound';
-import { formatDuration } from '../../services/statistics';
+import { formatDuration, headToHead } from '../../services/statistics';
 import { Avatar, MODE_LABEL, Modal, TestModeBadge } from '../components/common';
 import { GoalEffect } from '../components/GoalEffect';
+import { Banner, Confetti, CountdownRing, NeonGoal } from '../components/graphics';
 import { SevenSegment } from '../components/SevenSegment';
 import { useMatchController, type MatchController } from './useMatchController';
 
@@ -43,27 +48,43 @@ export function MatchScreen({
   config,
   participants,
   resume,
+  extras,
 }: {
   config: MatchConfig;
   participants: ParticipantRef[];
   resume?: MatchState;
+  extras?: MatchExtras;
 }) {
-  const ctl = useMatchController(config, participants, resume);
+  const ctl = useMatchController(config, participants, resume, extras);
   const { state } = ctl;
-  const { repos, navigate, refresh, prefs, players } = useApp();
+  const { repos, navigate, refresh, prefs, players, matches } = useApp();
   const [confirmExit, setConfirmExit] = useState(false);
+  const [save, setSave] = useState<SaveStatus | null>(null);
   const finishing = useRef(false);
 
-  // Final: aplicación → resultado completo → repositorio local → resumen.
+  // Rivalidad: historial entre estas mismas alineaciones (cualquier modalidad).
+  // Se calcula al empezar con las alineaciones del partido; no cambia durante el juego.
+  const [rivalry] = useState(() => {
+    const ids = (t: Team) => participants.filter((p) => p.team === t).map((p) => p.playerId);
+    const h = headToHead(matches, ids('white'), ids('blue'), false);
+    return h.played >= 5 ? h : null;
+  });
+
+  // Final: aplicación → resultado completo → repositorio local; después, pantalla de victoria.
   useEffect(() => {
     if (state.phase !== 'finished' || finishing.current) return;
     finishing.current = true;
     void (async () => {
-      const save = await persistFinishedMatch(state, repos);
-      if (save.kind === 'saved') await refresh();
-      window.setTimeout(() => navigate({ name: 'summary', match: toStoredMatch(state), save, live: state }), 1400);
+      const s = await persistFinishedMatch(state, repos, extras);
+      if (s.kind === 'saved') await refresh();
+      setSave(s);
     })();
-  }, [state, repos, refresh, navigate]);
+  }, [state, repos, refresh, extras]);
+
+  const goSummary = () => {
+    if (!save) return;
+    navigate({ name: 'summary', match: toStoredMatch(state, extras), save, live: state, extras });
+  };
 
   const abandon = async () => {
     await repos.activeMatch.clear();
@@ -81,10 +102,20 @@ export function MatchScreen({
       )}
 
       {ctl.lastGoal && state.phase !== 'penalties' && (
-        <GoalEffect key={ctl.lastGoal.id} team={ctl.lastGoal.team!} level={prefs.effects} seed={ctl.lastGoal.id} />
+        <GoalEffect
+          key={ctl.lastGoal.id}
+          team={ctl.lastGoal.team!}
+          level={prefs.effects}
+          seed={ctl.lastGoal.id}
+          label={ctl.goalLabel}
+        />
       )}
 
-      {state.phase === 'countdown' && <CountdownOverlay ctl={ctl} />}
+      {ctl.banner && state.phase !== 'finished' && (
+        <Banner key={ctl.banner.id} text={ctl.banner.text} sub={ctl.banner.sub} tone={ctl.banner.tone} />
+      )}
+
+      {state.phase === 'countdown' && <CountdownOverlay ctl={ctl} rivalry={state.period === 'first' ? rivalry : null} />}
       {state.phase === 'paused' && (
         <div className="overlay overlay-pause">
           <div className="overlay-title">PAUSA</div>
@@ -98,12 +129,7 @@ export function MatchScreen({
         </div>
       )}
       {state.phase === 'periodEnd' && <PeriodEndOverlay ctl={ctl} />}
-      {state.phase === 'finished' && (
-        <div className="overlay overlay-final" aria-live="assertive">
-          <div className="overlay-title">FINAL</div>
-          <div className={`final-winner team-${state.result!.winner}`}>GANA {TEAM_LABEL[state.result!.winner]}</div>
-        </div>
-      )}
+      {state.phase === 'finished' && <VictoryOverlay state={state} save={save} onContinue={goSummary} />}
 
       {confirmExit && (
         <Modal
@@ -140,18 +166,49 @@ function ScoreboardView({ ctl, photos }: { ctl: MatchController; photos: Map<str
   const flash = now - ctl.lockFlashAt < 700;
   const periodScore = getPeriodScore(state);
   const canCorrect = state.phase === 'playing' || state.phase === 'paused';
+  const streak = goalStreak(state);
+  const lastMinute =
+    state.config.mode === 'chaos' &&
+    state.config.chaos?.doubleLastMinute &&
+    state.period !== 'overtime' &&
+    clock.remainingMs !== null &&
+    clock.remainingMs <= 60_000;
 
   const team = (t: Team) => {
     const people = state.participants.filter((p) => p.team === t).sort((a, b) => a.slot - b.slot);
+    const joker = state.jokers?.[t];
+    const minus = (
+      <button
+        className="minus-btn"
+        onClick={() => send({ type: 'MINUS_ONE', team: t })}
+        disabled={!canCorrect || periodScore[t] === 0}
+        aria-label={`Restar un gol a ${TEAM_LABEL[t]}`}
+      >
+        −1
+      </button>
+    );
+    const jokerBtn = joker && (
+      <button
+        className={`joker-btn ${joker}`}
+        disabled={joker === 'used' || !canCorrect}
+        onClick={() => send({ type: 'TOGGLE_JOKER', team: t })}
+        aria-label={`Comodín ${TEAM_LABEL[t]}: ${joker === 'armed' ? 'armado' : joker === 'used' ? 'usado' : 'disponible'}`}
+      >
+        🃏 {joker === 'armed' ? 'x2' : joker === 'used' ? '—' : ''}
+      </button>
+    );
     return (
       <div className={`team-side side-${t}`}>
         <button
-          className={`score-btn score-${t} ${lock > 0 ? 'locked' : ''}`}
+          className={`score-btn score-${t} ${lock > 0 ? 'locked' : ''} ${ctl.matchPoint.includes(t) ? 'match-point' : ''} ${joker === 'armed' ? 'joker-armed' : ''}`}
           onClick={() => send({ type: 'GOAL', team: t, source: 'touch' })}
           disabled={!playing}
           aria-label={`Gol ${TEAM_LABEL[t]}. Marcador ${score[t]}`}
         >
+          <span className="score-sheen" aria-hidden="true" />
           <span className="score-team">{TEAM_LABEL[t]}</span>
+          {streak && streak.team === t && streak.count >= 3 && <span className="streak-badge">🔥 x{streak.count}</span>}
+          {joker === 'armed' && <span className="joker-tag">COMODÍN x2</span>}
           <span className={`score-num ${score[t] >= 10 ? 'two' : ''}`}>{score[t]}</span>
           {lock > 0 && (
             <span className="lock-bar" aria-hidden="true">
@@ -160,16 +217,8 @@ function ScoreboardView({ ctl, photos }: { ctl: MatchController; photos: Map<str
           )}
         </button>
         <div className="team-bottom">
-          {t === 'white' && (
-            <button
-              className="minus-btn"
-              onClick={() => send({ type: 'MINUS_ONE', team: t })}
-              disabled={!canCorrect || periodScore[t] === 0}
-              aria-label={`Restar un gol a ${TEAM_LABEL[t]}`}
-            >
-              −1
-            </button>
-          )}
+          {t === 'white' && minus}
+          {t === 'white' && jokerBtn}
           <div className="team-people">
             {people.map((p) => (
               <span key={p.playerId} className="person">
@@ -178,16 +227,8 @@ function ScoreboardView({ ctl, photos }: { ctl: MatchController; photos: Map<str
               </span>
             ))}
           </div>
-          {t === 'blue' && (
-            <button
-              className="minus-btn"
-              onClick={() => send({ type: 'MINUS_ONE', team: t })}
-              disabled={!canCorrect || periodScore[t] === 0}
-              aria-label={`Restar un gol a ${TEAM_LABEL[t]}`}
-            >
-              −1
-            </button>
-          )}
+          {t === 'blue' && jokerBtn}
+          {t === 'blue' && minus}
         </div>
       </div>
     );
@@ -198,6 +239,12 @@ function ScoreboardView({ ctl, photos }: { ctl: MatchController; photos: Map<str
       <header className="match-top">
         <span className="period-chip">{PERIOD_LABEL[state.period]}</span>
         {state.period === 'overtime' && <span className="badge badge-ranked">GOL DE ORO</span>}
+        {ctl.matchPoint.length > 0 && state.period !== 'overtime' && (
+          <span className="badge badge-danger match-point-badge">
+            BOLA DE PARTIDO {ctl.matchPoint.length === 1 ? `· ${TEAM_LABEL[ctl.matchPoint[0]]}` : ''}
+          </span>
+        )}
+        {lastMinute && <span className="badge badge-chaos">ÚLTIMO MINUTO · GOLES x2</span>}
         <span className="dim match-cond">{conditionText(state.config)}</span>
         <span style={{ flex: 1 }} />
         {state.config.testMode && <TestModeBadge />}
@@ -248,7 +295,7 @@ function ScoreboardView({ ctl, photos }: { ctl: MatchController; photos: Map<str
   );
 }
 
-function CountdownOverlay({ ctl }: { ctl: MatchController }) {
+function CountdownOverlay({ ctl, rivalry }: { ctl: MatchController; rivalry: { played: number; whiteWins: number; blueWins: number } | null }) {
   const { state, now, send } = ctl;
   const remaining = countdownRemaining(state, now);
   const n = Math.max(1, Math.ceil(remaining / 1000));
@@ -265,9 +312,17 @@ function CountdownOverlay({ ctl }: { ctl: MatchController }) {
         {PERIOD_LABEL[state.period]}
         {state.period === 'overtime' ? ' · GOL DE ORO · 60 s' : ''}
       </span>
-      <span key={n} className="countdown-num">
-        <SevenSegment text={String(n)} height={190} color="#62D6FF" />
+      <span className="countdown-stack">
+        <CountdownRing progress={remaining / COUNTDOWN_MS} size={250} />
+        <span key={n} className="countdown-num">
+          <SevenSegment text={String(n)} height={150} color="#62D6FF" />
+        </span>
       </span>
+      {rivalry && (
+        <span className="rivalry">
+          ⚔ CLÁSICO · {rivalry.whiteWins}–{rivalry.blueWins} en {rivalry.played} enfrentamientos
+        </span>
+      )}
       <span className="overlay-hint">Toca para saltar</span>
     </button>
   );
@@ -311,6 +366,49 @@ function PeriodEndOverlay({ ctl }: { ctl: MatchController }) {
   );
 }
 
+/** Pantalla de victoria: confeti, ganadores con foto y título, y melodía del jugador. */
+function VictoryOverlay({ state, save, onContinue }: { state: MatchState; save: SaveStatus | null; onContinue: () => void }) {
+  const { players, progression, prefs } = useApp();
+  const r = state.result!;
+  const winners = state.participants.filter((p) => p.team === r.winner).sort((a, b) => a.slot - b.slot);
+  // Melodía del primer ganador (una vez, al aparecer la pantalla).
+  const [anthem] = useState(() => players.find((p) => p.id === winners[0]?.playerId)?.anthem);
+  useEffect(() => {
+    const id = window.setTimeout(() => sound.playAnthem(anthem), 900);
+    return () => window.clearTimeout(id);
+  }, [anthem]);
+  const line = r.penaltyScore
+    ? `${r.score.white}–${r.score.blue} · Penaltis ${r.penaltyScore.white}–${r.penaltyScore.blue}`
+    : r.reason === 'golden_goal'
+      ? `${r.score.white}–${r.score.blue} · Gol de oro`
+      : `${r.score.white}–${r.score.blue}`;
+  return (
+    <div className={`overlay overlay-victory victory-${r.winner}`} aria-live="assertive">
+      {prefs.effects !== 'off' && <Confetti count={prefs.effects === 'full' ? 80 : 30} />}
+      <div className="victory-rays" aria-hidden="true" />
+      <div className="victory-kicker">FINAL DEL PARTIDO</div>
+      <div className="victory-title">VICTORIA {TEAM_LABEL[r.winner]}</div>
+      <div className="victory-score">{line}</div>
+      <div className="victory-people">
+        {winners.map((w) => {
+          const player = players.find((p) => p.id === w.playerId);
+          const title = displayTitle(progression?.players.get(w.playerId), player?.titleId);
+          return (
+            <div key={w.playerId} className="victory-person">
+              <Avatar name={w.nameSnapshot} photo={player?.photo} size={84} />
+              <strong>{w.nameSnapshot}</strong>
+              {title && <span className="player-title">{title}</span>}
+            </div>
+          );
+        })}
+      </div>
+      <button className="btn btn-primary btn-lg overlay-cta" onClick={onContinue} disabled={!save}>
+        {save ? 'VER RESUMEN' : 'GUARDANDO…'}
+      </button>
+    </div>
+  );
+}
+
 function PenaltiesView({ ctl }: { ctl: MatchController }) {
   const { state, send } = ctl;
   const pen = getPenaltyScore(state);
@@ -318,6 +416,7 @@ function PenaltiesView({ ctl }: { ctl: MatchController }) {
   const turn = nextPenaltyTeam(state);
   const sudden = isSuddenDeath(state);
   const active = state.phase === 'penalties';
+  const lastKick = state.penalties[state.penalties.length - 1];
 
   const column = (t: Team) => {
     const kicks = state.penalties.filter((k) => k.team === t);
@@ -325,6 +424,7 @@ function PenaltiesView({ ctl }: { ctl: MatchController }) {
     const isTurn = active && turn === t;
     return (
       <div className={`pen-col pen-${t} ${isTurn ? 'is-turn' : ''}`}>
+        {isTurn && <span className="spotlight" aria-hidden="true" />}
         <div className="pen-team">{TEAM_LABEL[t]}</div>
         <div className="pen-score">{pen[t]}</div>
         <div className="pen-dots" aria-label={`Lanzamientos ${TEAM_LABEL[t]}: ${kicks.map((k) => (k.scored ? 'gol' : 'fallo')).join(', ') || 'ninguno'}`}>
@@ -371,6 +471,7 @@ function PenaltiesView({ ctl }: { ctl: MatchController }) {
       <div className="pen-main">
         {column('white')}
         <div className="pen-center">
+          <NeonGoal result={lastKick ? (lastKick.scored ? 'goal' : 'miss') : null} kickKey={lastKick?.eventId ?? 'none'} />
           {active ? (
             <>
               <div className="label">Lanza</div>
