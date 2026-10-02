@@ -6,6 +6,8 @@
  *   HELLO <nombre> [versión]     saludo al conectar
  *   GOL_BLANCO [button|sensor]   gol del equipo Blanco (alias: GB)
  *   GOL_AZUL [button|sensor]     gol del equipo Azul   (alias: GA)
+ *   ANULAR_BLANCO                anular el último gol del Blanco (−1; pulsación larga) (alias: AB)
+ *   ANULAR_AZUL                  anular el último gol del Azul   (−1; pulsación larga) (alias: AA)
  *   PAUSA                        pausa / continuar
  *   SALTAR                       saltar la cuenta atrás
  *   PING                         la app responde PONG
@@ -38,6 +40,10 @@ const COMMANDS: Record<string, InputCommand> = {
   GB: 'GOL_BLANCO',
   GOL_AZUL: 'GOL_AZUL',
   GA: 'GOL_AZUL',
+  ANULAR_BLANCO: 'ANULAR_BLANCO',
+  AB: 'ANULAR_BLANCO',
+  ANULAR_AZUL: 'ANULAR_AZUL',
+  AA: 'ANULAR_AZUL',
   PAUSA: 'PAUSA',
   PAUSE: 'PAUSA',
   SALTAR: 'SALTAR',

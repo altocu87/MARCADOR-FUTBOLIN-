@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cstring>
 #define SERIAL_8N1 0x800001c
+inline uint32_t esp_random() { return 0xBEEF; }
 namespace sim {
 inline std::deque<char> auxIn;
 inline std::string auxOut;

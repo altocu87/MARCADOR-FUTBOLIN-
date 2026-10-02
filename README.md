@@ -69,6 +69,8 @@ Todas las entradas llegan al mismo motor y respetan el bloqueo de 3 s.
   guía completa en [`docs/HARDWARE.md`](docs/HARDWARE.md). `npm run build:esp32` prepara la app para la placa.
 - **Marcador nativo para ESP32-S3 con pantalla táctil de 7"** (`hardware/esp32s3_pantalla7/`): el partido completo
   en la placa, sin PC ni móvil, con las mismas reglas que la app.
+- **Mando inalámbrico** de 2 pulsadores arcade (`hardware/mando_pulsadores/`): toque corto = gol, toque largo =
+  anular gol, por radio ESP-NOW hasta la pantalla.
 - **Eliminar partidos** del historial (se recalcula todo).
 
 ### Añadidos de la versión 0.2

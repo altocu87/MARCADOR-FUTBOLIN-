@@ -9,6 +9,8 @@ describe('Protocolo MFV3', () => {
     expect(parseBoardLine('gol_azul sensor\r')).toEqual({ kind: 'command', command: 'GOL_AZUL', source: 'sensor' });
     expect(parseBoardLine('GB')).toMatchObject({ command: 'GOL_BLANCO' });
     expect(parseBoardLine('PAUSA')).toMatchObject({ command: 'PAUSA' });
+    expect(parseBoardLine('ANULAR_BLANCO')).toMatchObject({ command: 'ANULAR_BLANCO' });
+    expect(parseBoardLine('aa')).toMatchObject({ command: 'ANULAR_AZUL' });
     expect(parseBoardLine('HELLO ESP32-C3 1.0')).toEqual({ kind: 'hello', name: 'ESP32-C3', version: '1.0' });
     expect(parseBoardLine('PING')).toEqual({ kind: 'ping' });
     expect(parseBoardLine('   ')).toBeNull();

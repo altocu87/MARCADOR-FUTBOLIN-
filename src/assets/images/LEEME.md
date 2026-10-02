@@ -6,6 +6,10 @@ no hay que tocar código. Si falta una imagen se usa el diseño de respaldo actu
 
 ## Estado
 - Integradas: `categoria-bronze`, `categoria-silver`, `categoria-gold`, `categoria-platinum`, `categoria-elite`,
-  `logo`, `fondo-inicio`, `modo-rapido`, `modo-caos`, `modo-clasificatorio` (convertidas a .webp optimizado).
+  `logo`, `fondo-inicio`, `modo-rapido`, `modo-caos`, `modo-clasificatorio`, `trofeo` (transparente) y 49 de los
+  54 `logro-*` (recortados de las plantillas, sin fondo magenta, 256×256 .webp).
   Las ilustraciones de modo también se usan como fondo tenue del partido; la del Clasificatorio, en la victoria.
-- Pendientes: `categoria-diamond`, `trofeo` (transparente) y los 54 `logro-*`.
+- Pendientes (llegaron dañadas en el ZIP; mientras, se ve el icono de respaldo):
+  - `categoria-diamond` (archivo vacío).
+  - Fila inferior de `plantilla-logros-03` (imagen cortada): `logro-hat_trick`, `logro-scorer50`,
+    `logro-first_blood`, `logro-ranked_debut`, `logro-platinum`.

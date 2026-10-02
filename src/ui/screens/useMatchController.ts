@@ -8,7 +8,7 @@ import { useApp } from '../../app/AppContext';
 import { makeSnapshot } from '../../app/recovery';
 import type { MatchExtras } from '../../app/routes';
 import { hardwareHub } from '../../inputs/hardware/hub';
-import { teamFromCommand, inputBus } from '../../inputs/inputBus';
+import { annulTeamFromCommand, teamFromCommand, inputBus } from '../../inputs/inputBus';
 import {
   advance,
   createMatch,
@@ -217,6 +217,13 @@ export function useMatchController(
       inputBus.subscribe(({ command, source }) => {
         const s = stateRef.current;
         const team = teamFromCommand(command);
+        const annul = annulTeamFromCommand(command);
+        if (annul) {
+          // Pulsación larga: −1 al equipo en juego o en pausa; en penaltis deshace el último lanzamiento.
+          if (s.phase === 'playing' || s.phase === 'paused') send({ type: 'MINUS_ONE', team: annul });
+          else if (s.phase === 'penalties') send({ type: 'UNDO_PENALTY' });
+          return;
+        }
         if (s.phase === 'countdown' && (team || command === 'SALTAR')) {
           // La pulsación se consume como salto y no registra además un gol.
           send({ type: 'SKIP_COUNTDOWN' });

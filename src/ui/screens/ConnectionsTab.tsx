@@ -95,6 +95,7 @@ export function ConnectionsTab() {
           <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
             <button className="btn btn-sm" onClick={() => sendExternalInput('GOL_BLANCO', 'button')}>GOL_BLANCO</button>
             <button className="btn btn-sm" onClick={() => sendExternalInput('GOL_AZUL', 'sensor')}>GOL_AZUL</button>
+            <button className="btn btn-sm" onClick={() => sendExternalInput('ANULAR_BLANCO', 'button')}>ANULAR_BLANCO</button>
             <button className="btn btn-sm" onClick={() => sendExternalInput('PAUSA', 'button')}>PAUSA</button>
           </div>
           <div className="dim" style={{ fontSize: 11, marginTop: 6 }}>

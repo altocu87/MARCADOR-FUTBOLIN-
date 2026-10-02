@@ -1,6 +1,7 @@
 // Comprobación del sketch de la pantalla de 7" (ESP32-S3) en el PC con LovyanGFX/NVS simulados:
 // se juega un partido completo con toques y con líneas del protocolo MFV3 (USB y UART auxiliar).
 #include <cassert>
+#include <vector>
 #include "Arduino.h"
 #include "../esp32s3_pantalla7/esp32s3_pantalla7.ino"
 
@@ -122,6 +123,42 @@ int main() {
   tap(400, 430); tap(400, 360); tap(400, 360);  // pausa y abandonar
   assert(!inMatch);
 #endif
+
+  // Mando inalámbrico (ESP-NOW): 3 copias de cada orden cuentan una vez; toque largo anula.
+  {
+    uint8_t mac[6] = {0xAA, 1, 2, 3, 4, 5};
+    auto radio = [&](mfv3::RadioCmd c, uint16_t seq) {
+      std::vector<uint8_t> pk(mfv3::RADIO_PACKET_SIZE);
+      mfv3::radioEncode(pk.data(), GRUPO_MESA, seq, c);
+      for (int i = 0; i < 3; i++) sim::radioDeliver(mac, pk);
+      loop();
+    };
+    assert(sim::radioCb != nullptr && sim::wifiChannel == mfv3::RADIO_CHANNEL);
+    radio(mfv3::RadioCmd::Hello, 100);
+    run(50);
+    assert(shows("MANDO CONECTADO"));
+    while (cfg.goalsPerPeriod < 5) tap(326, 306);
+    tap(400, 420);                        // JUGAR
+    radio(mfv3::RadioCmd::GoalWhite, 101);  // en la cuenta atrás: solo la salta
+    assert(eng.phase() == Phase::Playing && eng.score().white == 0);
+    radio(mfv3::RadioCmd::GoalWhite, 102);
+    assert(eng.score().white == 1);
+    radio(mfv3::RadioCmd::GoalWhite, 102);  // repetición tardía de la misma orden: se ignora
+    run(3000);
+    radio(mfv3::RadioCmd::GoalBlue, 103);
+    assert(eng.score().white == 1 && eng.score().blue == 1);
+    radio(mfv3::RadioCmd::AnnulWhite, 104);
+    assert(eng.score().white == 0 && eng.score().blue == 1);
+    std::vector<uint8_t> other(mfv3::RADIO_PACKET_SIZE);  // mando de otra mesa (grupo distinto)
+    mfv3::radioEncode(other.data(), GRUPO_MESA + 1, 200, mfv3::RadioCmd::AnnulBlue);
+    sim::radioDeliver(mac, other);
+    loop();
+    assert(eng.score().blue == 1);
+    usb("AA");                            // misma orden por USB
+    assert(eng.score().blue == 0);
+    tap(400, 430); tap(400, 360); tap(400, 360);  // pausa y abandonar
+    assert(!inMatch);
+  }
 
   // Reinicio: la configuración y el historial salen de la NVS.
   uint8_t savedGoals = cfg.goalsPerPeriod;

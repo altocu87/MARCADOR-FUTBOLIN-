@@ -75,6 +75,42 @@ class EdgeTrigger {
   uint32_t lastFire_ = 0;
 };
 
+// Pulsador arcade con dos gestos: toque corto (gol) y toque largo (anular gol).
+//  - Corto: se suelta antes de `longMs` → se notifica AL SOLTAR.
+//  - Largo: se mantiene `longMs` → se notifica EN ESE MOMENTO (sin esperar a soltar) y al soltar no pasa nada.
+enum class Press : uint8_t { None, Short, Long };
+
+class PressClassifier {
+ public:
+  explicit PressClassifier(uint16_t longMs = 800, uint16_t stableMs = 25) : deb_(stableMs), longMs_(longMs) {}
+
+  Press update(bool raw, uint32_t nowMs) {
+    bool s = deb_.update(raw, nowMs);
+    Press out = Press::None;
+    if (s && !down_) {
+      down_ = true;
+      longSent_ = false;
+      downAt_ = nowMs;
+    } else if (s && down_ && !longSent_ && (uint32_t)(nowMs - downAt_) >= longMs_) {
+      longSent_ = true;
+      out = Press::Long;
+    } else if (!s && down_) {
+      down_ = false;
+      if (!longSent_) out = Press::Short;
+    }
+    return out;
+  }
+
+  bool held() const { return down_; }
+
+ private:
+  Debouncer deb_;
+  uint16_t longMs_;
+  bool down_ = false;
+  bool longSent_ = false;
+  uint32_t downAt_ = 0;
+};
+
 // Junta caracteres en líneas terminadas en '\n' (ignora '\r'). Tamaño fijo, sin memoria dinámica.
 class LineBuffer {
  public:

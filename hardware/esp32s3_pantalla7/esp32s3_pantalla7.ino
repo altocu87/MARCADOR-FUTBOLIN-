@@ -5,6 +5,8 @@
 //   - Partido: el número de cada equipo es el botón de gol, −1, DESHACER, PAUSA, reloj, bloqueo de 3 s,
 //     cuenta atrás, 1ª y 2ª parte, prórroga con gol de oro, penaltis y pantalla de victoria.
 //   - Mismas reglas que la app (motor mfv3_engine.h, probado en PC con los criterios A01–A13).
+//   - Mando inalámbrico (sketch `mando_pulsadores`): 2 pulsadores arcade por radio ESP-NOW; toque corto = gol,
+//     toque largo = anular el último gol de ese equipo. Sin Wi-Fi ni router.
 //   - Sensores de gol: en la Waveshare 7C, directamente a las entradas aisladas DI0 (Blanco) y DI1 (Azul);
 //     las salidas DO0/DO1 se activan 1 s con cada gol (luces, relé). En otras placas, por UART desde un
 //     Arduino o ESP32-C3 con el sketch `arduino_usb`. Siempre también por el USB (protocolo MFV3).
@@ -16,9 +18,14 @@
 
 #include <Arduino.h>
 #include <Preferences.h>
+#include <WiFi.h>
+#include <esp_now.h>
+#include <esp_wifi.h>
+#include <esp_arduino_version.h>
 #include "board_config.h"
 #include "mfv3_core.h"
 #include "mfv3_engine.h"
+#include "mfv3_radio.h"
 #include "ui_layout.h"
 
 using mfv3::Engine;
@@ -28,6 +35,7 @@ using mfv3::Team;
 using ui::Btn;
 
 static const char* FW_VERSION = "1.0";
+static const uint8_t GRUPO_MESA = 1;  // MISMO número que en el mando (cámbialo si hay dos mesas cerca)
 static const uint32_t SLEEP_AFTER_MS = 5UL * 60UL * 1000UL;  // atenuar pantalla tras 5 min sin uso fuera de partido
 
 LGFX lcd;
@@ -234,6 +242,16 @@ static void inputGoal(Team t) {
   afterChange(r == mfv3::Result::Accepted, t);
 }
 
+// Pulsación larga del mando: anular el último gol de ese equipo (en penaltis, deshacer el último lanzamiento).
+static void inputAnnul(Team t) {
+  if (!inMatch) return;
+  uint32_t now = millis();
+  if (eng.phase() == Phase::Playing || eng.phase() == Phase::Paused) eng.minusOne(t, now);
+  else if (eng.phase() == Phase::Penalties) eng.undoPenalty();
+  else return;
+  afterChange(false, t);
+}
+
 static void inputPause() {
   if (!inMatch) return;
   uint32_t now = millis();
@@ -253,6 +271,8 @@ static void handleBoardLine(const char* line) {
   }
   if (!strcmp(word, "GOL_BLANCO") || !strcmp(word, "GB")) inputGoal(Team::White);
   else if (!strcmp(word, "GOL_AZUL") || !strcmp(word, "GA")) inputGoal(Team::Blue);
+  else if (!strcmp(word, "ANULAR_BLANCO") || !strcmp(word, "AB")) inputAnnul(Team::White);
+  else if (!strcmp(word, "ANULAR_AZUL") || !strcmp(word, "AA")) inputAnnul(Team::Blue);
   else if (!strcmp(word, "PAUSA")) inputPause();
   else if (!strcmp(word, "SALTAR") && inMatch && eng.phase() == Phase::Countdown) {
     eng.skipCountdown(millis());
@@ -264,6 +284,50 @@ static void handleBoardLine(const char* line) {
     sendLine(buf);
   }
 }
+
+// ---------------------------------------------------------------- radio (ESP-NOW) desde el mando
+// El aviso llega en otra tarea del sistema: solo se valida y se guarda en una cola; loop() lo procesa.
+static mfv3::RadioDedup radioDedup;
+static volatile uint8_t radioHead = 0, radioTail = 0;
+static mfv3::RadioCmd radioQueue[8];
+static volatile uint32_t lastRadioAt = 0;
+static bool radioOk = false;
+
+static void radioPush(const uint8_t* mac, const uint8_t* data, int len) {
+  mfv3::RadioMsg m = mfv3::radioDecode(data, len, GRUPO_MESA);
+  if (!m.ok || !radioDedup.fresh(mac, m.seq)) return;
+  lastRadioAt = millis();
+  if (m.cmd == mfv3::RadioCmd::Hello) return;
+  uint8_t next = (uint8_t)((radioHead + 1) % 8);
+  if (next == radioTail) return;  // cola llena: se pierde (no debería pasar)
+  radioQueue[radioHead] = m.cmd;
+  radioHead = next;
+}
+
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+static void onRadio(const esp_now_recv_info_t* info, const uint8_t* data, int len) { radioPush(info->src_addr, data, len); }
+#else
+static void onRadio(const uint8_t* mac, const uint8_t* data, int len) { radioPush(mac, data, len); }
+#endif
+
+static void radioBegin() {
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  esp_wifi_set_channel(mfv3::RADIO_CHANNEL, WIFI_SECOND_CHAN_NONE);
+  radioOk = esp_now_init() == ESP_OK && esp_now_register_recv_cb(onRadio) == ESP_OK;
+  if (!radioOk) sendLine("LOG radio ESP-NOW no disponible");
+}
+
+static void radioPoll() {
+  while (radioTail != radioHead) {
+    mfv3::RadioCmd c = radioQueue[radioTail];
+    radioTail = (uint8_t)((radioTail + 1) % 8);
+    handleBoardLine(mfv3::radioLine(c));
+  }
+}
+
+// El mando saluda cada 20 s: «conectado» si se ha oído en el último minuto.
+static bool remoteLinked() { return lastRadioAt != 0 && millis() - lastRadioAt < 60000UL; }
 
 // ---------------------------------------------------------------- dibujo
 static void text(const char* s, int x, int y, const lgfx::IFont* font, uint16_t color, float size = 1.0f) {
@@ -306,6 +370,8 @@ static void drawHome() {
     snprintf(sub, sizeof(sub), "Partido rapido en la mesa  |  v%s", FW_VERSION);
   }
   text(sub, ui::W / 2, 100, &lgfx::fonts::FreeSans12pt7b, C_TEXT2);
+  text(remoteLinked() ? "MANDO CONECTADO" : "MANDO: SIN SENAL", ui::W / 2, 128, &lgfx::fonts::FreeSansBold9pt7b,
+       remoteLinked() ? C_OK : C_LINE);
 
   const char* conds[3] = {"POR GOLES", "POR TIEMPO", "AMBAS"};
   for (int i = 0; i < 3; i++) {
@@ -509,7 +575,9 @@ static void drawFinished() {
 
 // Clave de lo que hay en pantalla: si cambia, se redibuja todo.
 static uint32_t screenKey(uint32_t now) {
-  if (!inMatch) return 0x80000000UL | ((uint32_t)cfg.endCondition << 16) | (cfg.goalsPerPeriod << 8) | cfg.minutesPerPeriod;
+  if (!inMatch)
+    return 0x80000000UL | (remoteLinked() ? 0x01000000UL : 0) | ((uint32_t)cfg.endCondition << 16) | (cfg.goalsPerPeriod << 8) |
+           cfg.minutesPerPeriod;
   mfv3::Score s = eng.score();
   uint32_t k = ((uint32_t)eng.phase() << 28) | ((uint32_t)eng.period() << 25) | ((uint32_t)s.white << 17) | ((uint32_t)s.blue << 9) |
                ((uint32_t)eng.kickCount() << 2) | (eng.canUndo() ? 2 : 0) | (confirmAbandon ? 1 : 0);
@@ -677,6 +745,7 @@ void setup() {
   initColors();
   if (AUX_UART_RX >= 0) AuxSerial.begin(115200, SERIAL_8N1, AUX_UART_RX, AUX_UART_TX);
   loadPrefs();
+  radioBegin();
   lastActivity = millis();
   char hello[40];
   snprintf(hello, sizeof(hello), "HELLO MARCADOR_V3_S3 %s", FW_VERSION);
@@ -694,6 +763,7 @@ void loop() {
     while (AuxSerial.available() > 0)
       if (auxRx.push((char)AuxSerial.read())) handleBoardLine(auxRx.line());
 
+  radioPoll();
   pollTouch();
 #if HAS_ISOLATED_IO
   pollIsolatedInputs(now);

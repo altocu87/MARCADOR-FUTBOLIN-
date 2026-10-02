@@ -50,7 +50,9 @@ placa** (http://192.168.4.1), se conecta por Wi-Fi sola.
 | `hardware/arduino_usb/` | Arduino Uno/Nano/Mega/Leonardo | Pulsadores + sensores → USB; LEDs y zumbador al confirmar gol |
 | `hardware/esp32_marcador/` | ESP32 / C3 / S3 | Red propia «MARCADOR-FUTBOLIN», sirve la app, WebSocket + Bluetooth + USB, LEDs y zumbador |
 | `hardware/esp32s3_pantalla7/` | ESP32-S3 con pantalla táctil 7" 800×480 | **Marcador activo** en la propia pantalla: configuración, partido, prórroga, penaltis, victoria e historial |
-| `hardware/common/mfv3_core.h` | — | Antirrebote, disparo por flanco y protocolo (compartido, probado en PC) |
+| `hardware/mando_pulsadores/` | ESP32-C3 Super Mini (u otra ESP32) | **Mando inalámbrico** con 2 pulsadores arcade: toque corto = gol, toque largo = anular gol; radio ESP-NOW hasta la pantalla |
+| `hardware/common/mfv3_core.h` | — | Antirrebote, disparo por flanco, toque corto/largo y protocolo (compartido, probado en PC) |
+| `hardware/common/mfv3_radio.h` | — | Paquete de radio del mando (grupo de mesa, secuencia, suma de control, descarte de repeticiones) |
 | `hardware/common/mfv3_engine.h` | — | Motor del partido en C++ (mismas reglas que la app, criterios A01–A13 probados en PC) |
 
 ### Arduino (USB)
@@ -122,6 +124,8 @@ Texto UTF-8, **una orden por línea** terminada en `\n`, igual por USB (115200 b
 | `HELLO <nombre> [versión]` | Saludo (se repite cada 2 s por USB hasta recibir respuesta) |
 | `GOL_BLANCO [button\|sensor]` / `GB` | Gol de Blanco |
 | `GOL_AZUL [button\|sensor]` / `GA` | Gol de Azul |
+| `ANULAR_BLANCO` / `AB` | Anular el último gol del Blanco (−1). En penaltis deshace el último lanzamiento |
+| `ANULAR_AZUL` / `AA` | Anular el último gol del Azul (−1). En penaltis deshace el último lanzamiento |
 | `PAUSA` | Pausa / continuar |
 | `SALTAR` | Saltar la cuenta atrás |
 | `PING` | La app responde `PONG` |
@@ -169,6 +173,8 @@ fabricante (github.com/waveshareteam/ESP32-S3-Touch-LCD-7C). El sketch
 - **Mismas reglas que la app:** usa `mfv3_engine.h`, el motor portado a C++ y probado en PC con los criterios A01–A13.
 - **Memoria:** guarda la configuración y los 8 últimos resultados aunque se apague.
 - **Ahorro:** fuera de partido baja el brillo a los 5 min; el primer toque solo la despierta.
+- **Mando inalámbrico de 2 pulsadores** (ver §7.1): toque corto = gol, toque largo = anular gol. En la pantalla
+  de inicio aparece «MANDO CONECTADO» cuando lo oye.
 - **Sensores de gol (Waveshare 7C):** van directamente a las **entradas aisladas** de la placa, sin Arduino:
   **DI0 = gol del Blanco**, **DI1 = gol del Azul** (más su borne común). El estado que tienen al encender se toma
   como «sin balón», así que vale cualquier sensor (NPN/PNP, normalmente abierto o cerrado): **enciende la placa
@@ -177,7 +183,28 @@ fabricante (github.com/waveshareteam/ESP32-S3-Touch-LCD-7C). El sketch
 - **Otras placas:** conecta un Arduino o ESP32-C3 con el sketch `arduino_usb` al UART de la placa
   (TX del Arduino → RX de la placa). La placa contesta `GOAL/LOCK/WIN` para que el Arduino encienda LEDs y zumbador.
   ⚠ Un Arduino Uno/Nano trabaja a 5 V: pon un divisor (1 kΩ + 2 kΩ) en su TX antes de entrar al RX de 3,3 V.
-  También acepta las mismas órdenes por el USB de la placa (`GB`, `GA`, `PAUSA`, `SALTAR`, `PING`, `HELLO`).
+  También acepta las mismas órdenes por el USB de la placa (`GB`, `GA`, `AB`, `AA`, `PAUSA`, `SALTAR`, `PING`, `HELLO`).
+
+### 7.1 Mando inalámbrico con 2 pulsadores arcade (`hardware/mando_pulsadores/`)
+
+Una mini placa **ESP32-C3 Super Mini** (unos 3–5 €; vale cualquier ESP32) con los dos pulsadores arcade. Envía
+cada pulsación por radio **ESP-NOW** (2,4 GHz, la radio que ya llevan las dos placas): sin Wi-Fi, sin router y sin
+emparejar. Alcance típico de decenas de metros; de sobra para una mesa.
+
+| Gesto | Qué hace | LED del mando |
+|---|---|---|
+| Toque corto (se suelta antes de 0,8 s) | **Gol** de ese equipo (en la cuenta atrás, la salta; en penaltis, gol del lanzamiento) | 1 destello |
+| Toque largo (mantener 0,8 s) | **Anular** el último gol de ese equipo (−1); en penaltis, deshace el último lanzamiento | 3 destellos |
+
+- **Cableado:** pulsador BLANCO entre **GPIO 3** y **GND**; pulsador AZUL entre **GPIO 4** y **GND** (sin
+  resistencias: la placa usa las internas). Si tus pulsadores llevan LED, ese LED se alimenta aparte (5/12 V).
+- **Alimentación:** USB-C (cargador o batería externa) o batería LiPo de 3,7 V con un módulo cargador.
+- **Las mismas reglas:** el bloqueo de 3 s, los turnos de penaltis, etc. los decide la pantalla; el mando solo
+  envía pulsaciones. Cada orden se envía 3 veces y la pantalla cuenta solo una.
+- **Dos mesas cerca:** cambia `GRUPO_MESA` (mismo número en el mando y en `esp32s3_pantalla7.ino`).
+- **Ajustes** al principio del sketch: pines, LED, duración del toque largo (`PULSACION_LARGA_MS`).
+- **Cargar:** IDE de Arduino → placa **ESP32C3 Dev Module**, «USB CDC On Boot: Enabled» → Subir. En el monitor
+  serie verás «Enviado: GOL_BLANCO button», etc.
 
 ### Cómo cargarlo
 1. IDE de Arduino con el paquete **esp32 de Espressif** y la biblioteca **LovyanGFX** (Gestor de bibliotecas).
@@ -195,8 +222,8 @@ fabricante (github.com/waveshareteam/ESP32-S3-Touch-LCD-7C). El sketch
   el perfil en `board_config.h`.
 - Los textos de la placa van sin tildes (las fuentes integradas no las incluyen).
 - En la 7C no queda un UART libre (el audio usa GPIO43/44): los sensores van a DI0/DI1 y el PC por USB.
-- Aún no usa el altavoz/micrófono de las placas «AI Voice» (códec ES8389) ni el Wi-Fi/Bluetooth (los dos siguen disponibles para
-  una versión futura: sincronizar con la app o anunciar los goles por voz).
+- Aún no usa el altavoz/micrófono de las placas «AI Voice» (códec ES8389) ni el Bluetooth. La radio Wi-Fi se usa
+  para el mando (ESP-NOW); sincronizar con la app o anunciar los goles por voz queda para una versión futura.
 
 ---
 
@@ -208,5 +235,7 @@ fabricante (github.com/waveshareteam/ESP32-S3-Touch-LCD-7C). El sketch
 | No aparece el puerto | Cierra el monitor serie del IDE de Arduino (solo un programa puede usar el puerto). |
 | Wi-Fi «Reintentando…» | Comprueba que estás en la red MARCADOR-FUTBOLIN y la IP (ws://192.168.4.1:81/). |
 | Bluetooth no encuentra la placa | Activa Bluetooth y ubicación en Android; la placa se anuncia como «MFV3-xxxx». |
+| El mando no hace nada | Mira que en la pantalla ponga «MANDO CONECTADO» (el mando saluda cada 20 s); revisa que `GRUPO_MESA` sea el mismo en los dos sketches. |
+| Un toque corto anula el gol | Sube `PULSACION_LARGA_MS` en el mando (por defecto 800 ms). |
 | Goles dobles por rebote | Sube el antirrebote o el `holdOff` en el sketch; el bloqueo de 3 s de la app ya evita dobles goles. |
 | En http://192.168.4.1 no se instala como app | Los navegadores solo instalan/cachean en https o localhost; la placa ya la sirve sin Internet. |

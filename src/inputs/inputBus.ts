@@ -5,7 +5,7 @@
  */
 import type { InputSource, Team } from '../match-engine';
 
-export type InputCommand = 'GOL_BLANCO' | 'GOL_AZUL' | 'PAUSA' | 'SALTAR';
+export type InputCommand = 'GOL_BLANCO' | 'GOL_AZUL' | 'ANULAR_BLANCO' | 'ANULAR_AZUL' | 'PAUSA' | 'SALTAR';
 
 export interface InputSignal {
   command: InputCommand;
@@ -31,6 +31,10 @@ export const inputBus = new InputBus();
 
 export const teamFromCommand = (c: InputCommand): Team | null =>
   c === 'GOL_BLANCO' ? 'white' : c === 'GOL_AZUL' ? 'blue' : null;
+
+/** Pulsación larga de un pulsador: anular el último gol de ese equipo (−1). */
+export const annulTeamFromCommand = (c: InputCommand): Team | null =>
+  c === 'ANULAR_BLANCO' ? 'white' : c === 'ANULAR_AZUL' ? 'blue' : null;
 
 /** Teclado de desarrollo: Q/A = Blanco, P/L = Azul, Espacio = pausa, Intro = saltar. */
 const KEY_MAP: Record<string, InputCommand> = {
