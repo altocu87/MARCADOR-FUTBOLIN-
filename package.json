@@ -16,7 +16,8 @@
     "docs:diy": "node scripts/gen-diy-manual.mjs",
     "build:web": "npm run build && node scripts/firmware-manifests.mjs web/public/firmware && vite build -c vite.web.config.ts && node scripts/assemble-web.mjs",
     "preview:web": "vite preview -c vite.web.config.ts",
-    "dev:web": "vite -c vite.web.config.ts"
+    "dev:web": "vite -c vite.web.config.ts",
+    "firmware:get": "node scripts/fetch-firmware.mjs"
   },
   "dependencies": {
     "esp-web-tools": "^10.4.0",

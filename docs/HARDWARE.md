@@ -6,7 +6,8 @@ LEDs y zumbador, y el ESP32 además puede **servir la app sin Internet** desde s
 
 > **¿Quieres montarlo tú?** Empieza por el [Manual «Hazlo tú mismo»](MANUAL_DIY.md) (también en la app:
 > Ajustes → Hazlo tú mismo): niveles, placas compatibles, qué pin va a cada pulsador y cómo detectar los goles.
-> Este documento es la referencia técnica.
+> Este documento es la referencia técnica. Las placas ESP32 también se pueden instalar **desde la web**
+> (asistente «Monta tu marcador» → tu placa → «Instalar en mi placa»), sin IDE de Arduino.
 
 > Regla de oro: la placa solo avisa de pulsaciones. **Todas las reglas** (bloqueo de 3 s, turnos de penaltis,
 > estados del partido) las aplica el motor de la app, igual que si tocaras la pantalla.
@@ -178,6 +179,9 @@ fabricante (github.com/waveshareteam/ESP32-S3-Touch-LCD-7C). El sketch
 - **Mismas reglas que la app:** usa `mfv3_engine.h`, el motor portado a C++ y probado en PC con los criterios A01–A13.
 - **Memoria:** guarda la configuración y los 8 últimos resultados aunque se apague.
 - **Ahorro:** fuera de partido baja el brillo a los 5 min; el primer toque solo la despierta.
+- **Pantalla de prueba:** el primer arranque abre «PRUEBA DE LA PLACA»: toca las 4 esquinas, pulsa los dos botones
+  del mando y (opcional) pasa la bola por los sensores. Muestra también si la radio funciona y el último toque.
+  Se repite cuando quieras con el botón PRUEBA de la pantalla de inicio.
 - **Mando inalámbrico de 2 pulsadores** (ver §7.1): toque corto = gol, toque largo = anular gol. En la pantalla
   de inicio aparece «MANDO CONECTADO» cuando lo oye.
 - **Sensores de gol (Waveshare 7C):** van directamente a las **entradas aisladas** de la placa, sin Arduino:

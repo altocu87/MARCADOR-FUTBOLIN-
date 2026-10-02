@@ -16,6 +16,8 @@ npm run build      # comprobación TypeScript + compilación a dist/
 npm run preview    # sirve la compilación de dist/
 npm run build:esp32    # compila y copia la app comprimida a hardware/esp32_marcador/data/
 npm run docs:diy       # regenera docs/MANUAL_DIY.md desde el catálogo de placas
+npm run build:web      # web pública + app juntas en dist-web/ (la app en dist-web/app/)
+npm run preview:web    # sirve dist-web/ → http://localhost:4180
 npm run test:hardware  # pruebas en PC del firmware (núcleo, motor C++ y simulación de Arduino/ESP32/S3 7")
 ```
 
@@ -35,6 +37,19 @@ proporcionalmente en pequeñas, sin scroll general.
 | Consola: `marcador.enviar('GOL_AZUL', 'sensor')` | Simula un pulsador o sensor |
 
 Todas las entradas llegan al mismo motor y respetan el bloqueo de 3 s.
+
+## Web pública y compilación automática
+
+- **Web pública** (`web/`): portada, «Usar en el móvil» (cómo abrir e instalar la app en Android, iPhone y PC),
+  asistente **«Monta tu marcador»** (nivel → placa → lista de la compra, conexiones con esquema, instalación y
+  primer arranque), «Detectar goles» y Ayuda. Usa el mismo catálogo de placas que la app.
+- **Instalador desde el navegador** (ESP Web Tools): las placas ESP32 (incluida la pantalla Waveshare 7C y el mando)
+  se instalan con un botón desde Chrome o Edge, sin IDE de Arduino. Necesita los binarios publicados (ver abajo).
+- **GitHub Actions**: `Pruebas` (app + firmware simulado en cada subida) y `Firmware` (compila de verdad los
+  13 programas del catálogo; en `main` publica los binarios en la release `firmware-latest`). Para servir el
+  instalador: `npm run firmware:get` (descarga esa release en `web/public/firmware/`) y después `npm run build:web`.
+- **Pantalla de prueba** en la placa de 7": sale sola el primer arranque (táctil en las 4 esquinas, mando, sensores)
+  y después con el botón PRUEBA.
 
 ## Qué incluye
 

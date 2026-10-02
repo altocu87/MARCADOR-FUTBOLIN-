@@ -37,6 +37,14 @@ Fecha: 02/10/2026 · Versión 0.3.0 · Motor 1.0.0 (`reglas-partido-1`)
   Sin barras de desplazamiento en 800×480, 1280×720, 1024×768, 2560×1080, 844×390 y 390×844 (girado y sin girar),
   app servida comprimida como en el ESP32, y arranque sin conexión con el servidor apagado.
 
+## Web y compilación
+
+- Web pública (`web/`) con asistente «Monta tu marcador» e instalador desde el navegador (ESP Web Tools). Los
+  binarios los genera GitHub Actions (`Firmware`, release `firmware-latest` al subir a `main`).
+- Compilación real en GitHub: Arduino Uno/Nano/Mega/Leonardo, Raspberry Pi Pico, ESP32, C3, S3, S2 y mando
+  compilan. Las 3 pantallas de 7" fallaban por las declaraciones automáticas del IDE (corregido con `s3_types.h`;
+  las pruebas del PC ahora simulan ese paso).
+
 ## Limitaciones conocidas
 
 - El firmware ESP32 no se ha compilado con el compilador real de Espressif (bloqueado en el entorno de desarrollo)
