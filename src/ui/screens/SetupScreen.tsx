@@ -109,7 +109,7 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
         </div>
       </div>
 
-      <div className="grid-2" style={{ alignItems: 'center' }}>
+      <div className="grid-2 setup-steppers">
         <div className="card">
           <div className="label">Objetivo de goles por parte</div>
           <Stepper
