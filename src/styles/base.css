@@ -1,0 +1,120 @@
+/* Tokens del sistema visual (propuesta de paleta del documento maestro). */
+:root {
+  --bg-deep: #070b12;
+  --surface: #091324;
+  --card: #11223b;
+  --card-2: #162a47;
+  --line: #22385a;
+  --text: #f3f7ff;
+  --text-2: #a6b7cf;
+  --text-3: #6f84a3;
+  --accent: #62d6ff;
+  --accent-soft: rgba(98, 214, 255, 0.16);
+  --white-team: #eef6ff;
+  --white-ink: #0b1626;
+  --blue-team: #176dbc;
+  --blue-ink: #f3f7ff;
+  --chaos: #d65cff;
+  --chaos-soft: rgba(214, 92, 255, 0.18);
+  --ranked: #f2c94c;
+  --ranked-soft: rgba(242, 201, 76, 0.16);
+  --danger: #ff5a6e;
+  --danger-soft: rgba(255, 90, 110, 0.16);
+  --ok: #3ddc97;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --font: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, system-ui, sans-serif;
+  --glow: 0 0 0 1px rgba(98, 214, 255, 0.35), 0 0 18px rgba(98, 214, 255, 0.18);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Lienzo lógico 800 × 480 escalado proporcionalmente y centrado. */
+.viewport {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at center, #0b1424 0%, #000 75%);
+}
+
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 800px;
+  height: 480px;
+  transform-origin: center center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(98, 214, 255, 0.08), transparent 70%),
+    linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  box-shadow: 0 0 60px rgba(98, 214, 255, 0.08);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,100 @@
+/** Navegación principal: cada ruta pinta su pantalla dentro del lienzo 800 × 480. */
+import { useEffect } from 'react';
+import { attachKeyboardAdapter, exposeDevInputs } from '../inputs/inputBus';
+import { SleepOverlay } from '../ui/components/SleepOverlay';
+import { Stage } from '../ui/layout/Stage';
+import { HomeScreen } from '../ui/screens/HomeScreen';
+import { MatchScreen } from '../ui/screens/MatchScreen';
+import { PrematchScreen } from '../ui/screens/PrematchScreen';
+import { ProfileScreen } from '../ui/screens/ProfileScreen';
+import { RankingScreen } from '../ui/screens/RankingScreen';
+import { SelectPlayersScreen } from '../ui/screens/SelectPlayersScreen';
+import { SettingsScreen } from '../ui/screens/SettingsScreen';
+import { SetupScreen } from '../ui/screens/SetupScreen';
+import { MatchDetailScreen, TournamentScreen } from '../ui/screens/SimpleScreens';
+import { SummaryScreen } from '../ui/screens/SummaryScreen';
+import { AppProvider, useApp } from './AppContext';
+
+// Clave estable por navegación: cada nueva ruta de partido crea un partido nuevo
+// (revancha incluida) sin remontarlo en re-renderizados posteriores.
+const routeKeys = new WeakMap<object, number>();
+let nextKey = 0;
+function routeKey(route: object): number {
+  let k = routeKeys.get(route);
+  if (k === undefined) {
+    k = (nextKey += 1);
+    routeKeys.set(route, k);
+  }
+  return k;
+}
+
+function Router() {
+  const { route, loaded, prefs, toastMessage } = useApp();
+
+  useEffect(() => {
+    exposeDevInputs();
+    return attachKeyboardAdapter();
+  }, []);
+
+  if (!loaded) return <div className="screen" />;
+
+  let screen;
+  switch (route.name) {
+    case 'home':
+      screen = <HomeScreen />;
+      break;
+    case 'setup':
+      screen = <SetupScreen key={route.mode} mode={route.mode} initial={route.config} />;
+      break;
+    case 'select':
+      screen = <SelectPlayersScreen config={route.config} initial={route.participants} />;
+      break;
+    case 'prematch':
+      screen = <PrematchScreen config={route.config} participants={route.participants} />;
+      break;
+    case 'match':
+      screen = <MatchScreen key={routeKey(route)} config={route.config} participants={route.participants} resume={route.resume} />;
+      break;
+    case 'summary':
+      screen = <SummaryScreen match={route.match} save={route.save} live={route.live} />;
+      break;
+    case 'ranking':
+      screen = <RankingScreen tab={route.tab} />;
+      break;
+    case 'matchDetail':
+      screen = <MatchDetailScreen matchId={route.matchId} />;
+      break;
+    case 'profile':
+      screen = <ProfileScreen key={route.playerId} playerId={route.playerId} />;
+      break;
+    case 'tournament':
+      screen = <TournamentScreen />;
+      break;
+    case 'settings':
+      screen = <SettingsScreen tab={route.tab} />;
+      break;
+  }
+
+  return (
+    <>
+      {screen}
+      {/* Reposo solo fuera de una partida activa. */}
+      <SleepOverlay minutes={prefs.sleepMinutes} enabled={route.name !== 'match'} />
+      {toastMessage && (
+        <div className="toast" role="status">
+          {toastMessage}
+        </div>
+      )}
+    </>
+  );
+}
+
+export function App() {
+  return (
+    <AppProvider>
+      <Stage>
+        <Router />
+      </Stage>
+    </AppProvider>
+  );
+}
