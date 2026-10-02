@@ -147,7 +147,7 @@ function Celebration({
                     {e.levelAfter > e.levelBefore && <span className="cel-level">⬆ NIVEL {e.levelAfter}</span>}
                     {rankUp && (
                       <span className="cel-rank">
-                        <CategoryBadge category={e.categoryAfter} size={26} /> ¡ASCENSO A {e.categoryAfter.name.toUpperCase()}!
+                        <CategoryBadge category={e.categoryAfter} size={40} /> ¡ASCENSO A {e.categoryAfter.name.toUpperCase()}!
                       </span>
                     )}
                     {e.unlocked.map((id) => {

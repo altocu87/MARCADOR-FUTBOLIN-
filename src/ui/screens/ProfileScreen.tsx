@@ -127,7 +127,7 @@ export function ProfileScreen({ playerId }: { playerId: string }) {
         </div>
         {prog && (
           <div className="pc-elo">
-            <CategoryBadge category={category} size={46} />
+            <CategoryBadge category={category} size={64} />
             <div>
               <div style={{ color: category.color, fontWeight: 800, fontSize: 13 }}>{category.name}</div>
               <div style={{ fontSize: 24, fontWeight: 900 }}>{prog.elo}</div>

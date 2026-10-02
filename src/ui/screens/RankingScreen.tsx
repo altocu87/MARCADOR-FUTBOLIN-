@@ -125,7 +125,7 @@ function Standings() {
                 </span>
                 <span style={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{r.prog.elo}</span>
                 <span style={{ color: r.prog.category.color, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <CategoryBadge category={r.prog.category} size={24} />
+                  <CategoryBadge category={r.prog.category} size={30} />
                   {r.prog.category.name}
                 </span>
                 <span className="muted">{r.prog.rankedPlayed}</span>
