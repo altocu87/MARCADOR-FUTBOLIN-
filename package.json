@@ -13,9 +13,13 @@
     "test:watch": "vitest",
     "build:esp32": "npm run build && node scripts/copy-to-esp32.mjs",
     "test:hardware": "sh hardware/test/check_copies.sh",
-    "docs:diy": "node scripts/gen-diy-manual.mjs"
+    "docs:diy": "node scripts/gen-diy-manual.mjs",
+    "build:web": "npm run build && node scripts/firmware-manifests.mjs web/public/firmware && vite build -c vite.web.config.ts && node scripts/assemble-web.mjs",
+    "preview:web": "vite preview -c vite.web.config.ts",
+    "dev:web": "vite -c vite.web.config.ts"
   },
   "dependencies": {
+    "esp-web-tools": "^10.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
@@ -26,5 +30,8 @@
     "typescript": "7.0.2",
     "vite": "8.3.2",
     "vitest": "5.0.3"
+  },
+  "overrides": {
+    "@material/web": "2.2.0"
   }
 }

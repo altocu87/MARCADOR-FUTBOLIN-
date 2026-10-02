@@ -20,3 +20,18 @@ g++ -std=c++17 -Wall -Wno-unused-variable -Itest/mock_s3 -Imando_pulsadores -x c
 for b in 4 1 2; do
   g++ -std=c++17 -Wall -Wno-unused-variable -DMFV3_BOARD=$b -Itest/mock_s3 -Iesp32s3_pantalla7 -x c++ test/s3_sim_test.cpp -o /tmp/mfv3_s3_sim && /tmp/mfv3_s3_sim
 done
+
+# Igual que el IDE de Arduino: declarar todas las funciones del .ino al principio y volver a compilar
+# (detecta en el PC los errores «X does not name a type» que solo salen al compilar de verdad).
+proto() {  # proto <carpeta> <prueba> <mocks> [defines]
+  rm -rf /tmp/mfv3_proto && mkdir -p "/tmp/mfv3_proto/$1"
+  cp "$1"/*.h "/tmp/mfv3_proto/$1/"
+  python3 test/arduino_prototypes.py "$1/$1.ino" "/tmp/mfv3_proto/$1/$1.ino" > /dev/null
+  sed "s#../$1/$1.ino#/tmp/mfv3_proto/$1/$1.ino#" "test/$2" > /tmp/mfv3_proto/prueba.cpp
+  g++ -std=c++17 -w $4 -I"$3" -I"/tmp/mfv3_proto/$1" -x c++ /tmp/mfv3_proto/prueba.cpp -o /tmp/mfv3_proto/prueba && /tmp/mfv3_proto/prueba > /dev/null
+  echo "$1: compila con las declaraciones del IDE de Arduino"
+}
+proto arduino_usb arduino_sim_test.cpp test/mock "-DARDUINO_ARCH_AVR -DARDUINO_AVR_UNO"
+proto esp32_marcador esp32_sim_test.cpp test/mock_esp32 "-DARDUINO_ARCH_ESP32 -DCONFIG_IDF_TARGET_ESP32=1"
+proto mando_pulsadores mando_sim_test.cpp test/mock_s3
+proto esp32s3_pantalla7 s3_sim_test.cpp test/mock_s3 "-DMFV3_BOARD=4"

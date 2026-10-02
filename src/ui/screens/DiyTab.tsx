@@ -17,6 +17,7 @@ import {
   type BoardRole,
   type PinFunction,
 } from '../../inputs/hardware/catalog';
+import '../../styles/wiring.css';
 
 type Section = 'levels' | 'boards' | 'detection' | 'safety';
 

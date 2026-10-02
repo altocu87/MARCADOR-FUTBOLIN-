@@ -27,6 +27,7 @@
 #include "mfv3_engine.h"
 #include "mfv3_radio.h"
 #include "ui_layout.h"
+#include "s3_types.h"
 
 using mfv3::Engine;
 using mfv3::Phase;
@@ -79,9 +80,6 @@ static void initColors() {
 }
 
 // ---------------------------------------------------------------- historial breve (NVS)
-struct LastResult {
-  uint8_t white, blue, penW, penB, winner, reason;  // winner 0 = Blanco, 1 = Azul
-};
 static LastResult history[8];
 static uint8_t historyCount = 0;
 static uint32_t matchesPlayed = 0;
@@ -151,15 +149,6 @@ static bool lastLockShown = false;
 // ---------------------------------------------------------------- pantalla de prueba (primer arranque)
 // Comprueba el táctil (4 esquinas), el mando (pulsador BLANCO y AZUL) y los sensores, sin afectar al marcador.
 // Sale sola la primera vez que se enciende la placa; después, con el botón PRUEBA de la pantalla de inicio.
-struct TestState {
-  bool active;
-  bool corner[4];
-  bool remoteWhite, remoteBlue;
-  bool sensorWhite, sensorBlue;
-  bool usbSeen;
-  int16_t lastX, lastY;
-  uint16_t touches;
-};
 static TestState test = {};
 
 static bool testCornersOk() { return test.corner[0] && test.corner[1] && test.corner[2] && test.corner[3]; }
@@ -202,12 +191,6 @@ static void beep(uint16_t ms) {
 }
 
 // Tras cualquier cambio del motor: avisos a las placas, sonido, guardado.
-struct Snapshot {
-  Phase phase;
-  Period period;
-  uint8_t w, b;
-  uint8_t kicks;
-};
 static Snapshot snap;
 
 static Snapshot takeSnapshot() {
