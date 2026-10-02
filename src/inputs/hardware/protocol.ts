@@ -3,7 +3,8 @@
  * Una orden por línea, terminada en «\n», igual por USB Serial, WebSocket o Bluetooth.
  *
  * Placa → app:
- *   HELLO <nombre> [versión]     saludo al conectar
+ *   HELLO <modelo> [versión] [caps=a,b,c]  saludo al conectar: modelo de placa (ver catálogo
+ *                                «Hazlo tú mismo») y lo que sabe hacer (goles, anular, sensores, leds…)
  *   GOL_BLANCO [button|sensor]   gol del equipo Blanco (alias: GB)
  *   GOL_AZUL [button|sensor]     gol del equipo Azul   (alias: GA)
  *   ANULAR_BLANCO                anular el último gol del Blanco (−1; pulsación larga) (alias: AB)
@@ -31,7 +32,7 @@ export const PROTOCOL_VERSION = '1';
 
 export type BoardMessage =
   | { kind: 'command'; command: InputCommand; source: InputSource }
-  | { kind: 'hello'; name: string; version?: string }
+  | { kind: 'hello'; name: string; version?: string; caps: string[] }
   | { kind: 'ping' }
   | { kind: 'unknown'; raw: string };
 
@@ -55,7 +56,12 @@ export function parseBoardLine(line: string): BoardMessage | null {
   if (!raw) return null;
   const [head, ...rest] = raw.split(/\s+/);
   const word = head.toUpperCase();
-  if (word === 'HELLO') return { kind: 'hello', name: rest[0] ?? 'placa', version: rest[1] };
+  if (word === 'HELLO') {
+    const capsArg = rest.find((r) => r.toLowerCase().startsWith('caps='));
+    const plain = rest.filter((r) => r !== capsArg);
+    const caps = capsArg ? capsArg.slice(5).split(',').map((c) => c.trim().toLowerCase()).filter(Boolean) : [];
+    return { kind: 'hello', name: plain[0] ?? 'placa', version: plain[1], caps };
+  }
   if (word === 'PING') return { kind: 'ping' };
   const command = COMMANDS[word];
   if (command) {

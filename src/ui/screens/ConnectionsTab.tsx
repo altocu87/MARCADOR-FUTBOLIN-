@@ -1,6 +1,7 @@
 /** Ajustes → Conexiones: placas Arduino / ESP32 por USB, Wi-Fi o Bluetooth. */
 import { useState } from 'react';
 import { useApp } from '../../app/AppContext';
+import { CAP_LABEL, findBoard } from '../../inputs/hardware/catalog';
 import { defaultWsUrl } from '../../inputs/hardware/hub';
 import { linkSupport, type LinkKind, type LinkStatus } from '../../inputs/hardware/links';
 import { useHardware } from '../../inputs/hardware/useHardware';
@@ -35,7 +36,7 @@ const INFO: Record<LinkKind, { title: string; icon: string; text: string; needs:
   },
 };
 
-export function ConnectionsTab() {
+export function ConnectionsTab({ onShowGuide }: { onShowGuide?: (boardId?: string) => void }) {
   const hub = useHardware();
   const { prefs, savePrefs } = useApp();
   const [url, setUrl] = useState(prefs.hardware.wsUrl || defaultWsUrl());
@@ -60,6 +61,16 @@ export function ConnectionsTab() {
           <div className="dim" style={{ fontSize: 11 }}>
             {st.board ? `Placa: ${st.board}` : ''} {st.detail ?? ''}
           </div>
+        )}
+        {on && st.caps && st.caps.length > 0 && (
+          <div className="chip-wrap" aria-label="Lo que sabe hacer la placa">
+            {st.caps.map((c) => (
+              <span key={c} className="badge" style={{ fontSize: 10 }}>{CAP_LABEL[c] ?? c}</span>
+            ))}
+          </div>
+        )}
+        {on && st.boardId && findBoard(st.boardId) && onShowGuide && (
+          <button className="btn btn-sm" onClick={() => onShowGuide(st.boardId)}>Ver esquema de conexión</button>
         )}
         {!supported ? (
           <div className="notice warn" style={{ fontSize: 11 }}>No disponible aquí. {INFO[kind].needs}</div>
@@ -99,7 +110,14 @@ export function ConnectionsTab() {
             <button className="btn btn-sm" onClick={() => sendExternalInput('PAUSA', 'button')}>PAUSA</button>
           </div>
           <div className="dim" style={{ fontSize: 11, marginTop: 6 }}>
-            Programas para las placas y esquemas en la carpeta <code>hardware/</code> del proyecto (guía en docs/HARDWARE.md).
+            ¿Quieres montar tu propia placa con pulsadores o sensores?{' '}
+            {onShowGuide ? (
+              <button className="btn btn-sm" style={{ marginTop: 4 }} onClick={() => onShowGuide()}>
+                Guía «Hazlo tú mismo»
+              </button>
+            ) : (
+              'Mira Ajustes → Hazlo tú mismo.'
+            )}
           </div>
         </div>
         <div className="card conn-log">

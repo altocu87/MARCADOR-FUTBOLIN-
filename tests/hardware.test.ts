@@ -11,7 +11,13 @@ describe('Protocolo MFV3', () => {
     expect(parseBoardLine('PAUSA')).toMatchObject({ command: 'PAUSA' });
     expect(parseBoardLine('ANULAR_BLANCO')).toMatchObject({ command: 'ANULAR_BLANCO' });
     expect(parseBoardLine('aa')).toMatchObject({ command: 'ANULAR_AZUL' });
-    expect(parseBoardLine('HELLO ESP32-C3 1.0')).toEqual({ kind: 'hello', name: 'ESP32-C3', version: '1.0' });
+    expect(parseBoardLine('HELLO ESP32-C3 1.0')).toEqual({ kind: 'hello', name: 'ESP32-C3', version: '1.0', caps: [] });
+    expect(parseBoardLine('HELLO esp32c3 1.1 caps=goles,anular,Wifi')).toEqual({
+      kind: 'hello',
+      name: 'esp32c3',
+      version: '1.1',
+      caps: ['goles', 'anular', 'wifi'],
+    });
     expect(parseBoardLine('PING')).toEqual({ kind: 'ping' });
     expect(parseBoardLine('   ')).toBeNull();
     expect(parseBoardLine('XYZ')).toEqual({ kind: 'unknown', raw: 'XYZ' });

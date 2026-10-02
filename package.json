@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build:esp32": "npm run build && node scripts/copy-to-esp32.mjs",
-    "test:hardware": "sh hardware/test/check_copies.sh"
+    "test:hardware": "sh hardware/test/check_copies.sh",
+    "docs:diy": "node scripts/gen-diy-manual.mjs"
   },
   "dependencies": {
     "react": "19.3.0",

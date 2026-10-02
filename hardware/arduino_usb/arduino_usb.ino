@@ -1,38 +1,32 @@
-// MARCADOR FUTBOLÍN V3 · Arduino por USB (Uno, Nano, Mega, Leonardo, Micro…)
+// MARCADOR FUTBOLÍN V3 · Arduino por USB (Uno, Nano, Mega, Leonardo, Micro, Raspberry Pi Pico…)
 // ---------------------------------------------------------------------------
 // Conecta la placa al PC/tablet/móvil Android por USB y en la app:
 // Ajustes → Conexiones → USB → Conectar (Chrome o Edge).
 //
 // Qué hace:
+//   - Reconoce SOLA la placa elegida en el IDE y usa sus pines (mfv3_boards.h).
 //   - Lee 2 pulsadores de gol (Blanco/Azul), 1 de pausa y 2 sensores de gol (opcionales).
-//   - Envía por Serial (115200) las órdenes del protocolo MFV3: GOL_BLANCO, GOL_AZUL, PAUSA…
+//     Pulsador: toque corto = GOL, toque largo (0,8 s) = ANULAR el último gol de ese equipo.
+//     Sensores: de cualquier tipo; aprenden su estado «sin balón» al encender.
+//   - Envía por Serial (115200) las órdenes del protocolo MFV3: GOL_BLANCO, ANULAR_BLANCO, PAUSA…
 //   - Enciende el LED del pulsador del equipo que marca y suena el zumbador cuando la
 //     app CONFIRMA el gol (GOAL …), y los apaga durante el bloqueo de 3 s.
 //
-// Cableado (ver docs/HARDWARE.md):
+// Cableado (esquemas en la app: Ajustes → Hazlo tú mismo, y en docs/MANUAL_DIY.md):
 //   Pulsadores y sensores entre el pin y GND (se usa INPUT_PULLUP, activo en LOW).
 //   ¡Nunca conectes 12 V a un pin! Los LED de 12 V de los botones arcade van con
 //   un transistor/MOSFET (p. ej. ULN2003 o IRLZ44N) controlado desde el pin.
 
 #include "mfv3_core.h"
+#include "mfv3_boards.h"   // pines según la placa (automático)
 
-// ---------------- Configuración de pines ----------------
-const uint8_t PIN_BTN_BLANCO = 2;
-const uint8_t PIN_BTN_AZUL = 3;
-const uint8_t PIN_BTN_PAUSA = 4;      // opcional (deja sin conectar si no lo usas)
-const uint8_t PIN_SENSOR_BLANCO = 5;  // opcional: sensor de barrera IR en la portería
-const uint8_t PIN_SENSOR_AZUL = 6;    // opcional
-const uint8_t PIN_BUZZER = 8;         // opcional (zumbador activo)
-const uint8_t PIN_LED_BLANCO = 9;     // LED del pulsador (vía transistor si es de 12 V)
-const uint8_t PIN_LED_AZUL = 10;
+const char* FW_VERSION = "1.1";
+const uint16_t PULSACION_LARGA_MS = 800;  // mantener el pulsador este tiempo = anular gol
 
-const bool USE_SENSORS = false;       // pon true si instalas sensores
-const char* BOARD_NAME = "ARDUINO-USB";
-const char* FW_VERSION = "1.0";
-
-// Antirrebote 25 ms; tiempo mínimo entre señales del mismo pulsador 400 ms.
-mfv3::EdgeTrigger btnBlanco(25, 400), btnAzul(25, 400), btnPausa(25, 600);
-mfv3::EdgeTrigger senBlanco(5, 800), senAzul(5, 800);
+// Pulsadores: antirrebote 25 ms + toque corto/largo. Sensores: estado de reposo aprendido al encender.
+mfv3::PressClassifier btnBlanco(PULSACION_LARGA_MS), btnAzul(PULSACION_LARGA_MS);
+mfv3::EdgeTrigger btnPausa(25, 600);
+mfv3::GoalSensor senBlanco(5, 800), senAzul(5, 800);
 mfv3::LineBuffer rx;
 
 uint32_t ledUntil = 0;
@@ -98,6 +92,22 @@ void setup() {
   Serial.begin(115200);
   delay(300);
   setLeds(false, false);
+  senBlanco.begin(digitalRead(PIN_SENSOR_BLANCO));
+  senAzul.begin(digitalRead(PIN_SENSOR_AZUL));
+}
+
+void sendHello() {
+  Serial.print("HELLO ");
+  Serial.print(MFV3_BOARD_ID);
+  Serial.print(' ');
+  Serial.print(FW_VERSION);
+  Serial.print(" caps=" MFV3_CAPS_BASE "\n");
+}
+
+void button(mfv3::PressClassifier& b, uint8_t pin, const char* goal, const char* annul, uint32_t now) {
+  mfv3::Press p = b.update(digitalRead(pin) == LOW, now);
+  if (p == mfv3::Press::Short) sendLine(goal);
+  else if (p == mfv3::Press::Long) sendLine(annul);
 }
 
 void loop() {
@@ -106,21 +116,15 @@ void loop() {
   // Saludo periódico hasta que la app responde (la app puede abrirse después).
   if (!connected && now - lastHello > 2000) {
     lastHello = now;
-    Serial.print("HELLO ");
-    Serial.print(BOARD_NAME);
-    Serial.print(' ');
-    Serial.print(FW_VERSION);
-    Serial.print('\n');
+    sendHello();
   }
 
   // Entradas (activas en LOW por INPUT_PULLUP).
-  if (btnBlanco.update(digitalRead(PIN_BTN_BLANCO) == LOW, now)) sendLine("GOL_BLANCO button");
-  if (btnAzul.update(digitalRead(PIN_BTN_AZUL) == LOW, now)) sendLine("GOL_AZUL button");
+  button(btnBlanco, PIN_BTN_BLANCO, "GOL_BLANCO button", "ANULAR_BLANCO", now);
+  button(btnAzul, PIN_BTN_AZUL, "GOL_AZUL button", "ANULAR_AZUL", now);
   if (btnPausa.update(digitalRead(PIN_BTN_PAUSA) == LOW, now)) sendLine("PAUSA");
-  if (USE_SENSORS) {
-    if (senBlanco.update(digitalRead(PIN_SENSOR_BLANCO) == LOW, now)) sendLine("GOL_BLANCO sensor");
-    if (senAzul.update(digitalRead(PIN_SENSOR_AZUL) == LOW, now)) sendLine("GOL_AZUL sensor");
-  }
+  if (senBlanco.update(digitalRead(PIN_SENSOR_BLANCO), now)) sendLine("GOL_BLANCO sensor");
+  if (senAzul.update(digitalRead(PIN_SENSOR_AZUL), now)) sendLine("GOL_AZUL sensor");
 
   // Órdenes de la app.
   while (Serial.available() > 0) {

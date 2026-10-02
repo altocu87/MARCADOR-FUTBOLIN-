@@ -30,7 +30,7 @@ int main() {
   sim::now = 1000;
   setup();
   loop();
-  assert(sent("HELLO MARCADOR_V3_S3") && sent("STATE idle"));
+  assert(sent("HELLO " S3_BOARD_ID " 1.0 caps=goles,anular,pausa,pantalla") && sent("STATE idle"));
   assert(shows("MARCADOR FUTBOLIN V3") && shows("JUGAR"));
 
   // Configuración: POR GOLES, 1 gol por parte (desde 5).

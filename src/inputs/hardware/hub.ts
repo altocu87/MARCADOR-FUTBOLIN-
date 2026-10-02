@@ -5,6 +5,7 @@
 import type { MatchEvent, MatchState } from '../../match-engine';
 import { inputBus } from '../inputBus';
 import { BluetoothLink, SerialLink, WebSocketLink, type HardwareLink, type LinkKind, type LinkStatus } from './links';
+import { findBoard } from './catalog';
 import { PROTOCOL_VERSION, outgoingLines, parseBoardLine } from './protocol';
 
 export interface LinkState {
@@ -12,6 +13,9 @@ export interface LinkState {
   status: LinkStatus;
   detail?: string;
   board?: string;
+  /** Modelo anunciado por la placa (id del catálogo si lo reconoce) y lo que sabe hacer. */
+  boardId?: string;
+  caps?: string[];
 }
 
 export interface LogEntry {
@@ -94,7 +98,14 @@ class HardwareHub {
     this.addLog({ dir: 'in', kind, text: line });
     const msg = parseBoardLine(line);
     if (!msg) return;
-    if (msg.kind === 'hello') setState({ board: `${msg.name}${msg.version ? ` v${msg.version}` : ''}` });
+    if (msg.kind === 'hello') {
+      const known = findBoard(msg.name);
+      setState({
+        board: `${known?.name ?? msg.name}${msg.version ? ` v${msg.version}` : ''}`,
+        boardId: known?.id ?? msg.name,
+        caps: msg.caps,
+      });
+    }
     else if (msg.kind === 'ping') link.send('PONG');
     else if (msg.kind === 'command') inputBus.emit({ command: msg.command, source: msg.source });
   }

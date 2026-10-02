@@ -75,6 +75,30 @@ class EdgeTrigger {
   uint32_t lastFire_ = 0;
 };
 
+// Sensor de gol de CUALQUIER tipo (barrera de infrarrojos, láser, microinterruptor, inductivo…):
+// el nivel que tiene al arrancar se toma como «sin balón», y cualquier cambio estable respecto a él es un gol.
+// Así da igual si el sensor da nivel alto o bajo, o si es normalmente abierto o cerrado.
+// Un pin sin sensor (con INPUT_PULLUP) nunca cambia, así que tenerlo activado no molesta.
+class GoalSensor {
+ public:
+  explicit GoalSensor(uint16_t stableMs = 5, uint16_t holdOffMs = 800) : trig_(stableMs, holdOffMs) {}
+
+  void begin(bool level) {
+    idle_ = level;
+    ready_ = true;
+  }
+
+  bool update(bool level, uint32_t nowMs) {
+    if (!ready_) begin(level);
+    return trig_.update(level != idle_, nowMs);
+  }
+
+ private:
+  EdgeTrigger trig_;
+  bool idle_ = true;
+  bool ready_ = false;
+};
+
 // Pulsador arcade con dos gestos: toque corto (gol) y toque largo (anular gol).
 //  - Corto: se suelta antes de `longMs` → se notifica AL SOLTAR.
 //  - Largo: se mantiene `longMs` → se notifica EN ESE MOMENTO (sin esperar a soltar) y al soltar no pasa nada.

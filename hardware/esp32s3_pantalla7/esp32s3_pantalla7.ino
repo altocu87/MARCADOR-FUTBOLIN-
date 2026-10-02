@@ -35,6 +35,19 @@ using mfv3::Team;
 using ui::Btn;
 
 static const char* FW_VERSION = "1.0";
+#if MFV3_BOARD == BOARD_WAVESHARE_7C
+#define S3_BOARD_ID "waveshare-7c"
+#define S3_CAPS "goles,anular,pausa,pantalla,radio,sensores,salidas"
+#elif MFV3_BOARD == BOARD_ELECROW_7
+#define S3_BOARD_ID "elecrow-7"
+#define S3_CAPS "goles,anular,pausa,pantalla,radio,uart"
+#elif MFV3_BOARD == BOARD_WAVESHARE_7
+#define S3_BOARD_ID "waveshare-7"
+#define S3_CAPS "goles,anular,pausa,pantalla,radio,uart"
+#else
+#define S3_BOARD_ID "s3-pantalla"
+#define S3_CAPS "goles,anular,pausa,pantalla,radio"
+#endif
 static const uint8_t GRUPO_MESA = 1;  // MISMO número que en el mando (cámbialo si hay dos mesas cerca)
 static const uint32_t SLEEP_AFTER_MS = 5UL * 60UL * 1000UL;  // atenuar pantalla tras 5 min sin uso fuera de partido
 
@@ -260,6 +273,12 @@ static void inputPause() {
   afterChange(false, Team::White);
 }
 
+static void sendHello() {
+  char buf[96];
+  snprintf(buf, sizeof(buf), "HELLO %s %s caps=%s", S3_BOARD_ID, FW_VERSION, S3_CAPS);
+  sendLine(buf);
+}
+
 // Línea del protocolo MFV3 recibida de una placa auxiliar.
 static void handleBoardLine(const char* line) {
   wakeScreen();
@@ -279,9 +298,7 @@ static void handleBoardLine(const char* line) {
     afterChange(false, Team::White);
   } else if (!strcmp(word, "PING")) sendLine("PONG");
   else if (!strcmp(word, "HELLO")) {
-    char buf[40];
-    snprintf(buf, sizeof(buf), "HELLO MARCADOR_V3_S3 %s", FW_VERSION);
-    sendLine(buf);
+    sendHello();
   }
 }
 
@@ -747,9 +764,7 @@ void setup() {
   loadPrefs();
   radioBegin();
   lastActivity = millis();
-  char hello[40];
-  snprintf(hello, sizeof(hello), "HELLO MARCADOR_V3_S3 %s", FW_VERSION);
-  sendLine(hello);
+  sendHello();
   sendLine("STATE idle");
 }
 

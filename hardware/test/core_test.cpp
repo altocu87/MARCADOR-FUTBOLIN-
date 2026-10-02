@@ -18,6 +18,24 @@ static void testDebouncer() {
   assert(!d.update(false, 66));    // 26 ms en false → cambia
 }
 
+static void testGoalSensor() {
+  // Barrera que da nivel BAJO con el haz libre y ALTO al cortarse (y al revés): las dos valen.
+  for (int idle = 0; idle < 2; idle++) {
+    GoalSensor g(5, 800);
+    uint32_t t = 0;
+    g.begin(idle == 1);
+    int fires = 0;
+    for (int i = 0; i < 20; i++) fires += g.update(idle == 1, t += 1);          // reposo
+    for (int i = 0; i < 20; i++) fires += g.update(idle != 1, t += 1);          // balón
+    for (int i = 0; i < 20; i++) fires += g.update(idle == 1, t += 1);
+    assert(fires == 1);
+  }
+  GoalSensor unused;  // pin sin sensor: siempre igual, nunca dispara
+  int f = 0;
+  for (uint32_t t = 0; t < 1000; t++) f += unused.update(true, t);
+  assert(f == 0);
+}
+
 static void testEdgeTrigger() {
   EdgeTrigger t(20, 400);
   int fires = 0;
@@ -69,6 +87,7 @@ static void testParse() {
 int main() {
   testDebouncer();
   testEdgeTrigger();
+  testGoalSensor();
   testLineBuffer();
   testParse();
   std::puts("mfv3_core: todas las pruebas OK");

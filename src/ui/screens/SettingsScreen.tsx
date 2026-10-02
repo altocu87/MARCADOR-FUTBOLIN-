@@ -26,12 +26,14 @@ import { Avatar, Modal, ScreenFrame, Stepper, Tabs, Toggle } from '../components
 import { downloadJson } from '../components/download';
 import { PlayerEditor } from '../components/PlayerEditor';
 import { ConnectionsTab } from './ConnectionsTab';
+import { DiyTab } from './DiyTab';
 
 export const APP_VERSION = '0.3.0';
 
 export function SettingsScreen({ tab: initialTab }: { tab?: SettingsTab }) {
   const { navigate } = useApp();
   const [tab, setTab] = useState<SettingsTab>(initialTab ?? 'general');
+  const [diyBoard, setDiyBoard] = useState<string | undefined>();
   return (
     <ScreenFrame title="Ajustes" onBack={() => navigate({ name: 'home' })}>
       <Tabs
@@ -44,6 +46,7 @@ export function SettingsScreen({ tab: initialTab }: { tab?: SettingsTab }) {
           { id: 'audio', label: 'Audio/Efectos' },
           { id: 'progression', label: 'Progresión' },
           { id: 'connections', label: 'Conexiones' },
+          { id: 'diy', label: 'Hazlo tú mismo' },
           { id: 'system', label: 'Sistema' },
           { id: 'info', label: 'Información' },
         ]}
@@ -53,7 +56,15 @@ export function SettingsScreen({ tab: initialTab }: { tab?: SettingsTab }) {
         {tab === 'players' && <Players />}
         {tab === 'audio' && <Audio />}
         {tab === 'progression' && <Progression />}
-        {tab === 'connections' && <ConnectionsTab />}
+        {tab === 'connections' && (
+          <ConnectionsTab
+            onShowGuide={(boardId) => {
+              setDiyBoard(boardId);
+              setTab('diy');
+            }}
+          />
+        )}
+        {tab === 'diy' && <DiyTab key={diyBoard ?? 'diy'} initialBoard={diyBoard} />}
         {tab === 'system' && <SystemTab />}
         {tab === 'info' && <Info />}
       </div>

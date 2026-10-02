@@ -1,10 +1,12 @@
-// MARCADOR FUTBOLÍN V3 · ESP32 (ESP32, ESP32-C3, ESP32-S3) — centro de entradas y servidor de la app
+// MARCADOR FUTBOLÍN V3 · ESP32 (ESP32, ESP32-C3, ESP32-S3, ESP32-S2) — centro de entradas y servidor de la app
 // -----------------------------------------------------------------------------------------------
 // Qué hace:
 //   1. Crea su propia red Wi-Fi «MARCADOR-FUTBOLIN» (o se une a la tuya) sin necesidad de Internet.
 //   2. Sirve la app completa desde su memoria (LittleFS) en http://192.168.4.1 o http://marcador.local
 //      → cualquier móvil, tablet o PC conectado a esa red abre el marcador en el navegador.
-//   3. Lee pulsadores y sensores de gol y los envía por Wi-Fi (WebSocket, puerto 81),
+//   3. Reconoce SOLA el modelo de ESP32 elegido en el IDE y usa sus pines (mfv3_boards.h).
+//      Pulsador: toque corto = GOL, toque largo (0,8 s) = ANULAR. Sensores de cualquier tipo.
+//      Lee pulsadores y sensores de gol y los envía por Wi-Fi (WebSocket, puerto 81),
 //      Bluetooth LE (servicio UART, nombre «MFV3-…») y USB Serial a la vez.
 //   4. Enciende LEDs y zumbador cuando la app CONFIRMA el gol.
 //
@@ -25,10 +27,14 @@
 #include <LittleFS.h>
 #include <WebSocketsServer.h>
 #include "mfv3_core.h"
+#include "mfv3_boards.h"   // pines según el modelo de ESP32 (automático)
 
 // ======================= CONFIGURACIÓN =======================
-#define USE_BLE 1            // 0 = sin Bluetooth (ahorra memoria; obligatorio en ESP32-S2)
-#define USE_SENSORS 0        // 1 = hay sensores de gol en las porterías
+#if defined(CONFIG_IDF_TARGET_ESP32S2)
+#define USE_BLE 0            // el ESP32-S2 no tiene Bluetooth
+#else
+#define USE_BLE 1            // 0 = sin Bluetooth (ahorra memoria)
+#endif
 
 // Red propia (punto de acceso). La contraseña debe tener 8+ caracteres.
 const char* AP_SSID = "MARCADOR-FUTBOLIN";
@@ -37,26 +43,21 @@ const char* AP_PASS = "futbolin123";
 const char* STA_SSID = "";
 const char* STA_PASS = "";
 
-const char* BOARD_NAME = "ESP32";
-const char* FW_VERSION = "1.0";
-
-// Pines (cámbialos según tu placa). Pulsadores/sensores entre pin y GND.
-// ESP32 DevKit: 4, 5, 18, 19, 21 | LED 22, 23 | zumbador 25
-// ESP32-C3 SuperMini: usa p. ej. 2, 3, 4, 5, 6 | LED 7, 10 | zumbador 1  (evita 8 y 9 al arrancar)
-const uint8_t PIN_BTN_BLANCO = 4;
-const uint8_t PIN_BTN_AZUL = 5;
-const uint8_t PIN_BTN_PAUSA = 18;
-const uint8_t PIN_SENSOR_BLANCO = 19;
-const uint8_t PIN_SENSOR_AZUL = 21;
-const uint8_t PIN_LED_BLANCO = 22;   // vía transistor/MOSFET si el LED es de 12 V
-const uint8_t PIN_LED_AZUL = 23;
-const uint8_t PIN_BUZZER = 25;
+const char* FW_VERSION = "1.1";
+const uint16_t PULSACION_LARGA_MS = 800;  // mantener el pulsador este tiempo = anular gol
+#if USE_BLE
+#define MFV3_CAPS MFV3_CAPS_BASE ",wifi,bluetooth,servidor"
+#else
+#define MFV3_CAPS MFV3_CAPS_BASE ",wifi,servidor"
+#endif
 // =============================================================
+// Pines: ver mfv3_boards.h (o la app: Ajustes → Hazlo tú mismo).
 
 WebServer http(80);
 WebSocketsServer ws(81);
-mfv3::EdgeTrigger btnBlanco(25, 400), btnAzul(25, 400), btnPausa(25, 600);
-mfv3::EdgeTrigger senBlanco(5, 800), senAzul(5, 800);
+mfv3::PressClassifier btnBlanco(PULSACION_LARGA_MS), btnAzul(PULSACION_LARGA_MS);
+mfv3::EdgeTrigger btnPausa(25, 600);
+mfv3::GoalSensor senBlanco(5, 800), senAzul(5, 800);
 mfv3::LineBuffer serialRx;
 
 uint32_t ledUntil = 0;
@@ -113,10 +114,9 @@ void sendLine(const char* text) {
 #endif
 }
 
-void sendHello() {
-  String hello = String("HELLO ") + BOARD_NAME + " " + FW_VERSION;
-  sendLine(hello.c_str());
-}
+String helloLine() { return String("HELLO ") + MFV3_BOARD_ID + " " + FW_VERSION + " caps=" MFV3_CAPS; }
+
+void sendHello() { sendLine(helloLine().c_str()); }
 
 void setLeds(bool blanco, bool azul) {
   digitalWrite(PIN_LED_BLANCO, blanco ? HIGH : LOW);
@@ -159,7 +159,7 @@ void handleText(const char* text, size_t len) {
 
 void onWsEvent(uint8_t client, WStype_t type, uint8_t* payload, size_t length) {
   if (type == WStype_CONNECTED) {
-    String hello = String("HELLO ") + BOARD_NAME + " " + FW_VERSION;
+    String hello = helloLine();
     ws.sendTXT(client, hello);
   } else if (type == WStype_TEXT) {
     handleText((const char*)payload, length);
@@ -237,6 +237,8 @@ void setup() {
   pinMode(PIN_LED_AZUL, OUTPUT);
   pinMode(PIN_BUZZER, OUTPUT);
   setLeds(true, true);
+  senBlanco.begin(digitalRead(PIN_SENSOR_BLANCO));
+  senAzul.begin(digitalRead(PIN_SENSOR_AZUL));
 
   startNetwork();
   startHttp();
@@ -255,13 +257,15 @@ void loop() {
   uint32_t now = millis();
 
   // Entradas (activas en LOW con INPUT_PULLUP).
-  if (btnBlanco.update(digitalRead(PIN_BTN_BLANCO) == LOW, now)) sendLine("GOL_BLANCO button");
-  if (btnAzul.update(digitalRead(PIN_BTN_AZUL) == LOW, now)) sendLine("GOL_AZUL button");
+  mfv3::Press w = btnBlanco.update(digitalRead(PIN_BTN_BLANCO) == LOW, now);
+  if (w == mfv3::Press::Short) sendLine("GOL_BLANCO button");
+  else if (w == mfv3::Press::Long) sendLine("ANULAR_BLANCO");
+  mfv3::Press b = btnAzul.update(digitalRead(PIN_BTN_AZUL) == LOW, now);
+  if (b == mfv3::Press::Short) sendLine("GOL_AZUL button");
+  else if (b == mfv3::Press::Long) sendLine("ANULAR_AZUL");
   if (btnPausa.update(digitalRead(PIN_BTN_PAUSA) == LOW, now)) sendLine("PAUSA");
-#if USE_SENSORS
-  if (senBlanco.update(digitalRead(PIN_SENSOR_BLANCO) == LOW, now)) sendLine("GOL_BLANCO sensor");
-  if (senAzul.update(digitalRead(PIN_SENSOR_AZUL) == LOW, now)) sendLine("GOL_AZUL sensor");
-#endif
+  if (senBlanco.update(digitalRead(PIN_SENSOR_BLANCO), now)) sendLine("GOL_BLANCO sensor");
+  if (senAzul.update(digitalRead(PIN_SENSOR_AZUL), now)) sendLine("GOL_AZUL sensor");
 
   // Órdenes por USB y por Bluetooth.
   while (Serial.available() > 0) {

@@ -1,0 +1,644 @@
+{
+  "version": 1,
+  "levels": [
+    {
+      "id": 0,
+      "title": "Solo móvil",
+      "summary": "Sin montar nada. Abres la app en el móvil, la tablet o el PC y marcas tocando la pantalla.",
+      "needs": [
+        "Un móvil, tablet o PC con navegador"
+      ],
+      "cost": "0 €",
+      "difficulty": 1
+    },
+    {
+      "id": 1,
+      "title": "Pulsadores por cable",
+      "summary": "Una placa Arduino o ESP32 con 2 pulsadores arcade junto a la mesa, conectada por USB al PC o a un móvil Android.",
+      "needs": [
+        "Arduino Uno/Nano o ESP32",
+        "2 pulsadores arcade",
+        "Cables y cable USB",
+        "Chrome o Edge (PC, Mac o Android)"
+      ],
+      "cost": "15–30 €",
+      "difficulty": 1
+    },
+    {
+      "id": 2,
+      "title": "Sin cables",
+      "summary": "Un ESP32 crea su propia red Wi-Fi y sirve la app: cualquier móvil (también iPhone) se conecta y recibe los goles. También por Bluetooth.",
+      "needs": [
+        "ESP32, ESP32-C3 o ESP32-S3",
+        "2 pulsadores arcade",
+        "Alimentación USB (cargador o batería)"
+      ],
+      "cost": "10–25 €",
+      "difficulty": 2
+    },
+    {
+      "id": 3,
+      "title": "Marcador de mesa",
+      "summary": "Pantalla táctil de 7\" con ESP32-S3 que es el marcador completo, sin móvil. Mando inalámbrico de 2 pulsadores y sensores de gol opcionales.",
+      "needs": [
+        "Pantalla ESP32-S3 7\" (p. ej. Waveshare 7C)",
+        "ESP32-C3 Super Mini + 2 pulsadores (mando)",
+        "Sensores de gol (opcional)"
+      ],
+      "cost": "60–90 €",
+      "difficulty": 3
+    }
+  ],
+  "functions": {
+    "btnBlanco": {
+      "label": "Pulsador BLANCO",
+      "detail": "Toque corto = gol · toque largo (0,8 s) = anular",
+      "other": "GND",
+      "kind": "button"
+    },
+    "btnAzul": {
+      "label": "Pulsador AZUL",
+      "detail": "Toque corto = gol · toque largo (0,8 s) = anular",
+      "other": "GND",
+      "kind": "button"
+    },
+    "pausa": {
+      "label": "Pulsador PAUSA",
+      "detail": "Opcional · pausa y continuar",
+      "other": "GND",
+      "kind": "button"
+    },
+    "sensorBlanco": {
+      "label": "Sensor de gol BLANCO",
+      "detail": "Opcional · cable de señal del sensor (alimentación aparte)",
+      "other": "GND (y VCC del sensor)",
+      "kind": "sensor"
+    },
+    "sensorAzul": {
+      "label": "Sensor de gol AZUL",
+      "detail": "Opcional · cable de señal del sensor (alimentación aparte)",
+      "other": "GND (y VCC del sensor)",
+      "kind": "sensor"
+    },
+    "ledBlanco": {
+      "label": "Luz BLANCO",
+      "detail": "Opcional · se enciende con cada gol del Blanco",
+      "other": "LED + resistencia 220 Ω a GND (12 V: con transistor)",
+      "kind": "output"
+    },
+    "ledAzul": {
+      "label": "Luz AZUL",
+      "detail": "Opcional · se enciende con cada gol del Azul",
+      "other": "LED + resistencia 220 Ω a GND (12 V: con transistor)",
+      "kind": "output"
+    },
+    "zumbador": {
+      "label": "Zumbador",
+      "detail": "Opcional · pita con cada gol confirmado",
+      "other": "Zumbador activo (+) · su (−) a GND",
+      "kind": "output"
+    }
+  },
+  "boards": [
+    {
+      "id": "arduino-uno",
+      "name": "Arduino Uno",
+      "aka": "Uno R3 y compatibles (CH340)",
+      "role": "entradas",
+      "level": 1,
+      "chip": "ATmega328P",
+      "voltage": "5 V",
+      "links": [
+        "usb"
+      ],
+      "sketch": "arduino_usb",
+      "ideBoard": "Arduino Uno",
+      "core": "Arduino AVR Boards (viene instalado)",
+      "price": "≈ 8–25 €",
+      "status": "simulada",
+      "pins": {
+        "btnBlanco": "2",
+        "btnAzul": "3",
+        "pausa": "4",
+        "sensorBlanco": "5",
+        "sensorAzul": "6",
+        "zumbador": "8",
+        "ledBlanco": "9",
+        "ledAzul": "10"
+      },
+      "notes": [
+        "La más fácil para empezar. Solo por cable USB (PC, Mac o Android con Chrome/Edge)."
+      ]
+    },
+    {
+      "id": "arduino-nano",
+      "name": "Arduino Nano",
+      "aka": "Nano, Nano Every y clones",
+      "role": "entradas",
+      "level": 1,
+      "chip": "ATmega328P / ATmega4809",
+      "voltage": "5 V",
+      "links": [
+        "usb"
+      ],
+      "sketch": "arduino_usb",
+      "ideBoard": "Arduino Nano (en clones baratos: «ATmega328P (Old Bootloader)»)",
+      "core": "Arduino AVR Boards (Nano Every: Arduino megaAVR Boards)",
+      "price": "≈ 4–20 €",
+      "status": "simulada",
+      "pins": {
+        "btnBlanco": "D2",
+        "btnAzul": "D3",
+        "pausa": "D4",
+        "sensorBlanco": "D5",
+        "sensorAzul": "D6",
+        "zumbador": "D8",
+        "ledBlanco": "D9",
+        "ledAzul": "D10"
+      },
+      "notes": [
+        "Pequeño: cabe dentro de la mesa o en una caja con los pulsadores."
+      ]
+    },
+    {
+      "id": "arduino-mega",
+      "name": "Arduino Mega 2560",
+      "aka": "Mega 2560 y clones",
+      "role": "entradas",
+      "level": 1,
+      "chip": "ATmega2560",
+      "voltage": "5 V",
+      "links": [
+        "usb"
+      ],
+      "sketch": "arduino_usb",
+      "ideBoard": "Arduino Mega or Mega 2560",
+      "core": "Arduino AVR Boards (viene instalado)",
+      "price": "≈ 15–40 €",
+      "status": "simulada",
+      "pins": {
+        "btnBlanco": "2",
+        "btnAzul": "3",
+        "pausa": "4",
+        "sensorBlanco": "5",
+        "sensorAzul": "6",
+        "zumbador": "8",
+        "ledBlanco": "9",
+        "ledAzul": "10"
+      },
+      "notes": [
+        "Funciona igual que el Uno; solo tiene sentido si ya lo tienes."
+      ]
+    },
+    {
+      "id": "arduino-leonardo",
+      "name": "Arduino Leonardo / Micro / Pro Micro",
+      "aka": "ATmega32U4",
+      "role": "entradas",
+      "level": 1,
+      "chip": "ATmega32U4",
+      "voltage": "5 V",
+      "links": [
+        "usb"
+      ],
+      "sketch": "arduino_usb",
+      "ideBoard": "Arduino Leonardo (o Arduino Micro)",
+      "core": "Arduino AVR Boards (viene instalado)",
+      "price": "≈ 6–25 €",
+      "status": "simulada",
+      "pins": {
+        "btnBlanco": "2",
+        "btnAzul": "3",
+        "pausa": "4",
+        "sensorBlanco": "5",
+        "sensorAzul": "6",
+        "zumbador": "8",
+        "ledBlanco": "9",
+        "ledAzul": "10"
+      },
+      "notes": [
+        "El Pro Micro de 3,3 V/8 MHz también vale, pero alimenta los sensores a 3,3 V."
+      ]
+    },
+    {
+      "id": "rp2040",
+      "name": "Raspberry Pi Pico (RP2040)",
+      "aka": "Pico, Pico W y placas RP2040",
+      "role": "entradas",
+      "level": 1,
+      "chip": "RP2040",
+      "voltage": "3,3 V",
+      "links": [
+        "usb"
+      ],
+      "sketch": "arduino_usb",
+      "ideBoard": "Raspberry Pi Pico",
+      "core": "Raspberry Pi Pico/RP2040 de Earle Philhower (Gestor de placas)",
+      "price": "≈ 5–8 €",
+      "status": "simulada",
+      "pins": {
+        "btnBlanco": "GP2",
+        "btnAzul": "GP3",
+        "pausa": "GP4",
+        "sensorBlanco": "GP5",
+        "sensorAzul": "GP6",
+        "zumbador": "GP8",
+        "ledBlanco": "GP9",
+        "ledAzul": "GP10"
+      },
+      "notes": [
+        "Placa de 3,3 V: los sensores de 5 V con salida «push-pull» necesitan un divisor de tensión."
+      ]
+    },
+    {
+      "id": "esp32",
+      "name": "ESP32 DevKit",
+      "aka": "ESP32-WROOM-32, DevKit V1, NodeMCU-32S",
+      "role": "entradas",
+      "level": 2,
+      "chip": "ESP32",
+      "voltage": "3,3 V",
+      "links": [
+        "usb",
+        "wifi",
+        "bluetooth"
+      ],
+      "sketch": "esp32_marcador",
+      "ideBoard": "ESP32 Dev Module",
+      "core": "esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler",
+      "price": "≈ 6–12 €",
+      "status": "simulada",
+      "pins": {
+        "btnBlanco": "GPIO 4",
+        "btnAzul": "GPIO 5",
+        "pausa": "GPIO 18",
+        "sensorBlanco": "GPIO 19",
+        "sensorAzul": "GPIO 21",
+        "zumbador": "GPIO 25",
+        "ledBlanco": "GPIO 22",
+        "ledAzul": "GPIO 23"
+      },
+      "notes": [
+        "Crea la red «MARCADOR-FUTBOLIN» y sirve la app: válido para cualquier móvil, también iPhone."
+      ]
+    },
+    {
+      "id": "esp32c3",
+      "name": "ESP32-C3 Super Mini",
+      "aka": "ESP32-C3 DevKitM y Super Mini",
+      "role": "entradas",
+      "level": 2,
+      "chip": "ESP32-C3",
+      "voltage": "3,3 V",
+      "links": [
+        "usb",
+        "wifi",
+        "bluetooth"
+      ],
+      "sketch": "esp32_marcador",
+      "ideBoard": "ESP32C3 Dev Module («USB CDC On Boot: Enabled»)",
+      "core": "esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler",
+      "price": "≈ 3–6 €",
+      "status": "simulada",
+      "pins": {
+        "btnBlanco": "GPIO 3",
+        "btnAzul": "GPIO 4",
+        "pausa": "GPIO 5",
+        "sensorBlanco": "GPIO 6",
+        "sensorAzul": "GPIO 7",
+        "zumbador": "GPIO 10",
+        "ledBlanco": "GPIO 0",
+        "ledAzul": "GPIO 1"
+      },
+      "notes": [
+        "Diminuta y barata. No uses GPIO 8 (LED de la placa) ni GPIO 9 (botón BOOT)."
+      ]
+    },
+    {
+      "id": "esp32s3",
+      "name": "ESP32-S3 DevKit",
+      "aka": "ESP32-S3-DevKitC y similares",
+      "role": "entradas",
+      "level": 2,
+      "chip": "ESP32-S3",
+      "voltage": "3,3 V",
+      "links": [
+        "usb",
+        "wifi",
+        "bluetooth"
+      ],
+      "sketch": "esp32_marcador",
+      "ideBoard": "ESP32S3 Dev Module («USB CDC On Boot: Enabled»)",
+      "core": "esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler",
+      "price": "≈ 8–15 €",
+      "status": "simulada",
+      "pins": {
+        "btnBlanco": "GPIO 4",
+        "btnAzul": "GPIO 5",
+        "pausa": "GPIO 6",
+        "sensorBlanco": "GPIO 7",
+        "sensorAzul": "GPIO 8",
+        "zumbador": "GPIO 11",
+        "ledBlanco": "GPIO 9",
+        "ledAzul": "GPIO 10"
+      },
+      "notes": [
+        "No uses GPIO 19/20 (USB) ni 0, 3, 45 y 46 (arranque)."
+      ]
+    },
+    {
+      "id": "esp32s2",
+      "name": "ESP32-S2 Mini",
+      "aka": "Lolin S2 Mini y similares",
+      "role": "entradas",
+      "level": 2,
+      "chip": "ESP32-S2",
+      "voltage": "3,3 V",
+      "links": [
+        "usb",
+        "wifi"
+      ],
+      "sketch": "esp32_marcador",
+      "ideBoard": "ESP32S2 Dev Module («USB CDC On Boot: Enabled»)",
+      "core": "esp32 de Espressif (Gestor de placas) + biblioteca «WebSockets» de Markus Sattler",
+      "price": "≈ 4–8 €",
+      "status": "simulada",
+      "pins": {
+        "btnBlanco": "GPIO 4",
+        "btnAzul": "GPIO 5",
+        "pausa": "GPIO 6",
+        "sensorBlanco": "GPIO 7",
+        "sensorAzul": "GPIO 8",
+        "zumbador": "GPIO 11",
+        "ledBlanco": "GPIO 9",
+        "ledAzul": "GPIO 10"
+      },
+      "notes": [
+        "Sin Bluetooth (el chip no lo tiene): conecta por Wi-Fi o USB."
+      ]
+    },
+    {
+      "id": "mando-c3",
+      "name": "Mando inalámbrico (ESP32-C3 Super Mini)",
+      "aka": "Mando de 2 pulsadores por radio",
+      "role": "mando",
+      "level": 3,
+      "chip": "ESP32-C3",
+      "voltage": "3,3 V",
+      "links": [
+        "radio"
+      ],
+      "sketch": "mando_pulsadores",
+      "ideBoard": "ESP32C3 Dev Module («USB CDC On Boot: Enabled»)",
+      "core": "esp32 de Espressif (Gestor de placas)",
+      "price": "≈ 3–6 € + pulsadores",
+      "status": "simulada",
+      "pins": {
+        "btnBlanco": "GPIO 3",
+        "btnAzul": "GPIO 4"
+      },
+      "notes": [
+        "Envía los toques por radio ESP-NOW a la pantalla de mesa: sin Wi-Fi ni router.",
+        "LED de la placa: 1 destello = gol, 3 = anulación.",
+        "Mismo «GRUPO_MESA» en el mando y en la pantalla."
+      ]
+    },
+    {
+      "id": "waveshare-7c",
+      "name": "Waveshare ESP32-S3-Touch-LCD-7C",
+      "aka": "«ESP32-S3 7inch AI Voice Touch Display», 7C-BOX",
+      "role": "pantalla",
+      "level": 3,
+      "chip": "ESP32-S3",
+      "voltage": "Entradas aisladas (consulta la wiki de Waveshare)",
+      "links": [
+        "usb",
+        "radio"
+      ],
+      "sketch": "esp32s3_pantalla7",
+      "ideBoard": "ESP32S3 Dev Module · PSRAM «OPI PSRAM» · Flash 16 MB · «Huge APP» · «USB CDC On Boot: Enabled»",
+      "core": "esp32 de Espressif + biblioteca LovyanGFX",
+      "price": "≈ 50–70 €",
+      "status": "simulada",
+      "pins": {
+        "sensorBlanco": "DI0",
+        "sensorAzul": "DI1",
+        "ledBlanco": "DO0",
+        "ledAzul": "DO1"
+      },
+      "notes": [
+        "Marcador completo en la propia pantalla táctil, sin móvil.",
+        "Pulsadores: con el mando inalámbrico. Sensores: entradas aisladas DI0/DI1 (más su común).",
+        "Las salidas DO0/DO1 se activan 1 s con cada gol (luz o relé)."
+      ]
+    },
+    {
+      "id": "elecrow-7",
+      "name": "Elecrow CrowPanel 7.0\" ESP32-S3",
+      "aka": "CrowPanel HMI 800×480",
+      "role": "pantalla",
+      "level": 3,
+      "chip": "ESP32-S3",
+      "voltage": "3,3 V",
+      "links": [
+        "usb",
+        "radio"
+      ],
+      "sketch": "esp32s3_pantalla7",
+      "ideBoard": "ESP32S3 Dev Module · PSRAM «OPI PSRAM» · «Huge APP» (cambia MFV3_BOARD a BOARD_ELECROW_7)",
+      "core": "esp32 de Espressif + biblioteca LovyanGFX",
+      "price": "≈ 40–60 €",
+      "status": "simulada",
+      "pins": {},
+      "notes": [
+        "Pulsadores con el mando inalámbrico, o con un Arduino por el conector UART (RX 18 / TX 17)."
+      ]
+    },
+    {
+      "id": "waveshare-7",
+      "name": "Waveshare ESP32-S3-Touch-LCD-7",
+      "aka": "Modelo sin «C»",
+      "role": "pantalla",
+      "level": 3,
+      "chip": "ESP32-S3",
+      "voltage": "3,3 V",
+      "links": [
+        "usb",
+        "radio"
+      ],
+      "sketch": "esp32s3_pantalla7",
+      "ideBoard": "ESP32S3 Dev Module · PSRAM «OPI PSRAM» · «Huge APP» (cambia MFV3_BOARD a BOARD_WAVESHARE_7)",
+      "core": "esp32 de Espressif + biblioteca LovyanGFX",
+      "price": "≈ 40–60 €",
+      "status": "simulada",
+      "pins": {},
+      "notes": [
+        "Pulsadores con el mando inalámbrico, o con un Arduino por el UART (RX 44 / TX 43)."
+      ]
+    }
+  ],
+  "detection": [
+    {
+      "id": "pulsadores",
+      "name": "Pulsadores arcade",
+      "how": "Un jugador pulsa el botón de su equipo después de cada gol. Toque largo para anular un gol mal marcado.",
+      "where": "En un lateral de la mesa, en una caja o dentro del propio mueble.",
+      "wiring": "2 cables: uno al pin del pulsador y otro a GND.",
+      "pros": [
+        "El más fácil y barato",
+        "Nunca da falsos goles",
+        "No hay que tocar la mesa"
+      ],
+      "cons": [
+        "Hay que acordarse de pulsar"
+      ],
+      "cost": "2–4 € cada uno",
+      "difficulty": 1,
+      "recommended": true,
+      "supported": true
+    },
+    {
+      "id": "barrera-ir",
+      "name": "Barrera de infrarrojos (haz cortado)",
+      "how": "Un emisor y un receptor enfrentados: cuando la bola corta el haz invisible, cuenta gol.",
+      "where": "En el canal interior por el que cae la bola tras el gol (la bola siempre pasa por ahí y más despacio).",
+      "wiring": "Receptor: rojo a VCC, negro a GND, señal (blanco/amarillo) al pin del sensor. Emisor: rojo a VCC y negro a GND.",
+      "pros": [
+        "Automático y sin contacto",
+        "Muy fiable bien alineado",
+        "Vale para placas de 5 V y de 3,3 V (salida de colector abierto)"
+      ],
+      "cons": [
+        "Hay que alinear emisor y receptor",
+        "La luz solar directa puede molestar"
+      ],
+      "cost": "3–6 € por portería",
+      "difficulty": 2,
+      "recommended": true,
+      "supported": true
+    },
+    {
+      "id": "reflexivo",
+      "name": "Sensor de infrarrojos por reflexión",
+      "how": "Un único módulo que «ve» la bola cuando pasa por delante (E18-D80NK, FC-51, TCRT5000).",
+      "where": "En una pared del canal de caída de la bola, apuntando al paso de la bola.",
+      "wiring": "VCC, GND y señal al pin del sensor. El E18-D80NK va a 5 V y su salida NPN va directa al pin (también en placas de 3,3 V).",
+      "pros": [
+        "Un solo lado: más fácil de montar",
+        "Barato"
+      ],
+      "cons": [
+        "Ajustar la distancia con su tornillo",
+        "Bolas oscuras o muy rápidas pueden escaparse"
+      ],
+      "cost": "2–8 € por portería",
+      "difficulty": 2,
+      "recommended": false,
+      "supported": true
+    },
+    {
+      "id": "laser",
+      "name": "Láser + receptor",
+      "how": "Como la barrera de infrarrojos, pero con un punto de luz visible (módulo láser KY-008 + receptor láser).",
+      "where": "Igual que la barrera: en el canal de caída de la bola.",
+      "wiring": "Láser: S a 5 V y − a GND. Receptor: VCC, GND y OUT al pin del sensor.",
+      "pros": [
+        "Muy fácil de alinear (se ve el punto)",
+        "Barato"
+      ],
+      "cons": [
+        "No mirar el haz directamente",
+        "Necesita una caja que lo proteja de golpes"
+      ],
+      "cost": "3–5 € por portería",
+      "difficulty": 2,
+      "recommended": false,
+      "supported": true
+    },
+    {
+      "id": "microinterruptor",
+      "name": "Microinterruptor con palanca",
+      "how": "La bola empuja una palanquita al caer y cierra el contacto.",
+      "where": "En el canal de retorno, donde la bola cae con algo de peso.",
+      "wiring": "2 cables: común (C) a GND y normalmente abierto (NO) al pin del sensor. Sin alimentación.",
+      "pros": [
+        "Lo más barato",
+        "Sin electrónica extra ni alimentación"
+      ],
+      "cons": [
+        "Mecánico: se desgasta",
+        "Bolas ligeras o rápidas pueden no activarlo"
+      ],
+      "cost": "0,50–2 € por portería",
+      "difficulty": 1,
+      "recommended": false,
+      "supported": true
+    },
+    {
+      "id": "industrial",
+      "name": "Sensor fotoeléctrico industrial (12–24 V)",
+      "how": "Sensores de barrera o reflexión de los que se usan en fábricas, más robustos.",
+      "where": "En el canal de caída de la bola.",
+      "wiring": "Solo a placas con entradas aisladas (Waveshare 7C: DI0/DI1 y su común) o con un optoacoplador. ¡Nunca 12–24 V directos a un pin!",
+      "pros": [
+        "Muy robustos y fiables",
+        "Alcance largo"
+      ],
+      "cons": [
+        "Más caros",
+        "Necesitan fuente de 12–24 V"
+      ],
+      "cost": "10–25 € por portería",
+      "difficulty": 3,
+      "recommended": false,
+      "supported": true
+    },
+    {
+      "id": "vibracion",
+      "name": "Sensor de vibración o piezo",
+      "how": "Detecta el golpe de la bola contra la portería.",
+      "where": "Pegado a la portería.",
+      "wiring": "—",
+      "pros": [
+        "Barato"
+      ],
+      "cons": [
+        "Confunde golpes, rebotes y empujones a la mesa con goles",
+        "No recomendado"
+      ],
+      "cost": "1–2 €",
+      "difficulty": 2,
+      "recommended": false,
+      "supported": false
+    }
+  ],
+  "safety": [
+    "Nunca conectes 12 V ni 24 V a un pin de la placa: los LED de 12 V de los pulsadores van con un transistor o MOSFET (o un módulo de relé).",
+    "Placas de 3,3 V (ESP32, Pico): un sensor de 5 V cuya salida da 5 V necesita un divisor de tensión (10 kΩ + 20 kΩ). Los de colector abierto (NPN) van directos.",
+    "Enciende la placa sin bola delante de los sensores: al arrancar aprende cómo están «sin balón».",
+    "Todas las masas (GND) unidas: placa, sensores y fuente de los LED."
+  ],
+  "install": {
+    "common": [
+      "Instala el IDE de Arduino (arduino.cc/en/software) en tu PC.",
+      "Prepara el IDE: {core}.",
+      "Abre el programa hardware/{sketch}/{sketch}.ino de este proyecto (la carpeta entera, con sus archivos .h).",
+      "Herramientas → Placa: «{ideBoard}». Herramientas → Puerto: el de tu placa.",
+      "Pulsa «Subir» (la flecha). Al terminar, la placa arranca sola."
+    ],
+    "pantalla": [
+      "La pantalla arranca directamente en el marcador. Toca JUGAR."
+    ],
+    "mando": [
+      "En la pantalla de mesa aparecerá «MANDO CONECTADO»."
+    ],
+    "wifi": [
+      "Conéctate a la red Wi-Fi «MARCADOR-FUTBOLIN» (clave futbolin123) y abre http://192.168.4.1, o usa Bluetooth o USB.",
+      "La app reconoce la placa sola y muestra su nombre y lo que sabe hacer."
+    ],
+    "usb": [
+      "Con la app abierta en Chrome o Edge: Ajustes → Conexiones → USB → Conectar.",
+      "La app reconoce la placa sola y muestra su nombre y lo que sabe hacer."
+    ]
+  }
+}

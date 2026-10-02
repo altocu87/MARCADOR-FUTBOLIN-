@@ -49,7 +49,7 @@ export default defineConfig({
   base: './',
   plugins: [react(), offlineServiceWorker()],
   test: {
-    include: ['tests/**/*.test.ts'],
+    include: ['tests/**/*.test.ts', 'tests/**/*.test.mjs'],
     environment: 'node',
   },
 });

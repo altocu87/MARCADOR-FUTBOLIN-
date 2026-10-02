@@ -4,6 +4,10 @@ La app es una web: funciona en **cualquier PC, Mac, tablet o móvil** con un nav
 **instalar como aplicación** (PWA). Las placas **Arduino / ESP32** se usan para los **pulsadores y sensores de gol**,
 LEDs y zumbador, y el ESP32 además puede **servir la app sin Internet** desde su propia red Wi-Fi.
 
+> **¿Quieres montarlo tú?** Empieza por el [Manual «Hazlo tú mismo»](MANUAL_DIY.md) (también en la app:
+> Ajustes → Hazlo tú mismo): niveles, placas compatibles, qué pin va a cada pulsador y cómo detectar los goles.
+> Este documento es la referencia técnica.
+
 > Regla de oro: la placa solo avisa de pulsaciones. **Todas las reglas** (bloqueo de 3 s, turnos de penaltis,
 > estados del partido) las aplica el motor de la app, igual que si tocaras la pantalla.
 
@@ -51,6 +55,7 @@ placa** (http://192.168.4.1), se conecta por Wi-Fi sola.
 | `hardware/esp32_marcador/` | ESP32 / C3 / S3 | Red propia «MARCADOR-FUTBOLIN», sirve la app, WebSocket + Bluetooth + USB, LEDs y zumbador |
 | `hardware/esp32s3_pantalla7/` | ESP32-S3 con pantalla táctil 7" 800×480 | **Marcador activo** en la propia pantalla: configuración, partido, prórroga, penaltis, victoria e historial |
 | `hardware/mando_pulsadores/` | ESP32-C3 Super Mini (u otra ESP32) | **Mando inalámbrico** con 2 pulsadores arcade: toque corto = gol, toque largo = anular gol; radio ESP-NOW hasta la pantalla |
+| `hardware/common/mfv3_boards.h` | — | **Pines de cada modelo**, elegidos solos al compilar según la placa del IDE (Uno, Nano, Mega, Leonardo, Pico, ESP32, C3, S3, S2) |
 | `hardware/common/mfv3_core.h` | — | Antirrebote, disparo por flanco, toque corto/largo y protocolo (compartido, probado en PC) |
 | `hardware/common/mfv3_radio.h` | — | Paquete de radio del mando (grupo de mesa, secuencia, suma de control, descarte de repeticiones) |
 | `hardware/common/mfv3_engine.h` | — | Motor del partido en C++ (mismas reglas que la app, criterios A01–A13 probados en PC) |
@@ -121,7 +126,7 @@ Texto UTF-8, **una orden por línea** terminada en `\n`, igual por USB (115200 b
 
 | Placa → app | Significado |
 |---|---|
-| `HELLO <nombre> [versión]` | Saludo (se repite cada 2 s por USB hasta recibir respuesta) |
+| `HELLO <modelo> <versión> caps=a,b,…` | Saludo con el modelo de placa (id del catálogo, p. ej. `arduino-uno`, `esp32c3`, `waveshare-7c`) y lo que sabe hacer (`goles,anular,pausa,sensores,leds,zumbador,wifi,bluetooth,servidor,pantalla,radio`). La app muestra el nombre, las capacidades y el esquema de esa placa. Se repite cada 2 s por USB hasta recibir respuesta |
 | `GOL_BLANCO [button\|sensor]` / `GB` | Gol de Blanco |
 | `GOL_AZUL [button\|sensor]` / `GA` | Gol de Azul |
 | `ANULAR_BLANCO` / `AB` | Anular el último gol del Blanco (−1). En penaltis deshace el último lanzamiento |

@@ -17,7 +17,8 @@ static bool has(const std::string& s) { return sim::out.find(s) != std::string::
 int main() {
   setup();
   run(2500);
-  assert(has("HELLO ARDUINO-USB 1.0\n"));
+  // Compilado como Arduino Uno (-DARDUINO_AVR_UNO): se presenta con su modelo y capacidades.
+  assert(has("HELLO arduino-uno 1.1 caps=goles,anular,pausa,sensores,leds,zumbador\n"));
   // La app responde: deja de saludar.
   for (char c : std::string("HELLO MARCADOR_V3 1\n")) sim::in.push_back(c);
   run(10);
@@ -35,6 +36,23 @@ int main() {
   assert(has("GOL_AZUL button\n"));
   press(PIN_BTN_PAUSA, 80);
   assert(has("PAUSA\n"));
+
+  // Toque largo = anular (se envía al cumplir 0,8 s, sin esperar a soltar; soltar no marca gol).
+  sim::out.clear();
+  sim::pins[PIN_BTN_AZUL] = LOW;
+  run(850);
+  assert(sim::out == "ANULAR_AZUL\n");
+  sim::pins[PIN_BTN_AZUL] = HIGH;
+  run(100);
+  assert(sim::out == "ANULAR_AZUL\n");
+
+  // Sensor de gol (reposo aprendido al encender: HIGH con INPUT_PULLUP).
+  sim::out.clear();
+  sim::pins[PIN_SENSOR_BLANCO] = LOW;
+  run(30);
+  sim::pins[PIN_SENSOR_BLANCO] = HIGH;
+  run(30);
+  assert(sim::out == "GOL_BLANCO sensor\n");
 
   // Gol confirmado por la app → LED del equipo encendido.
   for (char c : std::string("GOAL AZUL\nLOCK 3000\n")) sim::in.push_back(c);
