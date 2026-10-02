@@ -24,6 +24,7 @@ import { displayTitle } from '../../services/progression';
 import { sound } from '../../services/sound/sound';
 import { formatDuration, headToHead } from '../../services/statistics';
 import { Avatar, MODE_LABEL, Modal, TestModeBadge } from '../components/common';
+import { AssetImage } from '../components/assets';
 import { GoalEffect } from '../components/GoalEffect';
 import { Banner, Confetti, CountdownRing, NeonGoal } from '../components/graphics';
 import { SevenSegment } from '../components/SevenSegment';
@@ -37,6 +38,13 @@ export const PERIOD_LABEL: Record<Period, string> = {
 };
 
 const TEAM_LABEL: Record<Team, string> = { white: 'BLANCO', blue: 'AZUL' };
+
+/** Ilustración de cada modalidad, usada como fondo muy tenue del partido. */
+const MODE_ART: Record<MatchConfig['mode'], string> = {
+  quick: 'modo-rapido',
+  chaos: 'modo-caos',
+  ranked: 'modo-clasificatorio',
+};
 
 function conditionText(config: MatchConfig): string {
   if (config.endCondition === 'goals') return `${config.goalsPerPeriod} goles por parte`;
@@ -95,6 +103,7 @@ export function MatchScreen({
 
   return (
     <section className={`screen match mode-${state.config.mode}`} onPointerDown={() => sound.unlock()}>
+      <AssetImage name={MODE_ART[state.config.mode]} className="match-bg" fallback={null} />
       {state.phase === 'penalties' || (state.phase === 'finished' && state.period === 'shootout') ? (
         <PenaltiesView ctl={ctl} />
       ) : (
@@ -385,6 +394,7 @@ function VictoryOverlay({ state, save, onContinue }: { state: MatchState; save: 
   return (
     <div className={`overlay overlay-victory victory-${r.winner}`} aria-live="assertive">
       {prefs.effects !== 'off' && <Confetti count={prefs.effects === 'full' ? 80 : 30} />}
+      <AssetImage name="modo-clasificatorio" className="victory-bg" fallback={null} />
       <div className="victory-rays" aria-hidden="true" />
       <div className="victory-kicker">FINAL DEL PARTIDO</div>
       <div className="victory-title">VICTORIA {TEAM_LABEL[r.winner]}</div>

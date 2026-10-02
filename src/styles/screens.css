@@ -1435,3 +1435,16 @@
 .log-out {
   color: var(--accent);
 }
+/* Encuadre de las ilustraciones de modo (imágenes panorámicas en tarjetas estrechas). */
+.mode-quick .mode-art {
+  object-position: 78% 50%;
+}
+.mode-chaos .mode-art {
+  object-position: 50% 40%;
+}
+.mode-ranked .mode-art {
+  object-position: 50% 30%;
+}
+.brand-logo {
+  filter: drop-shadow(0 0 8px rgba(98, 214, 255, 0.5));
+}
