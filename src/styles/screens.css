@@ -8,11 +8,17 @@
 .home {
   padding: 16px 20px 14px;
   gap: 10px;
+  container-type: inline-size;
 }
 .home-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+}
+.home-top .status-pill {
+  font-size: 10px;
+  letter-spacing: 0.06em;
 }
 .brand {
   display: flex;
@@ -31,30 +37,70 @@
   box-shadow: var(--glow);
 }
 .brand-name {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
-  letter-spacing: 0.08em;
-}
-.brand-name span {
-  color: var(--accent);
-  text-shadow: 0 0 12px rgba(98, 214, 255, 0.6);
-}
-.brand-sub {
-  font-size: 12px;
-  color: var(--text-2);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 .home-status {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
+  white-space: nowrap;
 }
 .home-clock {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.clock-h {
+  color: #4fd8ff;
+  text-shadow: 0 0 6px #4fd8ff, 0 0 16px rgba(79, 216, 255, 0.7);
+}
+.clock-m {
+  color: #ff9a3c;
+  text-shadow: 0 0 6px #ff9a3c, 0 0 16px rgba(255, 154, 60, 0.7);
+}
+.clock-sep {
   color: var(--text-2);
+  margin: 0 1px;
+  animation: clock-blink 2s steps(1) infinite;
+}
+@keyframes clock-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+/* Botones de icono sueltos (ajustes, pantalla completa): sin caja, solo el trazo con brillo. */
+.home-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  filter: drop-shadow(0 0 5px rgba(98, 214, 255, 0.6));
+  transition: transform 0.15s ease, filter 0.2s ease;
+}
+.home-icon-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.home-icon-btn:hover {
+  filter: drop-shadow(0 0 9px rgba(98, 214, 255, 0.95));
+}
+.home-icon-btn:active {
+  transform: scale(0.9);
 }
 .home-label {
   margin-top: 4px;
@@ -75,7 +121,7 @@
   gap: 6px;
   padding: 16px;
   border-radius: 18px;
-  border: 1px solid var(--line);
+  border: 2px solid var(--line);
   background: linear-gradient(160deg, var(--card-2), var(--card) 60%, var(--surface));
   cursor: pointer;
   text-align: left;
@@ -97,18 +143,18 @@
 }
 .mode-quick {
   --mc: var(--accent);
-  border-color: rgba(98, 214, 255, 0.55);
-  box-shadow: 0 0 22px rgba(98, 214, 255, 0.12);
+  border-color: rgba(98, 214, 255, 0.85);
+  box-shadow: 0 0 14px rgba(98, 214, 255, 0.45), inset 0 0 12px rgba(98, 214, 255, 0.18);
 }
 .mode-chaos {
   --mc: var(--chaos);
-  border-color: rgba(214, 92, 255, 0.6);
-  box-shadow: 0 0 26px rgba(214, 92, 255, 0.18);
+  border-color: rgba(214, 92, 255, 0.9);
+  box-shadow: 0 0 14px rgba(214, 92, 255, 0.5), inset 0 0 12px rgba(214, 92, 255, 0.2);
 }
 .mode-ranked {
   --mc: var(--ranked);
-  border-color: rgba(242, 201, 76, 0.55);
-  box-shadow: 0 0 22px rgba(242, 201, 76, 0.12);
+  border-color: rgba(242, 201, 76, 0.85);
+  box-shadow: 0 0 14px rgba(242, 201, 76, 0.45), inset 0 0 12px rgba(242, 201, 76, 0.18);
 }
 .mode-icon {
   position: absolute;
@@ -138,26 +184,70 @@
   padding: 3px 9px;
 }
 .home-menu {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 .menu-btn {
-  min-height: 60px;
-  border-radius: 14px;
+  min-height: 40px;
+  padding: 0 11px;
+  white-space: nowrap;
+  border-radius: 12px;
   border: 1px solid var(--line);
   background: rgba(17, 34, 59, 0.85);
-  font-size: 17px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
 }
 .menu-btn:active {
   background: var(--card-2);
+}
+/* Lienzo estrecho (800 px, pantalla de 7"): barra superior compacta para que quepa en una línea. */
+@container (max-width: 980px) {
+  .brand {
+    gap: 8px;
+  }
+  .brand-name {
+    font-size: 14px;
+  }
+  .brand-logo {
+    height: 30px;
+  }
+  .home-top {
+    gap: 8px;
+  }
+  .home-menu {
+    gap: 6px;
+  }
+  .menu-btn {
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+  .menu-btn > span {
+    display: none;
+  }
+  .home-top .status-pill {
+    padding: 0 8px;
+    letter-spacing: 0.03em;
+  }
+  .home-icon-btn {
+    width: 28px;
+  }
+  .home-icon-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+  .home-clock {
+    font-size: 19px;
+  }
 }
 .home-hint {
   font-size: 12px;
@@ -745,6 +835,9 @@
   height: 100%;
   object-fit: cover;
   opacity: 0.55;
+  /* Desenfoque gaussiano de 2px; la ligera ampliación evita bordes borrosos en los márgenes. */
+  filter: blur(2px);
+  transform: scale(1.02);
 }
 .tron-grid {
   position: absolute;
@@ -767,7 +860,7 @@
   }
 }
 .brand-logo {
-  height: 44px;
+  height: 40px;
   width: auto;
 }
 .mode-art {
@@ -779,25 +872,12 @@
   mask-image: linear-gradient(to bottom, #000 60%, transparent);
   opacity: 0.95;
 }
-.home-menu {
-  grid-template-columns: repeat(4, 1fr);
-}
 .brand-name {
   background: linear-gradient(90deg, #ffffff, #bfefff 60%, #62d6ff);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 0 10px rgba(98, 214, 255, 0.35));
-}
-.brand-name span {
-  color: var(--accent);
-  -webkit-text-fill-color: var(--accent);
-  animation: v3-glow 2.6s ease-in-out infinite;
-}
-@keyframes v3-glow {
-  50% {
-    text-shadow: 0 0 22px rgba(98, 214, 255, 1);
-  }
 }
 .mode-title {
   font-style: italic;

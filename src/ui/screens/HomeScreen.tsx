@@ -55,11 +55,19 @@ export function HomeScreen() {
       <header className="home-top">
         <div className="brand">
           <AssetImage name="logo" alt="" className="brand-logo" fallback={<span className="brand-mark" aria-hidden="true" />} />
-          <div>
-            <div className="brand-name">MARCADOR FUTBOLÍN <span>V3</span></div>
-            <div className="brand-sub">Marcador inteligente de mesa</div>
-          </div>
+          <div className="brand-name">MARCADOR FUTBOLÍN</div>
         </div>
+        <nav className="home-menu" aria-label="Menú principal">
+          <button className="menu-btn" onClick={() => navigate({ name: 'tournament' })}>
+            <span aria-hidden="true">🏆</span> TORNEO
+          </button>
+          <button className="menu-btn" onClick={() => navigate({ name: 'ranking' })}>
+            <span aria-hidden="true">📊</span> RANKING
+          </button>
+          <button className="menu-btn" onClick={() => navigate({ name: 'challenges' })}>
+            <span aria-hidden="true">🎯</span> RETOS
+          </button>
+        </nav>
         <div className="home-status">
           {hub.connectedCount > 0 && (
             <button className="status-pill" style={{ color: 'var(--ok)', cursor: 'pointer', background: 'none' }} onClick={() => navigate({ name: 'settings', tab: 'connections' })}>
@@ -70,13 +78,24 @@ export function HomeScreen() {
             <span className="dot" style={{ color: persistent ? 'var(--accent)' : 'var(--ranked)' }} />
             {persistent ? 'SISTEMA LOCAL' : 'SIN ALMACENAMIENTO'}
           </span>
+          <button className="home-icon-btn" onClick={() => navigate({ name: 'settings' })} aria-label="Ajustes" title="Ajustes">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="3.2" />
+              <path d="M12 2.5v2.6M12 18.9v2.6M4.6 4.6l1.9 1.9M17.5 17.5l1.9 1.9M2.5 12h2.6M18.9 12h2.6M4.6 19.4l1.9-1.9M17.5 6.5l1.9-1.9" />
+              <circle cx="12" cy="12" r="6.6" />
+            </svg>
+          </button>
           {fullscreenAvailable() && (
-            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => void toggleFullscreen()} aria-label="Pantalla completa" title="Pantalla completa">
-              ⛶
+            <button className="home-icon-btn" onClick={() => void toggleFullscreen()} aria-label="Pantalla completa" title="Pantalla completa">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3.5 8.5v-5h5M15.5 3.5h5v5M20.5 15.5v5h-5M8.5 20.5h-5v-5" />
+              </svg>
             </button>
           )}
           <span className="home-clock">
-            {clock.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+            <span className="clock-h">{String(clock.getHours()).padStart(2, '0')}</span>
+            <span className="clock-sep">:</span>
+            <span className="clock-m">{String(clock.getMinutes()).padStart(2, '0')}</span>
           </span>
         </div>
       </header>
@@ -100,21 +119,6 @@ export function HomeScreen() {
           </button>
         ))}
       </div>
-
-      <nav className="home-menu" aria-label="Menú principal">
-        <button className="menu-btn" onClick={() => navigate({ name: 'tournament' })}>
-          <span aria-hidden="true">🏆</span> TORNEO
-        </button>
-        <button className="menu-btn" onClick={() => navigate({ name: 'ranking' })}>
-          <span aria-hidden="true">📊</span> RANKING
-        </button>
-        <button className="menu-btn" onClick={() => navigate({ name: 'challenges' })}>
-          <span aria-hidden="true">🎯</span> RETOS
-        </button>
-        <button className="menu-btn" onClick={() => navigate({ name: 'settings' })}>
-          <span aria-hidden="true">⚙</span> AJUSTES
-        </button>
-      </nav>
 
       {players.length === 0 && (
         <div className="home-hint">Primero crea jugadores en AJUSTES → JUGADORES o desde la selección de jugadores.</div>
