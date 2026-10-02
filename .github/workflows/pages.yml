@@ -44,9 +44,8 @@ jobs:
             echo "Aún no hay programas publicados: la web saldrá con el instalador en preparación."
           fi
       - run: npm run build:web
+      # Requiere activar Pages una vez: Settings → Pages → Source: «GitHub Actions».
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist-web
