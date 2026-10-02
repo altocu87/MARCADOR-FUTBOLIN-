@@ -43,7 +43,7 @@ Fecha: 02/10/2026 · Versión 0.3.0 · Motor 1.0.0 (`reglas-partido-1`)
   ni se ha probado ninguna placa física: primera prueba recomendada por USB con el monitor serie.
 - En http://192.168.4.1 (app servida por el ESP32) el navegador no permite instalarla ni USB/Bluetooth web
   (exigen https); la conexión Wi-Fi con la placa sí funciona.
-- El ESP32-S3 no puede mostrar la app React en su propia pantalla: requiere una interfaz nativa (LVGL), pendiente.
+- ESP32-S3 7": versión nativa activa en `hardware/esp32s3_pantalla7/` (motor C++ + LovyanGFX). Probada en PC con simulación; sin compilar ni probar en la placa real. Pines según fabricante en `board_config.h`.
 
 - Los iconos con emoji (🏆, 🎯, 🃏…) dependen de la fuente de emoji del sistema; las imágenes opcionales los sustituyen.
 - La voz del locutor depende de que el navegador tenga una voz en español instalada.
@@ -51,6 +51,6 @@ Fecha: 02/10/2026 · Versión 0.3.0 · Motor 1.0.0 (`reglas-partido-1`)
   Exporta copias desde Ajustes → Sistema.
 - El arranque totalmente sin red tras un reinicio (empaquetado offline/PWA) no está garantizado en
   una web alojada sin caché; se debe validar en el dispositivo final.
-- No se ha probado en el hardware ESP32-S3. Un ESP32-S3 no ejecuta una app React/Vite como un PC:
-  hay que evaluar una interfaz embebida nativa o un host externo.
+- ESP32-S3 7": versión nativa activa en `hardware/esp32s3_pantalla7/` (motor C++ + LovyanGFX), probada en PC
+  con simulación; no se ha compilado ni probado en la placa real. Pines según fabricante en `board_config.h`.
 - Fotos de jugador guardadas como imagen reducida (160×160) dentro del almacenamiento local.

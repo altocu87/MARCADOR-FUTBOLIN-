@@ -15,7 +15,7 @@ npm test           # pruebas unitarias (Vitest)
 npm run build      # comprobación TypeScript + compilación a dist/
 npm run preview    # sirve la compilación de dist/
 npm run build:esp32    # compila y copia la app comprimida a hardware/esp32_marcador/data/
-npm run test:hardware  # pruebas en PC del firmware (núcleo + simulación de Arduino/ESP32)
+npm run test:hardware  # pruebas en PC del firmware (núcleo, motor C++ y simulación de Arduino/ESP32/S3 7")
 ```
 
 La interfaz es un lienzo de **800 × 480** en horizontal: se centra en pantallas grandes y se escala
@@ -67,6 +67,8 @@ Todas las entradas llegan al mismo motor y respetan el bloqueo de 3 s.
   y reconexión automática. La app avisa a la placa de los goles aceptados (LEDs/zumbador).
 - **Programas para placas** en `hardware/` (Arduino USB y ESP32 con red propia que sirve la app):
   guía completa en [`docs/HARDWARE.md`](docs/HARDWARE.md). `npm run build:esp32` prepara la app para la placa.
+- **Marcador nativo para ESP32-S3 con pantalla táctil de 7"** (`hardware/esp32s3_pantalla7/`): el partido completo
+  en la placa, sin PC ni móvil, con las mismas reglas que la app.
 - **Eliminar partidos** del historial (se recalcula todo).
 
 ### Añadidos de la versión 0.2

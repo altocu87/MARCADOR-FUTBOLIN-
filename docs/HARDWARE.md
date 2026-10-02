@@ -17,7 +17,7 @@ LEDs y zumbador, y el ESP32 además puede **servir la app sin Internet** desde s
 | Tablet / móvil Android | Chrome → menú → «Instalar aplicación» | Se abre a pantalla completa y en horizontal |
 | iPhone / iPad | Safari → Compartir → «Añadir a pantalla de inicio» | Sin USB ni Bluetooth web (usa Wi-Fi con ESP32) |
 | Raspberry Pi + pantalla táctil 7" | Chromium en modo quiosco (ver §6) | Opción recomendada para dejarlo fijo en la mesa |
-| ESP32-S3 7" (800×480) | Como **servidor** de la app y centro de entradas; la interfaz completa en la propia placa requiere una versión nativa (pendiente, ver §7) | |
+| ESP32-S3 7" (800×480) | **Marcador completo nativo** en la propia placa (táctil, sin PC ni móvil), ver §7. También puede hacer de servidor de la app | |
 
 **Resolución:** el diseño base es 800×480 (la pantalla del ESP32-S3). En pantallas panorámicas (16:9, 21:9) el
 lienzo se ensancha hasta 1100 px lógicos y en 4:3/16:10 crece en alto hasta 640, así que **no quedan franjas**.
@@ -49,7 +49,9 @@ placa** (http://192.168.4.1), se conecta por Wi-Fi sola.
 |---|---|---|
 | `hardware/arduino_usb/` | Arduino Uno/Nano/Mega/Leonardo | Pulsadores + sensores → USB; LEDs y zumbador al confirmar gol |
 | `hardware/esp32_marcador/` | ESP32 / C3 / S3 | Red propia «MARCADOR-FUTBOLIN», sirve la app, WebSocket + Bluetooth + USB, LEDs y zumbador |
+| `hardware/esp32s3_pantalla7/` | ESP32-S3 con pantalla táctil 7" 800×480 | **Marcador activo** en la propia pantalla: configuración, partido, prórroga, penaltis, victoria e historial |
 | `hardware/common/mfv3_core.h` | — | Antirrebote, disparo por flanco y protocolo (compartido, probado en PC) |
+| `hardware/common/mfv3_engine.h` | — | Motor del partido en C++ (mismas reglas que la app, criterios A01–A13 probados en PC) |
 
 ### Arduino (USB)
 1. Instala el **IDE de Arduino**. Abre `hardware/arduino_usb/arduino_usb.ino`.
@@ -152,15 +154,40 @@ Los pulsadores van a un Arduino por USB o a un ESP32 por Wi-Fi/Bluetooth, igual 
 
 ---
 
-## 7. ESP32-S3 con pantalla de 7" (pendiente)
+## 7. ESP32-S3 con pantalla de 7" (versión activa)
 
-El ESP32-S3 **no ejecuta un navegador**: no puede mostrar esta app React tal cual. Opciones:
+Placas tipo «ESP32-S3 7inch Touch Display, 800×480, táctil de 5 puntos, Wi-Fi + BLE 5». El sketch
+`hardware/esp32s3_pantalla7/` convierte la placa en **el marcador completo**, sin PC, móvil ni Internet:
 
-1. **Ahora**: usar el S3 (o un C3) como centro de entradas + servidor Wi-Fi de la app, y una tablet/móvil/Pi
-   como pantalla.
-2. **Siguiente bloque** (no incluido): una interfaz **nativa con LVGL** en el S3 que muestre el marcador usando
-   los mensajes `STATE/SCORE/GOAL/WIN` del protocolo, o que lleve el motor portado a C++. Requiere la placa exacta
-   (controlador de pantalla y táctil) para desarrollarla y probarla.
+- **Inicio:** POR GOLES / POR TIEMPO / AMBAS, goles y minutos por parte con − / +, botón JUGAR. Muestra el último
+  resultado y los partidos jugados.
+- **Partido:** el número grande de cada equipo es el botón de gol; −1, DESHACER, PAUSA, reloj, bloqueo de 3 s
+  visible, «BOLA DE PARTIDO», cuenta atrás (toca para saltar), 1ª y 2ª parte, prórroga con gol de oro, penaltis
+  con muerte súbita y pantalla de victoria con REVANCHA.
+- **Mismas reglas que la app:** usa `mfv3_engine.h`, el motor portado a C++ y probado en PC con los criterios A01–A13.
+- **Memoria:** guarda la configuración y los 8 últimos resultados aunque se apague.
+- **Ahorro:** fuera de partido baja el brillo a los 5 min; el primer toque solo la despierta.
+- **Pulsadores y sensores:** conecta un Arduino o ESP32-C3 con el sketch `arduino_usb` al UART de la placa
+  (TX del Arduino → RX de la placa). La placa contesta `GOAL/LOCK/WIN` para que el Arduino encienda LEDs y zumbador.
+  ⚠ Un Arduino Uno/Nano trabaja a 5 V: pon un divisor (1 kΩ + 2 kΩ) en su TX antes de entrar al RX de 3,3 V.
+  También acepta las mismas órdenes por el USB de la placa (`GB`, `GA`, `PAUSA`, `SALTAR`, `PING`, `HELLO`).
+
+### Cómo cargarlo
+1. IDE de Arduino con el paquete **esp32 de Espressif** y la biblioteca **LovyanGFX** (Gestor de bibliotecas).
+2. Abre `hardware/esp32s3_pantalla7/esp32s3_pantalla7.ino`.
+3. En `board_config.h` elige tu placa: `BOARD_ELECROW_7` (CrowPanel 7.0"), `BOARD_WAVESHARE_7`
+   (ESP32-S3-Touch-LCD-7) o `BOARD_CUSTOM` (rellena los pines con el ejemplo de tu fabricante).
+4. Herramientas → Placa **ESP32S3 Dev Module**, PSRAM **OPI PSRAM**, Flash **16 MB**, particiones **Huge APP**.
+5. **Subir.**
+
+### Limitaciones conocidas
+- No se ha podido compilar con las herramientas de Espressif ni probar en la placa real en este entorno: la lógica
+  (motor, botones, protocolo, memoria) sí se prueba en PC (`npm run test:hardware`), el dibujo en pantalla no.
+- Los pines de pantalla y táctil **cambian según el fabricante**: si la pantalla sale en negro o desplazada, revisa
+  el perfil en `board_config.h`.
+- Los textos de la placa van sin tildes (las fuentes integradas no las incluyen).
+- Aún no usa el altavoz/micrófono de las placas «AI Voice» ni el Wi-Fi/Bluetooth (los dos siguen disponibles para
+  una versión futura: sincronizar con la app o anunciar los goles por voz).
 
 ---
 
