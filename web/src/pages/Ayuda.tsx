@@ -67,7 +67,7 @@ export function Ayuda() {
       <h2>Seguridad al montar</h2>
       <ul className="safety">
         {SAFETY.map((s) => (
-          <li key={s}>⚠️ {s}</li>
+          <li key={s}>{s}</li>
         ))}
       </ul>
       <div className="card next">

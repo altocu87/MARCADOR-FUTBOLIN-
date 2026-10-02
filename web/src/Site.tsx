@@ -9,10 +9,9 @@ import { Usar } from './pages/Usar';
 import { APP_URL, href, useRoute } from './router';
 
 const NAV: { label: string; to: string; page: string; anchor?: string }[] = [
-  { label: 'Cómo funciona', to: '#/', page: 'home', anchor: 'como' },
-  { label: 'Usar en el móvil', to: href({ page: 'usar' }), page: 'usar' },
+  { label: 'En el móvil', to: href({ page: 'usar' }), page: 'usar' },
   { label: 'Monta tu marcador', to: href({ page: 'monta' }), page: 'monta' },
-  { label: 'Detectar goles', to: href({ page: 'goles' }), page: 'goles' },
+  { label: 'Sensores', to: href({ page: 'goles' }), page: 'goles' },
   { label: 'Ayuda', to: href({ page: 'ayuda' }), page: 'ayuda' },
 ];
 
@@ -24,10 +23,8 @@ export function Site() {
     <>
       <header className="top">
         <a className="brand" href="#/" onClick={() => setMenu(false)}>
-          <img src={logo} alt="" width={36} height={36} />
-          <span>
-            MARCADOR <b>FUTBOLÍN</b> V3
-          </span>
+          <img src={logo} alt="" width={28} height={28} />
+          <span>Marcador Futbolín</span>
         </a>
         <button className="menu-toggle" aria-expanded={menu} aria-label="Menú" onClick={() => setMenu(!menu)}>
           ☰
@@ -52,7 +49,7 @@ export function Site() {
             </a>
           ))}
           <a className="btn btn-primary btn-sm" href={APP_URL}>
-            Abrir la app
+            Abrir app
           </a>
         </nav>
       </header>
@@ -67,10 +64,7 @@ export function Site() {
       </main>
 
       <footer className="foot">
-        <div>
-          <strong>Marcador Futbolín V3</strong> · gratis, sin registro y sin publicidad. Tus partidos se guardan en tu
-          dispositivo.
-        </div>
+        <div>Marcador Futbolín V3 · Gratis, sin registro y sin publicidad.</div>
         <div className="foot-links">
           <a href={APP_URL}>Abrir la app</a>
           <a href={href({ page: 'monta' })}>Monta tu marcador</a>

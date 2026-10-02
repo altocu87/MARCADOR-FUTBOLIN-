@@ -100,7 +100,7 @@ function Installer({ b }: { b: BoardInfo }) {
 
   return (
     <div className="card installer">
-      <h3>⚡ Instalar desde el navegador</h3>
+      <h3>Instalar desde el navegador</h3>
       <ol>
         <li>Usa Chrome o Edge en un ordenador.</li>
         <li>Conecta la placa por USB con un cable de datos.</li>
@@ -173,7 +173,7 @@ export function Placa({ id }: { id: string }) {
           <span key={l} className="tag">{LINK_LABEL[l]}</span>
         ))}
         <span className={`tag ${b.status === 'probada' ? 'ok' : 'warn'}`}>
-          {b.status === 'probada' ? '✅ Probada en placa' : '🧪 Probada en simulador'}
+          {b.status === 'probada' ? 'Probada en placa' : 'Probada en simulador'}
         </span>
       </div>
       {b.notes.map((n) => (
@@ -245,7 +245,7 @@ export function Placa({ id }: { id: string }) {
         </h2>
         {installable && <Installer b={b} />}
         <details className="card" open={!installable}>
-          <summary>{installable ? 'Prefiero instalarlo con el IDE de Arduino' : '🧰 Instalar con el IDE de Arduino'}</summary>
+          <summary>{installable ? 'Prefiero instalarlo con el IDE de Arduino' : 'Instalar con el IDE de Arduino'}</summary>
           <ol>
             {installSteps(b).map((s) => (
               <li key={s}>{s}</li>

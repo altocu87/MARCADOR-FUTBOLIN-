@@ -21,7 +21,7 @@ export function BoardCard({ b, recommended }: { b: BoardInfo; recommended?: bool
         ))}
         <span className="tag">{b.price}</span>
       </div>
-      <p className="small">{webInstallable(b) ? '⚡ Se instala desde el navegador' : '🧰 Se instala con el IDE de Arduino'}</p>
+      <p className="small">{webInstallable(b) ? 'Se instala desde el navegador' : 'Se instala con el IDE de Arduino'}</p>
     </a>
   );
 }

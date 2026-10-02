@@ -11,7 +11,7 @@ export function Goles() {
         balón» y cuenta gol cuando cambia.
       </p>
       <div className="notice">
-        💡 El mejor sitio para un sensor es el <strong>canal interior por el que cae la bola</strong> después del gol: siempre
+        El mejor sitio para un sensor es el <strong>canal interior por el que cae la bola</strong> después del gol: siempre
         pasa por ahí, y más despacio que por la boca de la portería. Y pase lo que pase, el marcador ignora un segundo gol
         durante 3 segundos.
       </div>

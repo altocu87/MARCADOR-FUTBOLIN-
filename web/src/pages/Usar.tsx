@@ -70,19 +70,19 @@ export function Usar() {
       <h2>Bueno saber</h2>
       <div className="grid2">
         <div className="card">
-          <h3>📶 Sin Internet</h3>
+          <h3>Sin Internet</h3>
           <p>Después de abrirla una vez, funciona aunque no tengas conexión: en un bar, en el garaje o en el sótano.</p>
         </div>
         <div className="card">
-          <h3>🔒 Tus datos son tuyos</h3>
+          <h3>Tus datos son tuyos</h3>
           <p>Jugadores, partidos y torneos se guardan en tu dispositivo. Sin cuentas. Haz copias en Ajustes → Sistema.</p>
         </div>
         <div className="card">
-          <h3>🔄 Gira el móvil</h3>
+          <h3>En horizontal</h3>
           <p>El marcador está pensado en horizontal: así los dos equipos se ven grandes a cada lado.</p>
         </div>
         <div className="card">
-          <h3>🔆 Pantalla siempre encendida</h3>
+          <h3>Pantalla encendida</h3>
           <p>Durante el partido la pantalla no se apaga (en los navegadores que lo permiten).</p>
         </div>
       </div>
