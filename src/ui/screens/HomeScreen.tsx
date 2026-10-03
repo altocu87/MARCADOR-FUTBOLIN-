@@ -51,7 +51,7 @@ const PRESS_FEEDBACK_MS = 180;
 export function HomeScreen() {
   const { navigate, repos, persistent } = useApp();
   const [snapshot, setSnapshot] = useState<ActiveMatchSnapshot | null>(null);
-  const [pressed, setPressed] = useState<MatchMode | null>(null);
+  const [pressed, setPressed] = useState<string | null>(null);
   const pressTimer = useRef<number | undefined>(undefined);
   const hub = useHardware();
 
@@ -61,13 +61,18 @@ export function HomeScreen() {
 
   useEffect(() => () => window.clearTimeout(pressTimer.current), []);
 
-  // La tarjeta se ilumina y se hunde un instante antes de abrir el modo; un segundo toque se ignora.
+  // El botón tocado resplandece y se hunde un instante antes de cambiar de pantalla; un segundo toque se ignora.
+  const press = (key: string, go: () => void) => {
+    if (pressed) return;
+    setPressed(key);
+    pressTimer.current = window.setTimeout(go, PRESS_FEEDBACK_MS);
+  };
+
   const start = (mode: MatchMode) => {
     if (pressed) return;
     sound.unlock();
     sound.play('ui');
-    setPressed(mode);
-    pressTimer.current = window.setTimeout(() => navigate({ name: 'setup', mode }), PRESS_FEEDBACK_MS);
+    press(mode, () => navigate({ name: 'setup', mode }));
   };
 
   const resume = () => {
@@ -96,7 +101,11 @@ export function HomeScreen() {
         </div>
         <nav className="home-menu" aria-label="Menú principal">
           {MENU.map((item) => (
-            <button key={item.route} className={`menu-btn menu-${item.route}`} onClick={() => navigate({ name: item.route })}>
+            <button
+              key={item.route}
+              className={`menu-btn menu-${item.route}${pressed === item.route ? ' is-pressed' : ''}`}
+              onClick={() => press(item.route, () => navigate({ name: item.route }))}
+            >
               <svg className="menu-icon" viewBox="0 0 24 24" aria-hidden="true">
                 {item.icon}
               </svg>
