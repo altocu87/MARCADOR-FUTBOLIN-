@@ -1,39 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import { restoreSnapshot } from '../../app/recovery';
 import { getScore, type MatchMode } from '../../match-engine';
 import type { ActiveMatchSnapshot } from '../../services/persistence';
 import { sound } from '../../services/sound/sound';
-import { fullscreenAvailable, toggleFullscreen } from '../../services/system/device';
 import { useHardware } from '../../inputs/hardware/useHardware';
 import { AssetImage } from '../components/assets';
 import { MODE_LABEL, Modal, formatDate } from '../components/common';
 
+// Textos de una sola frase: se tienen que entender de un vistazo, de pie y jugando.
 const MODES: { mode: MatchMode; title: string; text: string; tag: string }[] = [
-  { mode: 'quick', title: 'RÁPIDO', text: 'Partida directa con la configuración elegida.', tag: 'XP' },
-  { mode: 'chaos', title: 'CAOS', text: 'Motor normal · reglas especiales pendientes.', tag: 'XP' },
-  { mode: 'ranked', title: 'CLASIFICATORIO', text: 'Competición con previsión, ELO y XP.', tag: 'ELO + XP' },
+  { mode: 'quick', title: 'RÁPIDO', text: 'Empieza a jugar', tag: 'XP' },
+  { mode: 'chaos', title: 'CAOS', text: 'Reglas y hándicaps locos', tag: 'XP' },
+  { mode: 'ranked', title: 'CLASIFICATORIO', text: 'Partido competitivo', tag: 'ELO + XP' },
 ];
 
+/** Tiempo que la tarjeta se ve «pulsada» antes de cambiar de pantalla (confirma el toque). */
+const PRESS_FEEDBACK_MS = 180;
+
 export function HomeScreen() {
-  const { navigate, repos, persistent, players } = useApp();
+  const { navigate, repos, persistent } = useApp();
   const [snapshot, setSnapshot] = useState<ActiveMatchSnapshot | null>(null);
-  const [clock, setClock] = useState(() => new Date());
+  const [pressed, setPressed] = useState<MatchMode | null>(null);
+  const pressTimer = useRef<number | undefined>(undefined);
   const hub = useHardware();
 
   useEffect(() => {
     void repos.activeMatch.load().then(setSnapshot);
   }, [repos]);
 
-  useEffect(() => {
-    const id = window.setInterval(() => setClock(new Date()), 10_000);
-    return () => window.clearInterval(id);
-  }, []);
+  useEffect(() => () => window.clearTimeout(pressTimer.current), []);
 
+  // La tarjeta se ilumina y se hunde un instante antes de abrir el modo; un segundo toque se ignora.
   const start = (mode: MatchMode) => {
+    if (pressed) return;
     sound.unlock();
     sound.play('ui');
-    navigate({ name: 'setup', mode });
+    setPressed(mode);
+    pressTimer.current = window.setTimeout(() => navigate({ name: 'setup', mode }), PRESS_FEEDBACK_MS);
   };
 
   const resume = () => {
@@ -59,51 +63,39 @@ export function HomeScreen() {
         </div>
         <nav className="home-menu" aria-label="Menú principal">
           <button className="menu-btn" onClick={() => navigate({ name: 'tournament' })}>
-            <span aria-hidden="true">🏆</span> TORNEO
+            TORNEO
           </button>
           <button className="menu-btn" onClick={() => navigate({ name: 'ranking' })}>
-            <span aria-hidden="true">📊</span> RANKING
+            RANKING
           </button>
           <button className="menu-btn" onClick={() => navigate({ name: 'challenges' })}>
-            <span aria-hidden="true">🎯</span> RETOS
+            RETOS
           </button>
         </nav>
-        <div className="home-status">
-          {hub.connectedCount > 0 && (
-            <button className="status-pill" style={{ color: 'var(--ok)', cursor: 'pointer', background: 'none' }} onClick={() => navigate({ name: 'settings', tab: 'connections' })}>
-              🔌 {hub.connectedCount === 1 ? 'PLACA CONECTADA' : `${hub.connectedCount} PLACAS`}
-            </button>
-          )}
-          <span className="status-pill" title="Sin backend: todos los datos se guardan en este dispositivo">
-            <span className="dot" style={{ color: persistent ? 'var(--accent)' : 'var(--ranked)' }} />
-            {persistent ? 'SISTEMA LOCAL' : 'SIN ALMACENAMIENTO'}
+        {/* Solo se avisa del almacenamiento cuando hay un problema; el resto vive en Ajustes. */}
+        {!persistent && (
+          <span className="status-pill home-warn" title="Los datos no se pueden guardar en este dispositivo">
+            SIN GUARDADO
           </span>
-          <button className="home-icon-btn" onClick={() => navigate({ name: 'settings' })} aria-label="Ajustes" title="Ajustes">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="3.2" />
-              <path d="M12 2.5v2.6M12 18.9v2.6M4.6 4.6l1.9 1.9M17.5 17.5l1.9 1.9M2.5 12h2.6M18.9 12h2.6M4.6 19.4l1.9-1.9M17.5 6.5l1.9-1.9" />
-              <circle cx="12" cy="12" r="6.6" />
-            </svg>
-          </button>
-          {fullscreenAvailable() && (
-            <button className="home-icon-btn" onClick={() => void toggleFullscreen()} aria-label="Pantalla completa" title="Pantalla completa">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3.5 8.5v-5h5M15.5 3.5h5v5M20.5 15.5v5h-5M8.5 20.5h-5v-5" />
-              </svg>
-            </button>
-          )}
-          <span className="home-clock">
-            <span className="clock-h">{String(clock.getHours()).padStart(2, '0')}</span>
-            <span className="clock-sep">:</span>
-            <span className="clock-m">{String(clock.getMinutes()).padStart(2, '0')}</span>
-          </span>
-        </div>
+        )}
+        <button className="home-icon-btn" onClick={() => navigate({ name: 'settings' })} aria-label="Ajustes" title="Ajustes">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3.2" />
+            <path d="M12 2.5v2.6M12 18.9v2.6M4.6 4.6l1.9 1.9M17.5 17.5l1.9 1.9M2.5 12h2.6M18.9 12h2.6M4.6 19.4l1.9-1.9M17.5 6.5l1.9-1.9" />
+            <circle cx="12" cy="12" r="6.6" />
+          </svg>
+          {hub.connectedCount > 0 && <span className="home-icon-dot" title="Placa conectada" />}
+        </button>
       </header>
 
-      <div className="home-label label">Nuevo partido</div>
       <div className="mode-cards">
         {MODES.map((m) => (
-          <button key={m.mode} className={`mode-card mode-${m.mode}`} onClick={() => start(m.mode)}>
+          <button
+            key={m.mode}
+            className={`mode-card mode-${m.mode}${pressed === m.mode ? ' is-pressed' : ''}`}
+            onClick={() => start(m.mode)}
+            aria-label={`Jugar ${m.title.toLowerCase()}: ${m.text}`}
+          >
             <AssetImage
               name={`modo-${m.mode === 'quick' ? 'rapido' : m.mode === 'chaos' ? 'caos' : 'clasificatorio'}`}
               className="mode-art"
@@ -119,10 +111,6 @@ export function HomeScreen() {
           </button>
         ))}
       </div>
-
-      {players.length === 0 && (
-        <div className="home-hint">Primero crea jugadores en AJUSTES → JUGADORES o desde la selección de jugadores.</div>
-      )}
 
       {snapshot && (
         <Modal

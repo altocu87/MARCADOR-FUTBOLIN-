@@ -4,10 +4,12 @@
   text-overflow: ellipsis;
 }
 
-/* ---------- Inicio ---------- */
+/* ---------- Inicio ----------
+   Pensado como una recreativa: se usa de pie, con el brazo extendido y mirando un segundo.
+   Todo lo que se toca es grande (≥ 56 px de alto) y está separado; lo informativo no parece botón. */
 .home {
-  padding: 16px 20px 14px;
-  gap: 10px;
+  padding: 14px 20px 18px;
+  gap: 14px;
   container-type: inline-size;
 }
 .home-top {
@@ -15,15 +17,21 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-height: 60px;
 }
 .home-top .status-pill {
   font-size: 10px;
   letter-spacing: 0.06em;
 }
+.home-warn {
+  color: var(--ranked);
+  border-color: var(--ranked);
+}
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
 }
 .brand-mark {
   width: 40px;
@@ -41,44 +49,18 @@
   font-weight: 900;
   letter-spacing: 0.06em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.home-status {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-.home-clock {
-  font-size: 24px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-}
-.clock-h {
-  color: #4fd8ff;
-  text-shadow: 0 0 6px #4fd8ff, 0 0 16px rgba(79, 216, 255, 0.7);
-}
-.clock-m {
-  color: #ff9a3c;
-  text-shadow: 0 0 6px #ff9a3c, 0 0 16px rgba(255, 154, 60, 0.7);
-}
-.clock-sep {
-  color: var(--text-2);
-  margin: 0 1px;
-  animation: clock-blink 2s steps(1) infinite;
-}
-@keyframes clock-blink {
-  50% {
-    opacity: 0.25;
-  }
-}
-/* Botones de icono sueltos (ajustes, pantalla completa): sin caja, solo el trazo con brillo. */
+/* Ajustes: el icono se ve pequeño pero la zona táctil es de 60 × 60 px. */
 .home-icon-btn {
+  position: relative;
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 60px;
+  height: 60px;
   padding: 0;
   border: none;
   background: none;
@@ -88,8 +70,8 @@
   transition: transform 0.15s ease, filter 0.2s ease;
 }
 .home-icon-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -100,18 +82,27 @@
   filter: drop-shadow(0 0 9px rgba(98, 214, 255, 0.95));
 }
 .home-icon-btn:active {
-  transform: scale(0.9);
+  transform: scale(0.88);
 }
-.home-label {
-  margin-top: 4px;
+/* Punto verde sobre el engranaje cuando hay una placa conectada. */
+.home-icon-dot {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
 }
 .mode-cards {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 20px;
   min-height: 0;
 }
+/* Toda la tarjeta es el botón. */
 .mode-card {
   position: relative;
   display: flex;
@@ -119,14 +110,14 @@
   align-items: flex-start;
   justify-content: flex-end;
   gap: 6px;
-  padding: 16px;
+  padding: 16px 16px 18px;
   border-radius: 18px;
   border: 2px solid var(--line);
   background: linear-gradient(160deg, var(--card-2), var(--card) 60%, var(--surface));
   cursor: pointer;
   text-align: left;
   overflow: hidden;
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  transition: transform 0.08s ease, box-shadow 0.15s ease, filter 0.15s ease, border-color 0.15s ease;
 }
 .mode-card::before {
   content: '';
@@ -138,8 +129,13 @@
   background: radial-gradient(circle, var(--mc, var(--accent)) 0%, transparent 65%);
   opacity: 0.22;
 }
-.mode-card:active {
-  transform: scale(0.97);
+/* Estado «pulsado»: la tarjeta se hunde y el marco se enciende. Se mantiene ~180 ms antes de navegar. */
+.mode-card:active,
+.mode-card.is-pressed {
+  transform: scale(0.96) translateY(2px);
+  border-color: var(--mc);
+  box-shadow: 0 0 28px var(--mc), inset 0 0 28px var(--mc);
+  filter: brightness(1.2);
 }
 .mode-quick {
   --mc: var(--accent);
@@ -165,94 +161,73 @@
   text-shadow: 0 0 16px var(--mc);
 }
 .mode-title {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+}
+.mode-ranked .mode-title {
+  font-size: 22px;
+  letter-spacing: 0.02em;
 }
 .mode-text {
-  font-size: 13px;
-  color: var(--text-2);
-  line-height: 1.35;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
 }
+/* Recompensa: solo informativa, así que va como texto y no como «pastilla» con borde. */
 .mode-tag {
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 900;
   letter-spacing: 0.1em;
   color: var(--mc);
-  border: 1px solid var(--mc);
-  border-radius: 999px;
-  padding: 3px 9px;
 }
 .home-menu {
   flex: 1;
   display: flex;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 12px;
 }
 .menu-btn {
-  min-height: 40px;
-  padding: 0 11px;
+  min-width: 112px;
+  min-height: 58px;
+  padding: 0 14px;
   white-space: nowrap;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid var(--line);
   background: rgba(17, 34, 59, 0.85);
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 900;
   letter-spacing: 0.08em;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  transition: transform 0.08s ease, background 0.15s ease;
 }
 .menu-btn:active {
   background: var(--card-2);
+  border-color: var(--accent);
+  transform: scale(0.95);
 }
-/* Lienzo estrecho (800 px, pantalla de 7"): barra superior compacta para que quepa en una línea. */
+/* Lienzo estrecho (800 px, pantalla de 7"): misma barra, un poco más compacta. */
 @container (max-width: 980px) {
-  .brand {
-    gap: 8px;
-  }
   .brand-name {
-    font-size: 14px;
+    font-size: 15px;
   }
   .brand-logo {
-    height: 30px;
-  }
-  .home-top {
-    gap: 8px;
+    height: 34px;
   }
   .home-menu {
-    gap: 6px;
+    gap: 10px;
   }
   .menu-btn {
-    min-height: 34px;
+    min-width: 108px;
     padding: 0 10px;
-    font-size: 11px;
-    letter-spacing: 0.05em;
+    font-size: 14px;
+    letter-spacing: 0.06em;
   }
-  .menu-btn > span {
-    display: none;
-  }
-  .home-top .status-pill {
-    padding: 0 8px;
-    letter-spacing: 0.03em;
-  }
-  .home-icon-btn {
-    width: 28px;
-  }
-  .home-icon-btn svg {
-    width: 20px;
-    height: 20px;
-  }
-  .home-clock {
-    font-size: 19px;
-  }
-}
-.home-hint {
-  font-size: 12px;
-  color: var(--ranked);
-  text-align: center;
 }
 
 /* ---------- Selección de jugadores ---------- */
