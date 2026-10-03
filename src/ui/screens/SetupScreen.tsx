@@ -16,7 +16,7 @@ function conditionFrom(goals: boolean, time: boolean): EndCondition {
 }
 
 /**
- * Tarjeta de condición: + arriba, número en medio y − abajo.
+ * Tarjeta de condición: triángulo ▲ pegado encima, recuadro con el número y triángulo ▼ pegado debajo.
  * Tocar el número activa o desactiva la tarjeta (decide si el partido es por goles, por tiempo o ambos).
  */
 function ConditionCard({
@@ -41,10 +41,9 @@ function ConditionCard({
   onChange: (v: number) => void;
 }) {
   return (
-    <div className={`card cond-card${active ? ' on' : ''}`} role="group" aria-label={title}>
-      <div className="label cond-title">{title}</div>
+    <div className={`cond${active ? ' on' : ''}`} role="group" aria-label={title}>
       <button
-        className="cond-btn"
+        className="cond-btn up"
         aria-label={`Sumar ${label}`}
         disabled={!active || value >= max}
         onClick={() => onChange(Math.min(max, value + 1))}
@@ -52,15 +51,16 @@ function ConditionCard({
         <NeonSign kind="sumar" fallback="+" />
       </button>
       <button
-        className="cond-value"
+        className="cond-box"
         aria-pressed={active}
-        aria-label={`${value} ${unit}. ${active ? 'Toca para desactivar' : 'Toca para activar'}`}
+        aria-label={`${title}: ${value} ${unit}. ${active ? 'Toca para desactivar' : 'Toca para activar'}`}
         onClick={onToggle}
       >
+        <span className="label cond-title">{title}</span>
         <span className="num" aria-live="polite">{value}</span>
       </button>
       <button
-        className="cond-btn"
+        className="cond-btn down"
         aria-label={`Restar ${label}`}
         disabled={!active || value <= min}
         onClick={() => onChange(Math.max(min, value - 1))}

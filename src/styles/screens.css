@@ -1832,39 +1832,30 @@
 }
 
 /* ---------- Configuración: tarjetas de goles y tiempo ---------- */
-/* Ocupan todo el alto libre. ▲ arriba, número en medio (toca para activar/desactivar) y ▼ abajo.
-   La tarjeta activa se resalta con borde y brillo; la inactiva queda apagada. */
+/* Cada columna: triángulo ▲ a ras del borde superior del recuadro, recuadro con el número
+   (tocar = activar/desactivar) y triángulo ▼ a ras del borde inferior. La activa brilla; la otra se apaga. */
 .setup-conditions {
   flex: 1;
   min-height: 0;
+  column-gap: 28px;
+  padding: 0 12px;
 }
-.cond-card {
+.cond {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
   min-height: 0;
-  padding: 8px 12px 10px;
-  gap: 4px;
-  opacity: 0.55;
-  filter: saturate(0.4);
-  transition: opacity 0.2s ease, filter 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  opacity: 0.45;
+  filter: saturate(0.35);
+  transition: opacity 0.2s ease, filter 0.2s ease;
 }
-.cond-card.on {
+.cond.on {
   opacity: 1;
   filter: none;
-  border: 2px solid var(--accent);
-  background: linear-gradient(180deg, rgba(47, 184, 236, 0.16), var(--card) 60%);
-  box-shadow: 0 0 24px rgba(47, 184, 236, 0.45), inset 0 0 22px rgba(47, 184, 236, 0.12);
-}
-.cond-title {
-  text-align: center;
-}
-.cond-card.on .cond-title {
-  color: var(--accent);
 }
 .cond-btn {
-  flex: 1;
-  min-height: 52px;
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
   border: 0;
   background: transparent;
   padding: 0;
@@ -1873,28 +1864,42 @@
   font-size: 40px;
   font-weight: 800;
 }
+/* Alto según la proporción de la imagen más alta de cada pareja (reposo/pulsado). */
+.cond-btn.up {
+  aspect-ratio: 600 / 146;
+}
+.cond-btn.down {
+  aspect-ratio: 600 / 139;
+}
 .cond-btn:disabled {
   cursor: default;
 }
-.cond-card.on .cond-btn:disabled {
+.cond.on .cond-btn:disabled {
   opacity: 0.3;
 }
 .cond-btn .neon-sign {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
 }
 .cond-btn .neon-sign img {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  /* Triángulos alargados: llenan el alto del botón sin pasar del ancho. */
-  height: 110%;
-  width: 92%;
-  object-fit: contain;
-  transform: translate(-50%, -50%);
+  left: 0;
+  width: 100%;
+  height: auto;
   pointer-events: none;
+}
+/* El lado plano de cada triángulo toca el recuadro. */
+.cond-btn.up .neon-sign img {
+  bottom: 0;
+}
+.cond-btn.down .neon-sign img {
+  top: 0;
+}
+.cond.on .cond-btn.up .neon-sign img {
+  filter: drop-shadow(0 0 8px rgba(61, 220, 151, 0.55));
+}
+.cond.on .cond-btn.down .neon-sign img {
+  filter: drop-shadow(0 0 8px rgba(255, 90, 110, 0.55));
 }
 .cond-btn .neon-sign .on {
   opacity: 0;
@@ -1904,35 +1909,44 @@
 }
 .cond-btn:not(:disabled):active .neon-sign .on {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1.06);
 }
-/* Número grande: toda la zona es el botón de activar/desactivar. */
-.cond-value {
-  flex: 1.6;
+.cond-box {
+  flex: 1;
+  min-height: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 0;
-  background: transparent;
+  gap: 2px;
+  border: 2px solid var(--line);
+  border-radius: 4px;
+  background: var(--card);
   cursor: pointer;
-  padding: 0;
-  min-height: 0;
+  padding: 4px 0;
 }
-.cond-value .num {
-  font-size: 118px;
+.cond.on .cond-box {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(47, 184, 236, 0.18), var(--card));
+  box-shadow: 0 0 22px rgba(47, 184, 236, 0.45), inset 0 0 22px rgba(47, 184, 236, 0.14);
+}
+.cond.on .cond-title {
+  color: var(--accent);
+}
+.cond-box .num {
+  font-size: 104px;
   font-weight: 900;
   line-height: 0.9;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
   color: #9fb3c8;
 }
-.cond-card.on .cond-value .num {
+.cond.on .cond-box .num {
   background: linear-gradient(180deg, #ffffff 15%, #8fe3ff 60%, #2fb8ec);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 0 14px rgba(47, 184, 236, 0.6));
 }
-.cond-value:active .num {
+.cond-box:active .num {
   transform: scale(0.96);
 }

@@ -13,7 +13,8 @@ no hay que tocar código. Si falta una imagen se usa el diseño de respaldo actu
   `tarjeta-rapido-off/on` (robot), `tarjeta-caos-off/on` (ardilla y caracol) y
   `tarjeta-clasificatorio-off/on` (copa), 640 px de ancho, vertical.
 - Botones − y + de la configuración del partido: triángulos neón con dos estados (`-off` en reposo, `-on` al pulsar):
-  `boton-sumar-off/on` (verde, hacia arriba) y `boton-restar-off/on` (rojo, hacia abajo), 480×128 .webp con fondo transparente.
+  `boton-sumar-off/on` (verde, hacia arriba) y `boton-restar-off/on` (rojo, hacia abajo), 600 px de ancho, .webp
+  transparente y recortados justo al borde del triángulo para que encajen a ras del recuadro.
 - Pendientes (llegaron dañadas en el ZIP; mientras, se ve el icono de respaldo):
   - `categoria-diamond` (archivo vacío).
   - Fila inferior de `plantilla-logros-03` (imagen cortada): `logro-hat_trick`, `logro-scorer50`,
