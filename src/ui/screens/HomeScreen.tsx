@@ -162,6 +162,7 @@ export function HomeScreen() {
               <>
                 <AssetImage name={`tarjeta-${MODE_FILE[m.mode]}-off`} className="mode-bg mode-bg-off" fallback={null} />
                 <AssetImage name={`tarjeta-${MODE_FILE[m.mode]}-on`} className="mode-bg mode-bg-on" fallback={null} />
+                <span className="mode-shade" aria-hidden="true" />
               </>
             ) : (
               <AssetImage
