@@ -850,15 +850,85 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 12px;
   cursor: pointer;
+}
+/* Reloj gigante: ocupa casi todo el ancho de la pantalla, con brillo neón suave. */
+.sleep-clock {
+  margin-top: -10px;
+  filter: drop-shadow(0 0 10px rgba(79, 216, 255, 0.55)) drop-shadow(0 0 28px rgba(79, 216, 255, 0.25));
+}
+.sleep-clock .seg-colon {
+  transition: opacity 0.2s ease;
+}
+.sleep-clock.sec-odd .seg-colon {
+  opacity: 0.15;
+}
+.sleep-seconds {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 720px;
+}
+.sleep-ticks {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 22px;
+}
+.tick {
+  width: 6px;
+  height: 12px;
+  border-radius: 3px;
+  background: rgba(79, 216, 255, 0.1);
+}
+/* Cada cinco segundos, marca algo más alta (como un cronómetro). */
+.tick:nth-child(5n) {
+  height: 18px;
+}
+.tick.on {
+  background: rgba(79, 216, 255, 0.55);
+  box-shadow: 0 0 6px rgba(79, 216, 255, 0.5);
+}
+.tick.now {
+  background: #ff9a3c;
+  box-shadow: 0 0 8px #ff9a3c, 0 0 18px rgba(255, 154, 60, 0.8);
+  animation: tick-pop 0.6s ease-out;
+}
+@keyframes tick-pop {
+  0% {
+    transform: scaleY(2.2);
+    box-shadow: 0 0 14px #fff, 0 0 30px #ff9a3c;
+    background: #fff;
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+.sleep-sec {
+  width: 44px;
+  text-align: right;
+  font-size: 26px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #ff9a3c;
+  text-shadow: 0 0 8px rgba(255, 154, 60, 0.8);
+  animation: sec-in 0.35s ease-out;
+}
+@keyframes sec-in {
+  from {
+    opacity: 0.3;
+    transform: translateY(-6px) scale(1.25);
+  }
 }
 .sleep-date::first-letter {
   text-transform: uppercase;
 }
 .sleep-date {
-  color: #3a556e;
-  font-size: 20px;
+  margin-top: 6px;
+  color: #5d7f9c;
+  font-size: 22px;
   letter-spacing: 0.06em;
 }
 .sleep-hint {

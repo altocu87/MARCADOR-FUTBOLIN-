@@ -42,7 +42,7 @@ export function SevenSegment({ text, height, color = 'currentColor', className, 
   const parts = chars.map((ch, i) => {
     if (ch === ':' || ch === '.') {
       const g = (
-        <g key={i} transform={`translate(${x},0)`}>
+        <g key={i} className="seg-colon" transform={`translate(${x},0)`}>
           {ch === ':' && <circle cx={10} cy={32} r={5} fill={color} />}
           <circle cx={10} cy={ch === ':' ? 68 : 92} r={5} fill={color} />
         </g>

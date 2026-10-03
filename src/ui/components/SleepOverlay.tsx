@@ -1,6 +1,6 @@
 /**
  * Reposo: tras inactividad fuera de una partida activa muestra fondo casi negro,
- * reloj y fecha. El toque que despierta se consume y no activa lo que hay debajo.
+ * un reloj que ocupa toda la pantalla (con barra de segundos) y la fecha. El toque que despierta se consume y no activa lo que hay debajo.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../app/AppContext';
@@ -38,14 +38,16 @@ export function SleepOverlay({ minutes, enabled }: { minutes: number; enabled: b
   }, []);
 
   useEffect(() => {
+    // Cada 250 ms para que el cambio de segundo se vea en el momento; solo se repinta si el segundo cambia.
     const id = window.setInterval(() => {
-      setNow(new Date());
+      const d = new Date();
+      setNow((prev) => (prev.getSeconds() === d.getSeconds() && prev.getMinutes() === d.getMinutes() ? prev : d));
       if (!enabled || minutes <= 0) {
         lastActivity.current = Date.now();
         return;
       }
       if (Date.now() - lastActivity.current >= minutes * 60_000) setAsleep(true);
-    }, 1000);
+    }, 250);
     return () => window.clearInterval(id);
   }, [enabled, minutes]);
 
@@ -70,6 +72,7 @@ export function SleepOverlay({ minutes, enabled }: { minutes: number; enabled: b
   };
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
+  const sec = now.getSeconds();
   return (
     <div
       className="sleep"
@@ -79,7 +82,21 @@ export function SleepOverlay({ minutes, enabled }: { minutes: number; enabled: b
       onPointerDown={wakeUp}
       onClick={wakeUp}
     >
-      <SevenSegment text={`${hh}:${mm}`} height={130} color="#3A6E8C" />
+      {/* Los dos puntos laten con cada segundo (pares encendidos, impares apagados). */}
+      <div className={`sleep-clock${sec % 2 ? ' sec-odd' : ''}`}>
+        <SevenSegment text={`${hh}:${mm}`} height={250} color="#4fd8ff" />
+      </div>
+      {/* Barra de 60 marcas: se van encendiendo una por segundo y la actual da un destello. */}
+      <div className="sleep-seconds" aria-hidden="true">
+        <div className="sleep-ticks">
+          {Array.from({ length: 60 }, (_, i) => (
+            <span key={i === sec ? `now-${sec}` : i} className={i < sec ? 'tick on' : i === sec ? 'tick now' : 'tick'} />
+          ))}
+        </div>
+        <span key={sec} className="sleep-sec">
+          {String(sec).padStart(2, '0')}
+        </span>
+      </div>
       <div className="sleep-date">
         {now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
       </div>
