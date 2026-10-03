@@ -417,7 +417,7 @@ static void drawHome() {
   bool useGoals = cfg.endCondition != mfv3::EndCondition::Time;
   bool useTime = cfg.endCondition != mfv3::EndCondition::Goals;
   char v[24];
-  text("GOLES POR PARTE", 201, 250, &lgfx::fonts::FreeSansBold9pt7b, C_TEXT2);
+  text("GOLES PARA GANAR", 201, 250, &lgfx::fonts::FreeSansBold9pt7b, C_TEXT2);
   text("MINUTOS POR PARTE", 599, 250, &lgfx::fonts::FreeSansBold9pt7b, C_TEXT2);
   button(ui::HOME[3].r, "-", C_CARD, useGoals ? C_TEXT : C_LINE, C_LINE, &lgfx::fonts::FreeSansBold24pt7b);
   button(ui::HOME[4].r, "+", C_CARD, useGoals ? C_TEXT : C_LINE, C_LINE, &lgfx::fonts::FreeSansBold24pt7b);
@@ -478,7 +478,8 @@ static void drawTest() {
 
 static const char* periodLabel(Period p) {
   switch (p) {
-    case Period::First: return "1a PARTE";
+    // Por goles no hay partes: se juega un único periodo.
+    case Period::First: return cfg.endCondition == mfv3::EndCondition::Goals ? "PARTIDO" : "1a PARTE";
     case Period::Second: return "2a PARTE";
     case Period::Overtime: return "PRORROGA - GOL DE ORO";
     case Period::Shootout: return "PENALTIS";
@@ -538,9 +539,8 @@ static void drawMatch(uint32_t now) {
   drawClock(now);
   drawLock(now);
   if (cfg.endCondition != mfv3::EndCondition::Time && eng.period() != Period::Overtime) {
-    mfv3::Score ps = eng.periodScore(eng.period());
     char buf[24];
-    snprintf(buf, sizeof(buf), "Parte: %u/%u", ps.white + ps.blue, cfg.goalsPerPeriod);
+    snprintf(buf, sizeof(buf), "A %u goles", cfg.goalsPerPeriod);
     text(buf, 400, 190, &lgfx::fonts::FreeSans9pt7b, C_TEXT2);
   }
   button(ui::MATCH[2].r, "-1", lcd.color565(40, 18, 26), C_DANGER, C_DANGER, &lgfx::fonts::FreeSansBold18pt7b);

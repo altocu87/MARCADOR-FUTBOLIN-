@@ -101,7 +101,10 @@ export function generateDemoData(now: number = Date.now(), seed = 20261003): Dem
           break;
         case 'playing': {
           // En la prórroga (gol de oro) cuesta más marcar: así algunas acaban en penaltis.
-          t += Math.round(s.period === 'overtime' ? between(15_000, 110_000) : between(6_000, 45_000));
+          // Por tiempo hay menos goles (más empates); en la prórroga cuesta más marcar, así algunas acaban en penaltis.
+          const gap =
+            s.period === 'overtime' ? between(20_000, 130_000) : config.endCondition === 'goals' ? between(6_000, 45_000) : between(35_000, 120_000);
+          t += Math.round(gap);
           s = advance(s, t).state;
           if (s.phase !== 'playing') break;
           const team: Team = rnd() < Math.min(0.85, Math.max(0.15, pWhite)) ? 'white' : 'blue';
@@ -174,13 +177,14 @@ export function generateDemoData(now: number = Date.now(), seed = 20261003): Dem
 
   const randomConfig = (mode: MatchMode): MatchConfig => {
     const r = rnd();
-    const endCondition = r < 0.7 ? 'goals' : r < 0.85 ? 'time' : 'both';
+    // Por goles (a 5–10), por tiempo (dos partes) o ambas.
+    const endCondition = r < 0.55 ? 'goals' : r < 0.85 ? 'time' : 'both';
     return {
       ...DEFAULT_CONFIG,
       mode,
       testMode: false,
       endCondition,
-      goalsPerPeriod: pick([3, 4, 5, 5, 5, 6, 7]),
+      goalsPerPeriod: pick([5, 5, 6, 7, 8, 10]),
       minutesPerPeriod: pick([2, 3, 3, 4, 5]),
       ...(mode === 'chaos' ? { chaos: { doubleLastMinute: true, jokers: true } } : {}),
     };

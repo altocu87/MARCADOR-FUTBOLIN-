@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { persistFinishedMatch } from '../src/app/matchFinalizer';
-import { DEFAULT_CONFIG, createMatch, dispatch, type MatchConfig, type MatchState } from '../src/match-engine';
+import { DEFAULT_CONFIG, advance, createMatch, dispatch, type MatchConfig, type MatchState } from '../src/match-engine';
 import {
   KEYS,
   StorageError,
@@ -16,16 +16,18 @@ import { createPlayer } from '../src/services/players';
 import { makeMatch } from './helpers';
 
 function finishedMatch(config: Partial<MatchConfig>): MatchState {
-  let s = createMatch('mx', { ...DEFAULT_CONFIG, goalsPerPeriod: 1, ...config }, [
+  // Por tiempo: dos partes de 1 minuto, Blanco marca en cada una.
+  let s = createMatch('mx', { ...DEFAULT_CONFIG, endCondition: 'time', minutesPerPeriod: 1, ...config }, [
     { playerId: 'a', team: 'white', slot: 1, nameSnapshot: 'A' },
     { playerId: 'b', team: 'blue', slot: 1, nameSnapshot: 'B' },
   ], 0);
   const run = (c: Parameters<typeof dispatch>[1], t: number) => (s = dispatch(s, c, t).state);
   run({ type: 'SKIP_COUNTDOWN' }, 0);
   run({ type: 'GOAL', team: 'white' }, 1000);
-  run({ type: 'CONTINUE' }, 2000);
-  run({ type: 'SKIP_COUNTDOWN' }, 2000);
-  run({ type: 'GOAL', team: 'white' }, 5000);
+  run({ type: 'CONTINUE' }, 61_000);
+  run({ type: 'SKIP_COUNTDOWN' }, 61_000);
+  run({ type: 'GOAL', team: 'white' }, 65_000);
+  s = advance(s, 121_000).state;
   expect(s.phase).toBe('finished');
   return s;
 }

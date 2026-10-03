@@ -106,6 +106,11 @@ export function validGoalsFromEvents(events: MatchEvent[]): MatchEvent[] {
 
 export const goalValue = (e: MatchEvent): number => e.value ?? 1;
 
+/** Por goles se juega una sola parte (sin descanso): el primero que llega al objetivo gana. */
+export function isSinglePeriod(config: MatchConfig): boolean {
+  return config.endCondition === 'goals';
+}
+
 export function chaosActive(config: MatchConfig, rule: keyof NonNullable<MatchConfig['chaos']>): boolean {
   return config.mode === 'chaos' && !!config.chaos?.[rule];
 }
@@ -475,8 +480,9 @@ function checkGoalEnd(state: MatchState, events: MatchEvent[], now: number): Mat
     return state;
   }
   if (state.config.endCondition === 'time') return state;
-  const ps = getPeriodScore(state);
-  if (ps.white + ps.blue >= state.config.goalsPerPeriod) return endPeriod(state, events, now, 'goals');
+  // Por goles (y en «ambas»): gana el primer equipo que llega al objetivo, sin esperar al final de la parte.
+  const score = getScore(state);
+  if (Math.max(score.white, score.blue) >= state.config.goalsPerPeriod) return endPeriod(state, events, now, 'goals');
   return state;
 }
 
@@ -504,6 +510,9 @@ function endPeriod(
   next = { ...next, closedPeriodsMs: next.closedPeriodsMs + elapsed, periods: [...next.periods, record] };
 
   const score = getScore(next);
+  if (reason === 'goals') {
+    return finishMatch(next, events, at, score.white > score.blue ? 'white' : 'blue', 'regulation');
+  }
   if (state.period === 'second' && score.white !== score.blue) {
     return finishMatch(next, events, at, score.white > score.blue ? 'white' : 'blue', 'regulation');
   }

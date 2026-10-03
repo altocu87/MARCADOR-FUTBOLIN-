@@ -163,13 +163,12 @@ class Engine {
   uint8_t matchPoint() const {
     if (phase_ != Phase::Playing && phase_ != Phase::Paused) return 0;
     if (period_ == Period::Overtime) return 3;
-    if (period_ != Period::Second || cfg_.endCondition == EndCondition::Time) return 0;
-    Score ps = periodScore(period_);
-    if (ps.white + ps.blue + 1 < cfg_.goalsPerPeriod) return 0;
+    if (cfg_.endCondition == EndCondition::Time) return 0;
+    // A un gol del objetivo de goles para ganar.
     Score s = score();
     uint8_t m = 0;
-    if (s.white + 1 > s.blue) m |= 1;
-    if (s.blue + 1 > s.white) m |= 2;
+    if (s.white + 1 >= cfg_.goalsPerPeriod) m |= 1;
+    if (s.blue + 1 >= cfg_.goalsPerPeriod) m |= 2;
     return m;
   }
 
@@ -356,7 +355,9 @@ class Engine {
       return;
     }
     if (cfg_.endCondition == EndCondition::Time) return;
-    if (ps.white + ps.blue >= cfg_.goalsPerPeriod) endPeriod(now, PeriodEndBy::Goals);
+    // Por goles (y en «ambas»): el primer equipo que llega al objetivo gana en ese momento.
+    Score s = score();
+    if (s.white >= cfg_.goalsPerPeriod || s.blue >= cfg_.goalsPerPeriod) endPeriod(now, PeriodEndBy::Goals);
   }
 
   void endPeriod(uint32_t at, PeriodEndBy by) {
@@ -367,7 +368,9 @@ class Engine {
     undoCount_ = 0;
     closedMs_ += e;
     Score s = score();
-    if (period_ == Period::Second && s.white != s.blue) {
+    if (by == PeriodEndBy::Goals) {
+      finish(s.white > s.blue ? Team::White : Team::Blue, Reason::Regulation, at);
+    } else if (period_ == Period::Second && s.white != s.blue) {
       finish(s.white > s.blue ? Team::White : Team::Blue, Reason::Regulation, at);
     } else if (period_ == Period::Overtime && by == PeriodEndBy::GoldenGoal) {
       finish(s.white > s.blue ? Team::White : Team::Blue, Reason::GoldenGoal, at);

@@ -65,42 +65,36 @@ int main() {
   assert(!test.active);
   loop();
 
-  // Configuración: POR GOLES, 1 gol por parte (desde 5).
-  for (int i = 0; i < 4; i++) tap(76, 306);
-  assert(cfg.goalsPerPeriod == 1 && shows("GOLES POR PARTE"));
+  // Configuración: POR GOLES, a 2 goles (desde 5). Sin partes: el primero que llega gana.
+  for (int i = 0; i < 3; i++) tap(76, 306);
+  assert(cfg.goalsPerPeriod == 2 && shows("GOLES PARA GANAR"));
   tap(400, 420);  // JUGAR
   assert(inMatch && eng.phase() == Phase::Countdown && shows("TOCA PARA SALTAR"));
   assert(sim::nvs.count("goals"));
 
   usb("SALTAR");
-  assert(eng.phase() == Phase::Playing && shows("BLANCO") && shows("AZUL"));
+  assert(eng.phase() == Phase::Playing && shows("BLANCO") && shows("AZUL") && shows("PARTIDO"));
 
   // Gol por USB y bloqueo: el segundo impulso inmediato se ignora.
   usb("GB");
   assert(sent("GOAL BLANCO") && sent("LOCK 3000") && count(sim::out, "SCORE 1 0") == 1);
-  assert(eng.phase() == Phase::PeriodEnd && shows("FINAL 1a PARTE"));
-  tap(400, 370);  // CONTINUAR 2a PARTE
-  assert(eng.period() == Period::Second && eng.phase() == Phase::Countdown);
-  tap(10, 10);    // cualquier toque salta la cuenta atrás
-  aux("GOL_AZUL");  // dentro del bloqueo de 3 s heredado
+  assert(eng.phase() == Phase::Playing && eng.period() == Period::First);
+  aux("GOL_AZUL");  // dentro del bloqueo de 3 s
   assert(eng.score().blue == 0);
   run(3000);
   aux("GOL_AZUL");
   assert((AUX_UART_RX < 0 ? sim::out : sim::auxOut).find("GOAL AZUL") != std::string::npos);
-  assert(eng.phase() == Phase::PeriodEnd);
-  tap(400, 370);  // IR A PRORROGA
-  assert(eng.period() == Period::Overtime);
-  tap(400, 240);
+  assert(eng.phase() == Phase::Playing && eng.score().blue == 1);
   run(3000);
-  // Pausa por protocolo, DESHACER deshabilitado sin goles, continuar con toque.
+  // Pausa por protocolo, continuar con toque.
   usb("PAUSA");
   assert(eng.phase() == Phase::Paused && shows("CONTINUAR"));
   tap(400, 260);
   assert(eng.phase() == Phase::Playing);
-  tap(160, 200);  // panel BLANCO = gol de oro
+  tap(160, 200);  // panel BLANCO: llega a 2 y gana
   assert(eng.phase() == Phase::Finished && sent("WIN BLANCO"));
   run(1000);
-  assert(shows("VICTORIA BLANCO") && shows("Gol de oro"));
+  assert(shows("VICTORIA BLANCO"));
   assert(matchesPlayed == 1 && historyCount == 1 && history[0].white == 2);
 
   // Revancha y abandono con doble confirmación.

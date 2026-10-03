@@ -79,16 +79,16 @@ describe('Caos: último minuto', () => {
 });
 
 describe('Avisos', () => {
-  it('bola de partido en la 2ª parte', () => {
-    const m = run({ goalsPerPeriod: 2 });
+  it('bola de partido a un gol del objetivo', () => {
+    const m = run({ goalsPerPeriod: 3 });
     m.at(1000).cmd({ type: 'GOAL', team: 'white' });
-    m.at(5000).cmd({ type: 'GOAL', team: 'white' });
-    m.cmd({ type: 'CONTINUE' });
-    m.cmd({ type: 'SKIP_COUNTDOWN' });
     expect(matchPointTeams(m.s)).toEqual([]);
-    m.at(9000).cmd({ type: 'GOAL', team: 'blue' });
-    // 2–1, queda 1 gol en la parte: Blanco gana si marca; Azul empataría.
+    m.at(5000).cmd({ type: 'GOAL', team: 'white' });
+    // 2–0 a 3 goles: Blanco gana si marca.
     expect(matchPointTeams(m.s)).toEqual(['white']);
+    m.at(9000).cmd({ type: 'GOAL', team: 'blue' });
+    m.at(13000).cmd({ type: 'GOAL', team: 'blue' });
+    expect(matchPointTeams(m.s)).toEqual(['white', 'blue']);
   });
   it('racha y remontada', () => {
     const m = run({ goalsPerPeriod: 10 });

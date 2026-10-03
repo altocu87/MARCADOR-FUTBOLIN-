@@ -11,9 +11,9 @@ import {
 import { MODE_LABEL, ModeBadge, NeonSign, ScreenFrame, TestModeBadge, Toggle } from '../components/common';
 
 const CONDITION_HELP: Record<EndCondition, string> = {
-  goals: 'Cada parte termina al sumar el objetivo de goles entre los dos equipos.',
-  time: 'Cada parte termina al agotarse su tiempo.',
-  both: 'Cada parte termina con lo que ocurra primero: goles o tiempo.',
+  goals: 'Sin partes: el reloj corre hasta que un equipo llega a los goles y gana.',
+  time: 'Dos partes: gana quien sume más goles. Si hay empate, prórroga y después penaltis.',
+  both: 'Dos partes, pero quien llegue antes a los goles gana en ese momento. Empate al final: prórroga y penaltis.',
 };
 
 /** Las dos tarjetas activas a la vez equivalen a «ambas». */
@@ -23,7 +23,7 @@ function conditionFrom(goals: boolean, time: boolean): EndCondition {
 
 /**
  * Tarjeta de condición: + arriba, número en medio y − abajo.
- * Tocar el número activa o desactiva la tarjeta (decide si la parte termina por goles, por tiempo o por ambos).
+ * Tocar el número activa o desactiva la tarjeta (decide si el partido es por goles, por tiempo o ambos).
  */
 function ConditionCard({
   title,
@@ -162,8 +162,8 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
       )}
       <div className="grid-2 setup-conditions">
         <ConditionCard
-          title="Goles por parte"
-          label="goles por parte"
+          title="Goles para ganar"
+          label="goles para ganar"
           unit="goles"
           value={config.goalsPerPeriod}
           min={CONFIG_LIMITS.goalsPerPeriod.min}
@@ -173,7 +173,7 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
           onChange={(v) => set({ goalsPerPeriod: v })}
         />
         <ConditionCard
-          title="Tiempo por parte"
+          title="Minutos por parte"
           label="minutos por parte"
           unit="min"
           value={config.minutesPerPeriod}

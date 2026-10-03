@@ -12,6 +12,7 @@ import {
   getScore,
   goalLockRemaining,
   goalStreak,
+  isSinglePeriod,
   isSuddenDeath,
   nextPenaltyTeam,
   type MatchConfig,
@@ -47,9 +48,14 @@ const MODE_ART: Record<MatchConfig['mode'], string> = {
 };
 
 function conditionText(config: MatchConfig): string {
-  if (config.endCondition === 'goals') return `${config.goalsPerPeriod} goles por parte`;
-  if (config.endCondition === 'time') return `${config.minutesPerPeriod} min por parte`;
-  return `${config.goalsPerPeriod} goles o ${config.minutesPerPeriod} min`;
+  if (config.endCondition === 'goals') return `Gana quien llegue a ${config.goalsPerPeriod} goles`;
+  if (config.endCondition === 'time') return `2 partes de ${config.minutesPerPeriod} min`;
+  return `A ${config.goalsPerPeriod} goles o 2 partes de ${config.minutesPerPeriod} min`;
+}
+
+/** Rótulo del periodo: por goles no hay partes, es «PARTIDO». */
+export function periodLabel(state: MatchState): string {
+  return state.period === 'first' && isSinglePeriod(state.config) ? 'PARTIDO' : PERIOD_LABEL[state.period];
 }
 
 export function MatchScreen({
@@ -247,7 +253,7 @@ function ScoreboardView({ ctl, photos }: { ctl: MatchController; photos: Map<str
   return (
     <>
       <header className="match-top">
-        <span className="period-chip">{PERIOD_LABEL[state.period]}</span>
+        <span className="period-chip">{periodLabel(state)}</span>
         {state.period === 'overtime' && <span className="badge badge-ranked">GOL DE ORO</span>}
         {ctl.matchPoint.length > 0 && state.period !== 'overtime' && (
           <span className="badge badge-danger match-point-badge">
@@ -275,7 +281,7 @@ function ScoreboardView({ ctl, photos }: { ctl: MatchController; photos: Map<str
           />
           {state.config.endCondition !== 'time' && state.period !== 'overtime' && (
             <div className="period-goals">
-              Parte: {periodScore.white + periodScore.blue}/{state.config.goalsPerPeriod}
+              A {state.config.goalsPerPeriod} goles
             </div>
           )}
           <div className={`lock-msg ${lock > 0 ? 'on' : ''} ${flash ? 'flash' : ''}`} role="status">
@@ -319,7 +325,7 @@ function CountdownOverlay({ ctl, rivalry }: { ctl: MatchController; rivalry: { p
   return (
     <button className="overlay overlay-countdown" onClick={() => send({ type: 'SKIP_COUNTDOWN' })} autoFocus>
       <span className="overlay-sub">
-        {PERIOD_LABEL[state.period]}
+        {periodLabel(state)}
         {state.period === 'overtime' ? ' · GOL DE ORO · 60 s' : ''}
       </span>
       <span className="countdown-stack">

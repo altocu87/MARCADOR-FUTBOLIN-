@@ -6,7 +6,6 @@ import {
   dispatch,
   advance,
   getScore,
-  getPeriodScore,
   getClock,
   getPenaltyScore,
   nextPenaltyTeam,
@@ -67,31 +66,55 @@ class Sim {
   }
 }
 
+/** Configuración por tiempo (dos partes de 1 minuto). */
+const TIME = { endCondition: 'time' as const, minutesPerPeriod: 1 };
+
+/** Deja correr el reloj hasta el final de la parte en curso. */
+function toPeriodEnd(s: Sim): Sim {
+  const remaining = getClock(s.state, s.t).remainingMs;
+  if (remaining === null) throw new Error('La parte no tiene límite de tiempo');
+  s.wait(remaining);
+  expect(['periodEnd', 'finished']).toContain(s.state.phase);
+  return s;
+}
+
 describe('A01 · partido válido completo', () => {
-  it('recorre cuenta atrás, dos partes y final', () => {
-    const s = new Sim(cfg({ goalsPerPeriod: 2 }));
+  it('por goles: una sola parte y gana el primero que llega al objetivo', () => {
+    const s = new Sim(cfg({ goalsPerPeriod: 3 }));
     expect(s.state.phase).toBe('countdown');
     s.wait(2999);
     expect(s.state.phase).toBe('countdown');
     s.wait(1);
     expect(s.state.phase).toBe('playing');
     expect(s.state.period).toBe('first');
+    for (const team of ['white', 'blue', 'white', 'blue'] as const) s.scoreAfterLock(team);
+    expect(s.state.phase).toBe('playing');
+    s.scoreAfterLock('white');
+    expect(s.state.phase).toBe('finished');
+    expect(s.state.result?.winner).toBe('white');
+    expect(s.state.result?.reason).toBe('regulation');
+    expect(s.state.result?.score).toEqual({ white: 3, blue: 2 });
+    expect(s.state.periods).toHaveLength(1);
+    expect(s.state.periods[0].endReason).toBe('goals');
+  });
+  it('por tiempo: dos partes y gana quien suma más goles', () => {
+    const s = new Sim(cfg(TIME)).start();
     s.scoreAfterLock('white');
     s.scoreAfterLock('white');
-    expect(s.state.phase).toBe('periodEnd');
+    toPeriodEnd(s);
     expect(s.cmd({ type: 'CONTINUE' }).accepted).toBe(true);
     expect(s.state.phase).toBe('countdown');
     expect(s.state.period).toBe('second');
     s.start();
     s.scoreAfterLock('blue');
-    s.scoreAfterLock('white');
+    toPeriodEnd(s);
     expect(s.state.phase).toBe('finished');
     expect(s.state.result?.winner).toBe('white');
     expect(s.state.result?.reason).toBe('regulation');
-    expect(s.state.result?.score).toEqual({ white: 3, blue: 1 });
+    expect(s.state.result?.score).toEqual({ white: 2, blue: 1 });
     expect(s.state.periods.map((p) => p.score)).toEqual([
       { white: 2, blue: 0 },
-      { white: 1, blue: 1 },
+      { white: 0, blue: 1 },
     ]);
   });
 });
@@ -120,18 +143,27 @@ describe('A02 · configuraciones y selecciones inválidas', () => {
 });
 
 describe('A03 · POR GOLES', () => {
-  it('termina la parte por el total válido del periodo y conserva el acumulado', () => {
+  it('cuentan los goles de cada equipo, no la suma de ambos', () => {
     const s = new Sim(cfg({ goalsPerPeriod: 5 })).start();
-    for (const team of ['white', 'blue', 'white', 'blue', 'white'] as const) s.scoreAfterLock(team);
-    expect(s.state.phase).toBe('periodEnd');
-    expect(getScore(s.state)).toEqual({ white: 3, blue: 2 });
-    s.cmd({ type: 'CONTINUE' });
-    s.start();
-    // La segunda parte cuenta sus propios goles para el objetivo.
-    s.scoreAfterLock('blue');
+    for (let i = 0; i < 4; i += 1) {
+      s.scoreAfterLock('white');
+      s.scoreAfterLock('blue');
+    }
     expect(s.state.phase).toBe('playing');
-    expect(getScore(s.state)).toEqual({ white: 3, blue: 3 });
-    expect(getPeriodScore(s.state)).toEqual({ white: 0, blue: 1 });
+    expect(getScore(s.state)).toEqual({ white: 4, blue: 4 });
+    s.scoreAfterLock('blue');
+    expect(s.state.phase).toBe('finished');
+    expect(s.state.result?.winner).toBe('blue');
+    expect(s.state.events.some((e) => e.type === 'OVERTIME_START')).toBe(false);
+  });
+  it('un gol anulado no da la victoria', () => {
+    const s = new Sim(cfg({ goalsPerPeriod: 2 })).start();
+    s.scoreAfterLock('white');
+    s.cmd({ type: 'MINUS_ONE', team: 'white' });
+    s.scoreAfterLock('white');
+    expect(s.state.phase).toBe('playing');
+    s.scoreAfterLock('white');
+    expect(s.state.phase).toBe('finished');
   });
 });
 
@@ -157,11 +189,14 @@ describe('A04 · POR GOLES no termina por tiempo; POR TIEMPO sí', () => {
 });
 
 describe('A05 · AMBAS', () => {
-  it('termina por goles si llegan primero', () => {
+  it('llegar al objetivo de goles gana el partido en ese momento', () => {
     const s = new Sim(cfg({ endCondition: 'both', goalsPerPeriod: 2, minutesPerPeriod: 5 })).start();
     s.scoreAfterLock('white');
     s.scoreAfterLock('blue');
-    expect(s.state.phase).toBe('periodEnd');
+    expect(s.state.phase).toBe('playing');
+    s.scoreAfterLock('blue');
+    expect(s.state.phase).toBe('finished');
+    expect(s.state.result?.winner).toBe('blue');
     expect(s.state.periods[0].endReason).toBe('goals');
   });
   it('termina por tiempo si llega primero', () => {
@@ -186,17 +221,21 @@ describe('A05 · AMBAS', () => {
 });
 
 describe('A06 · goles fuera de estado de juego', () => {
-  it('rechaza antes de iniciar, en pausa y en final de periodo', () => {
-    const s = new Sim(cfg({ goalsPerPeriod: 1 }));
+  it('rechaza antes de iniciar, en pausa, en final de parte y con el partido terminado', () => {
+    const s = new Sim(cfg(TIME));
     expect(s.goal('white').reason).toBe('invalid_state');
     s.start();
     s.cmd({ type: 'PAUSE' });
     expect(s.goal('white').reason).toBe('invalid_state');
     s.cmd({ type: 'RESUME' });
-    s.scoreAfterLock('white');
-    expect(s.state.phase).toBe('periodEnd');
+    toPeriodEnd(s);
     s.wait(5000);
     expect(s.goal('blue').reason).toBe('invalid_state');
+    const f = new Sim(cfg({ goalsPerPeriod: 1 })).start();
+    f.scoreAfterLock('white');
+    expect(f.state.phase).toBe('finished');
+    f.wait(5000);
+    expect(f.goal('blue').reason).toBe('invalid_state');
   });
 });
 
@@ -254,16 +293,17 @@ describe('A08 · nada elude el bloqueo', () => {
     expect(s.goal('blue').reason).toBe('goal_lock');
   });
   it('cambio de parte y salto de cuenta atrás no abren una vía', () => {
-    const s = new Sim(cfg({ goalsPerPeriod: 1 })).start();
-    s.wait(5000);
+    const s = new Sim(cfg(TIME)).start();
+    s.at(58_000);
     const t0 = s.t;
-    s.goal('white');
+    expect(s.goal('white').accepted).toBe(true);
+    s.at(60_000);
     expect(s.state.phase).toBe('periodEnd');
-    s.at(t0 + 200);
+    s.at(t0 + 2200);
     s.cmd({ type: 'CONTINUE' });
-    s.at(t0 + 300);
+    s.at(t0 + 2300);
     s.start();
-    s.at(t0 + 500);
+    s.at(t0 + 2500);
     expect(s.goal('blue').reason).toBe('goal_lock');
     s.at(t0 + 3000);
     expect(s.goal('blue').accepted).toBe(true);
@@ -296,31 +336,32 @@ describe('A09 · correcciones', () => {
     expect(seqs).toEqual([...seqs].sort((a, b) => a - b));
   });
   it('−1 solo actúa sobre el periodo actual', () => {
-    const s = new Sim(cfg({ goalsPerPeriod: 1 })).start();
+    const s = new Sim(cfg(TIME)).start();
     s.scoreAfterLock('white');
+    toPeriodEnd(s);
     s.cmd({ type: 'CONTINUE' });
     s.start();
     expect(s.cmd({ type: 'MINUS_ONE', team: 'white' }).reason).toBe('no_goal_to_remove');
     expect(s.cmd({ type: 'UNDO' }).reason).toBe('nothing_to_undo');
   });
   it('correcciones no permitidas fuera de estado', () => {
-    const s = new Sim(cfg({ goalsPerPeriod: 1 })).start();
+    const s = new Sim(cfg(TIME)).start();
     s.scoreAfterLock('white');
-    expect(s.state.phase).toBe('periodEnd');
+    toPeriodEnd(s);
     expect(s.cmd({ type: 'MINUS_ONE', team: 'white' }).reason).toBe('invalid_state');
     expect(s.cmd({ type: 'UNDO' }).reason).toBe('invalid_state');
   });
 });
 
+/** Empate al final de la 2ª parte (por tiempo). */
 function toOvertime(): Sim {
-  const s = new Sim(cfg({ goalsPerPeriod: 2 })).start();
+  const s = new Sim(cfg(TIME)).start();
   s.scoreAfterLock('white');
-  s.scoreAfterLock('blue');
+  toPeriodEnd(s);
   s.cmd({ type: 'CONTINUE' });
   s.start();
-  s.scoreAfterLock('white');
   s.scoreAfterLock('blue');
-  expect(s.state.phase).toBe('periodEnd');
+  toPeriodEnd(s);
   expect(s.state.period).toBe('second');
   s.cmd({ type: 'CONTINUE' });
   expect(s.state.period).toBe('overtime');
@@ -335,7 +376,7 @@ describe('A10 · prórroga', () => {
     expect(getClock(s.state, s.t).remainingMs).toBe(60_000);
     s.scoreAfterLock('blue');
     expect(s.state.phase).toBe('finished');
-    expect(s.state.result).toMatchObject({ winner: 'blue', reason: 'golden_goal', score: { white: 2, blue: 3 } });
+    expect(s.state.result).toMatchObject({ winner: 'blue', reason: 'golden_goal', score: { white: 1, blue: 2 } });
   });
 });
 
@@ -357,11 +398,13 @@ describe('A11 · prórroga sin gol → penaltis', () => {
 });
 
 function toShootout(over: Partial<MatchConfig> = {}): Sim {
-  const s = new Sim(cfg({ goalsPerPeriod: 1, ...over })).start();
+  const s = new Sim(cfg({ ...TIME, ...over })).start();
   s.scoreAfterLock('white');
+  toPeriodEnd(s);
   s.cmd({ type: 'CONTINUE' });
   s.start();
   s.scoreAfterLock('blue');
+  toPeriodEnd(s);
   s.cmd({ type: 'CONTINUE' });
   s.start();
   s.wait(60_000);

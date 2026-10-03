@@ -140,7 +140,7 @@ function General() {
         </div>
       </div>
       <div className="card">
-        <div className="label">Goles por parte (por defecto)</div>
+        <div className="label">Goles para ganar (por defecto)</div>
         <Stepper
           label="goles por defecto"
           value={prefs.defaultGoalsPerPeriod}

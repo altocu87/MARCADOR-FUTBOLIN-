@@ -25,6 +25,7 @@ import {
   type ParticipantRef,
   type Period,
   type Team,
+  isSinglePeriod,
 } from '../../match-engine';
 import { newId } from '../../services/ids';
 import { sound } from '../../services/sound/sound';
@@ -141,7 +142,7 @@ export function useMatchController(
           showBanner(
             e.period === 'overtime'
               ? { text: 'PRÓRROGA', sub: 'GOL DE ORO', tone: 'gold' }
-              : { text: PERIOD_BANNER[e.period], sub: '¡A JUGAR!', tone: next.config.mode === 'chaos' ? 'chaos' : 'accent' },
+              : { text: e.period === 'first' && isSinglePeriod(next.config) ? 'PARTIDO' : PERIOD_BANNER[e.period], sub: '¡A JUGAR!', tone: next.config.mode === 'chaos' ? 'chaos' : 'accent' },
             1500,
           );
         } else if (e.type === 'SHOOTOUT_START') {

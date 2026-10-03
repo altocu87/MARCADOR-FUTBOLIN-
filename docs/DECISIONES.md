@@ -18,6 +18,16 @@ Se distingue entre **requisito fijado** (del documento maestro), **propuesta con
 | Penaltis separados | Resultado ordinario y de la tanda se guardan aparte; el ganador sale de la tanda |
 | Modo prueba | Se fija al empezar; no guarda partido, eventos, XP, ELO, logros ni récords |
 
+### Reglas de final de partido («reglas-partido-2», indicadas por el propietario)
+
+- **Por goles**: no hay partes. El cronómetro corre hacia arriba sin límite y gana el primer equipo que
+  llega a los goles fijados (cuentan los goles de cada equipo, no la suma de ambos). Sin prórroga ni penaltis.
+- **Por tiempo**: dos partes de X minutos con cartel de descanso entre ellas. Gana quien sume más goles
+  entre las dos; si hay empate, prórroga (gol de oro) y después penaltis.
+- **Ambas**: dos partes de X minutos, pero llegar a los goles fijados gana en ese momento. Si se acaba el
+  tiempo con empate, prórroga y penaltis.
+- Los partidos guardados antes del cambio (`reglas-partido-1`, objetivo de goles por parte) se conservan tal cual.
+
 ### Criterios de desarrollo tomados (revisables)
 
 - **Gol en el instante límite (AMBAS/TIEMPO)**: el motor procesa primero el tiempo. Un gol con el
@@ -25,7 +35,7 @@ Se distingue entre **requisito fijado** (del documento maestro), **propuesta con
 - **−1** anula el gol válido más reciente de ese equipo **en el periodo actual**. Deshacer revierte
   la última acción corregible (gol o −1) del periodo actual. No se reabren partes cerradas.
 - Correcciones permitidas en juego y en pausa; no en final de periodo ni tras el final.
-- Restaurar un gol con Deshacer puede completar el objetivo de goles y cerrar la parte.
+- Restaurar un gol con Deshacer puede completar el objetivo de goles y terminar el partido.
 - Cuenta atrás de 3 s antes de 1ª parte, 2ª parte y prórroga; no antes de la tanda.
 - Una pulsación física durante la cuenta atrás se consume como salto (no registra gol).
 - En penaltis, un gol físico/sensor se interpreta como acierto del equipo indicado y el motor
@@ -68,7 +78,7 @@ guardados sin origen y reprocesar no duplica premios.
 
 - **Caos «caos-1»**: comodín por equipo y partido (armar/desarmar; el siguiente gol vale +1) y goles del
   último minuto x2 en partidos con límite de tiempo (no en prórroga). Se acumulan (máx. x3). El valor del gol
-  cuenta para el objetivo de goles de la parte. −1 y Deshacer anulan/restauran el gol con su valor.
+  cuenta para el objetivo de goles. −1 y Deshacer anulan/restauran el gol con su valor.
   Deshacer un gol de comodín **no** devuelve el comodín.
 - **Goleador opcional**: se asigna en el resumen o en el detalle del historial; en 1v1 es automático.
   No modifica resultado, ELO ni XP del partido; solo estadísticas personales y logros de goleador.

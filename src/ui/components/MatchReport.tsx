@@ -1,7 +1,7 @@
 /** Informe de un partido terminado: resumen, cronología, evolución y progresión. */
 import { useState } from 'react';
 import { useApp } from '../../app/AppContext';
-import { annulledGoalIdsFromEvents, validGoalsFromEvents, type MatchEvent, type Period, type Team } from '../../match-engine';
+import { annulledGoalIdsFromEvents, isSinglePeriod, validGoalsFromEvents, type MatchEvent, type Period, type Team } from '../../match-engine';
 import type { StoredMatch } from '../../services/persistence';
 import { ACHIEVEMENTS } from '../../services/progression';
 import { formatDuration } from '../../services/statistics';
@@ -20,8 +20,14 @@ export function resultLine(m: StoredMatch): string {
   return `${base} · Gana ${TEAM[r.winner]}`;
 }
 
-function describeEvent(e: MatchEvent, byId: Map<string, MatchEvent>): { text: string; kind: string } | null {
-  const t = `${PERIOD[e.period]} · ${formatDuration(e.periodTimeMs)}`;
+/** Por goles no hay partes: el periodo único se llama «Partido» (los partidos antiguos sí tenían dos). */
+function periodName(m: StoredMatch, period: Period): string {
+  const single = isSinglePeriod(m.config) && !m.periods.some((p) => p.period === 'second');
+  return period === 'first' && single ? 'Partido' : PERIOD[period];
+}
+
+function describeEvent(e: MatchEvent, byId: Map<string, MatchEvent>, name: (p: Period) => string): { text: string; kind: string } | null {
+  const t = `${name(e.period)} · ${formatDuration(e.periodTimeMs)}`;
   const sc = `${e.scoreAfter.white}–${e.scoreAfter.blue}`;
   switch (e.type) {
     case 'GOAL':
@@ -41,9 +47,9 @@ function describeEvent(e: MatchEvent, byId: Map<string, MatchEvent>): { text: st
       return { text: `Deshacer: ${what} · ${t} · ${sc}`, kind: 'corr' };
     }
     case 'PERIOD_START':
-      return { text: `Inicio ${PERIOD[e.period].toLowerCase()}`, kind: 'info' };
+      return { text: `Inicio ${name(e.period).toLowerCase()}`, kind: 'info' };
     case 'PERIOD_END':
-      return { text: `Final ${PERIOD[e.period].toLowerCase()} (${e.reason === 'time' ? 'tiempo' : e.reason === 'golden_goal' ? 'gol de oro' : 'goles'}) · ${sc}`, kind: 'info' };
+      return { text: `Final ${name(e.period).toLowerCase()} (${e.reason === 'time' ? 'tiempo' : e.reason === 'golden_goal' ? 'gol de oro' : 'goles'}) · ${sc}`, kind: 'info' };
     case 'PAUSE':
       return { text: `Pausa · ${t}`, kind: 'minor' };
     case 'RESUME':
@@ -125,7 +131,7 @@ export function MatchReport({ match: given }: { match: StoredMatch }) {
               <tbody>
                 {match.periods.map((p) => (
                   <tr key={p.period}>
-                    <td>{PERIOD[p.period]}</td>
+                    <td>{periodName(match, p.period)}</td>
                     <td>{p.score.white}</td>
                     <td>{p.score.blue}</td>
                     <td>{formatDuration(p.durationMs)}</td>
@@ -151,7 +157,7 @@ export function MatchReport({ match: given }: { match: StoredMatch }) {
       {tab === 'timeline' && (
         <ol className="timeline scroll">
           {match.events.map((e) => {
-            const d = describeEvent(e, byId);
+            const d = describeEvent(e, byId, (p) => periodName(match, p));
             if (!d) return null;
             const isAnnulled = e.type === 'GOAL' && annulled.has(e.id);
             return (
@@ -247,7 +253,7 @@ function ScorersEditor({ match, editable }: { match: StoredMatch; editable: bool
             <div key={g.id} className="row">
               <span className={`badge ${g.team === 'white' ? '' : 'badge-accent'}`}>{TEAM[g.team!]}</span>
               <span className="muted" style={{ width: 150, fontSize: 13 }}>
-                {PERIOD[g.period]} · {formatDuration(g.periodTimeMs)}
+                {periodName(match, g.period)} · {formatDuration(g.periodTimeMs)}
               </span>
               <span style={{ fontWeight: 800, width: 50 }}>
                 {g.scoreAfter.white}–{g.scoreAfter.blue}

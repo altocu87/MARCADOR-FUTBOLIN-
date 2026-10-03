@@ -5,14 +5,19 @@
  */
 
 export const ENGINE_VERSION = '1.0.0';
-export const RULES_VERSION = 'reglas-partido-1';
+export const RULES_VERSION = 'reglas-partido-2';
 
 export type Team = 'white' | 'blue';
 export const TEAMS: readonly Team[] = ['white', 'blue'];
 
 export type MatchMode = 'quick' | 'chaos' | 'ranked';
 
-/** Condición de final de periodo («Condición de victoria» en la interfaz). */
+/**
+ * Cómo termina el partido («reglas-partido-2»):
+ * - goals: una sola parte con cronómetro ascendente; gana el primero que llega a `goalsPerPeriod`.
+ * - time: dos partes de `minutesPerPeriod`; gana quien sume más goles; empate → prórroga → penaltis.
+ * - both: dos partes con tiempo, pero llegar al objetivo de goles gana en ese momento.
+ */
 export type EndCondition = 'goals' | 'time' | 'both';
 
 export type Period = 'first' | 'second' | 'overtime' | 'shootout';
@@ -29,7 +34,7 @@ export type Phase =
 export interface MatchConfig {
   mode: MatchMode;
   endCondition: EndCondition;
-  /** Objetivo de goles totales (Blanco + Azul) por periodo. */
+  /** Goles para ganar: el primer equipo que llega gana el partido (nombre histórico del campo). */
   goalsPerPeriod: number;
   /** Duración de cada parte en minutos. */
   minutesPerPeriod: number;

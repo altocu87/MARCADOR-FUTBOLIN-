@@ -27,17 +27,28 @@ struct Sim {
 };
 
 static void a01_full_match() {
-  Sim s(cfg(EndCondition::Goals, 2));
+  // Por goles: una sola parte; gana el primero que llega al objetivo.
+  Sim s(cfg(EndCondition::Goals, 3));
   assert(s.e.phase() == Phase::Countdown);
   s.wait(2999); assert(s.e.phase() == Phase::Countdown);
   s.wait(1); assert(s.e.phase() == Phase::Playing);
-  s.goalLater(Team::White); s.goalLater(Team::White);
-  assert(s.e.phase() == Phase::PeriodEnd);
-  assert(s.e.next(s.t) == R::Accepted && s.e.period() == Period::Second);
-  s.startPeriod();
-  s.goalLater(Team::Blue); s.goalLater(Team::White);
+  s.goalLater(Team::White); s.goalLater(Team::Blue); s.goalLater(Team::White); s.goalLater(Team::Blue);
+  assert(s.e.phase() == Phase::Playing);
+  s.goalLater(Team::White);
   assert(s.e.phase() == Phase::Finished && s.e.winner() == Team::White && s.e.reason() == Reason::Regulation);
-  assert(s.e.score().white == 3 && s.e.score().blue == 1);
+  assert(s.e.score().white == 3 && s.e.score().blue == 2);
+  // Por tiempo: dos partes y gana quien suma más.
+  Sim t(cfg(EndCondition::Time, 5, 1));
+  t.startPeriod(); t.goalLater(Team::White); t.goalLater(Team::White);
+  t.wait(60000); assert(t.e.phase() == Phase::PeriodEnd);
+  assert(t.e.next(t.t) == R::Accepted && t.e.period() == Period::Second);
+  t.startPeriod(); t.goalLater(Team::Blue);
+  t.wait(60000);
+  assert(t.e.phase() == Phase::Finished && t.e.winner() == Team::White && t.e.reason() == Reason::Regulation);
+  // Ambas: llegar a los goles gana aunque quede tiempo.
+  Sim b(cfg(EndCondition::Both, 2, 5));
+  b.startPeriod(); b.goalLater(Team::Blue); b.goalLater(Team::Blue);
+  assert(b.e.phase() == Phase::Finished && b.e.winner() == Team::Blue);
 }
 
 static void a02_invalid_config() {
@@ -91,12 +102,14 @@ static void a08_nothing_bypasses_lock() {
   assert(s.goal(Team::Blue) == R::GoalLock);
   s.e.pause(s.t); s.t += 100; s.e.resume(s.t);
   assert(s.goal(Team::Blue) == R::GoalLock);
-  Sim p(cfg(EndCondition::Goals, 1));
-  p.startPeriod(); p.wait(5000);
+  // Cambio de parte (por tiempo) justo después de un gol.
+  Sim p(cfg(EndCondition::Time, 5, 1));
+  p.startPeriod(); p.wait(58000);
   t0 = p.t;
   p.goal(Team::White);
-  p.t = t0 + 200; p.e.next(p.t); p.startPeriod();
-  p.t = t0 + 500; assert(p.goal(Team::Blue) == R::GoalLock);
+  p.wait(2000); assert(p.e.phase() == Phase::PeriodEnd);
+  p.t = t0 + 2200; p.e.next(p.t); p.startPeriod();
+  p.t = t0 + 2500; assert(p.goal(Team::Blue) == R::GoalLock);
 }
 
 static void a09_corrections() {
@@ -111,9 +124,12 @@ static void a09_corrections() {
 }
 
 static Sim toOvertime() {
-  Sim s(cfg(EndCondition::Goals, 2));
+  // Por tiempo, 2–2 al final de la 2ª parte.
+  Sim s(cfg(EndCondition::Time, 5, 1));
   s.startPeriod(); s.goalLater(Team::White); s.goalLater(Team::Blue);
+  while (s.e.phase() == Phase::Playing) s.wait(1000);
   s.e.next(s.t); s.startPeriod(); s.goalLater(Team::White); s.goalLater(Team::Blue);
+  while (s.e.phase() == Phase::Playing) s.wait(1000);
   assert(s.e.phase() == Phase::PeriodEnd && s.e.period() == Period::Second);
   s.e.next(s.t);
   assert(s.e.period() == Period::Overtime);
@@ -175,12 +191,13 @@ static void pause_keeps_time() {
 }
 
 static void match_point() {
-  Sim s(cfg(EndCondition::Goals, 2));
-  s.startPeriod(); s.goalLater(Team::White); s.goalLater(Team::White);
-  s.e.next(s.t); s.startPeriod();
+  Sim s(cfg(EndCondition::Goals, 3));
+  s.startPeriod(); s.goalLater(Team::White);
   assert(s.e.matchPoint() == 0);
-  s.goalLater(Team::Blue);
-  assert(s.e.matchPoint() == 1);  // solo Blanco ganaría con el siguiente gol
+  s.goalLater(Team::White);
+  assert(s.e.matchPoint() == 1);  // 2–0 a 3 goles: solo Blanco gana con el siguiente
+  s.goalLater(Team::Blue); s.goalLater(Team::Blue);
+  assert(s.e.matchPoint() == 3);
 }
 
 int main() {

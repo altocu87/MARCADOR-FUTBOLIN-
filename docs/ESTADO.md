@@ -1,6 +1,6 @@
 # Estado de la entrega local
 
-Fecha: 02/10/2026 · Versión 0.3.0 · Motor 1.0.0 (`reglas-partido-1`)
+Fecha: 02/10/2026 · Versión 0.3.0 · Motor 1.0.0 (`reglas-partido-2`: por goles sin partes; por tiempo dos partes con prórroga y penaltis)
 
 ## Fases del documento maestro
 
