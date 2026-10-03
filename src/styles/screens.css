@@ -1831,14 +1831,167 @@
   }
 }
 
-/* ---------- Configuración: tarjetas de goles y tiempo ---------- */
-/* Cada columna: triángulo ▲ a ras del borde superior del recuadro, recuadro con el número
-   (tocar = activar/desactivar) y triángulo ▼ a ras del borde inferior. La activa brilla; la otra se apaga. */
+/* ---------- Configuración del partido ---------- */
+.setup-screen {
+  --mc: var(--accent);
+}
+.setup-chaos {
+  --mc: var(--chaos);
+}
+.setup-ranked {
+  --mc: var(--ranked);
+}
+/* Fondo a pantalla completa; todo lo demás va por encima. */
+.setup-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.7;
+  pointer-events: none;
+}
+.setup-screen > :not(.setup-bg) {
+  position: relative;
+  z-index: 1;
+}
+.setup-screen .screen-header {
+  background: rgba(7, 11, 18, 0.45);
+}
+/* Modo de partido: píldora grande centrada en la cabecera, del color del modo. */
+.setup-mode {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 6px 26px;
+  border: 2px solid var(--mc);
+  border-radius: 999px;
+  background: rgba(7, 16, 28, 0.85);
+  color: var(--mc);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 0 12px var(--mc);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--mc) 45%, transparent), inset 0 0 10px color-mix(in srgb, var(--mc) 20%, transparent);
+  pointer-events: none;
+}
+.setup-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.setup-clock {
+  display: flex;
+  filter: drop-shadow(0 0 4px rgba(79, 216, 255, 0.7)) drop-shadow(0 0 10px rgba(79, 216, 255, 0.3));
+}
+.setup-clock .seg-colon {
+  transition: opacity 0.2s ease;
+}
+.setup-clock.sec-odd .seg-colon {
+  opacity: 0.15;
+}
+.setup-screen .screen-body {
+  padding: 10px 16px 0;
+}
+.setup-screen .screen-footer {
+  justify-content: center;
+  padding: 6px 16px 10px;
+}
+.setup-error {
+  position: absolute;
+  left: 16px;
+  max-width: 30%;
+}
+
+/* Botón Continuar: panel neón en SVG; al pulsar se ilumina por dentro. */
+.continue-btn {
+  position: relative;
+  width: 250px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 6px rgba(47, 212, 255, 0.45));
+  transition: transform 0.08s ease, filter 0.15s ease;
+}
+.continue-btn svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.continue-btn span {
+  position: relative;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #bff4ff;
+  text-shadow: 0 0 8px rgba(47, 212, 255, 0.8);
+}
+.cb-fill {
+  fill: #08131d;
+}
+.cb-fill-on {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.cb-frame {
+  fill: none;
+  stroke: #2fd4ff;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+.cb-inner {
+  fill: none;
+  stroke: rgba(47, 212, 255, 0.35);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.cb-bar {
+  fill: none;
+  stroke: #3dff8a;
+  stroke-width: 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 3px #3dff8a);
+}
+.continue-btn:not(:disabled):active {
+  transform: scale(0.97);
+  filter: drop-shadow(0 0 12px rgba(47, 212, 255, 0.85));
+}
+.continue-btn:not(:disabled):active .cb-fill-on {
+  opacity: 1;
+}
+.continue-btn:not(:disabled):active .cb-top {
+  stroke: #6fe6ff;
+  filter: drop-shadow(0 0 3px #6fe6ff);
+}
+.continue-btn:not(:disabled):active span {
+  color: #ffffff;
+  text-shadow: 0 0 6px #fff, 0 0 14px #2fd4ff;
+}
+.continue-btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+
+/* Tarjetas de goles y tiempo: botón ▲ a ras del borde superior del recuadro, recuadro con el número
+   (tocar = activar/desactivar) y botón ▼ a ras del borde inferior. La activa brilla; la otra se apaga. */
 .setup-conditions {
   flex: 1;
   min-height: 0;
-  column-gap: 28px;
-  padding: 0 12px;
+  column-gap: 22px;
+  padding: 0 4px;
 }
 .cond {
   display: flex;
@@ -1852,24 +2005,65 @@
   opacity: 1;
   filter: none;
 }
+/* Botones de sumar/restar: pestaña en trapecio con borde de color fino y flecha, sin imágenes. */
 .cond-btn {
+  --c: #3ddc97;
   position: relative;
   flex: 0 0 auto;
   width: 100%;
+  height: 46px;
   border: 0;
   background: transparent;
   padding: 0;
   cursor: pointer;
-  color: var(--text);
-  font-size: 40px;
-  font-weight: 800;
-}
-/* Alto según la proporción de la imagen más alta de cada pareja (reposo/pulsado). */
-.cond-btn.up {
-  aspect-ratio: 600 / 146;
 }
 .cond-btn.down {
-  aspect-ratio: 600 / 139;
+  --c: #ff5a6e;
+}
+.cond.on .cond-btn {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 60%, transparent));
+}
+.cond-tab {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c);
+  clip-path: polygon(16% 0, 84% 0, 100% 100%, 0 100%);
+}
+.cond-btn.down .cond-tab {
+  clip-path: polygon(0 0, 100% 0, 84% 100%, 16% 100%);
+}
+/* Relleno oscuro dentro del borde; el lado pegado al recuadro queda abierto para que se fundan. */
+.cond-tab::before {
+  content: '';
+  position: absolute;
+  inset: 2px 2px 0;
+  clip-path: inherit;
+  background: linear-gradient(to top, color-mix(in srgb, var(--c) 28%, #08131d), #08131d);
+  transition: background 0.1s ease;
+}
+.cond-btn.down .cond-tab::before {
+  inset: 0 2px 2px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--c) 28%, #08131d), #08131d);
+}
+.cond-tab svg {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px var(--c));
+}
+.cond-btn:not(:disabled):active .cond-tab::before {
+  background: color-mix(in srgb, var(--c) 55%, #08131d);
+}
+.cond-btn:not(:disabled):active svg {
+  stroke: #fff;
 }
 .cond-btn:disabled {
   cursor: default;
@@ -1877,68 +2071,48 @@
 .cond.on .cond-btn:disabled {
   opacity: 0.3;
 }
-.cond-btn .neon-sign {
-  position: absolute;
-  inset: 0;
-}
-.cond-btn .neon-sign img {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  height: auto;
-  pointer-events: none;
-}
-/* El lado plano de cada triángulo toca el recuadro. */
-.cond-btn.up .neon-sign img {
-  bottom: 0;
-}
-.cond-btn.down .neon-sign img {
-  top: 0;
-}
-.cond.on .cond-btn.up .neon-sign img {
-  filter: drop-shadow(0 0 8px rgba(61, 220, 151, 0.55));
-}
-.cond.on .cond-btn.down .neon-sign img {
-  filter: drop-shadow(0 0 8px rgba(255, 90, 110, 0.55));
-}
-.cond-btn .neon-sign .on {
-  opacity: 0;
-}
-.cond-btn:not(:disabled):active .neon-sign .off {
-  opacity: 0;
-}
-.cond-btn:not(:disabled):active .neon-sign .on {
-  opacity: 1;
-}
+/* Recuadro del número: el número se ajusta al espacio disponible y la leyenda va en la esquina inferior izquierda. */
 .cond-box {
+  position: relative;
   flex: 1;
   min-height: 0;
+  container-type: size;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
   border: 2px solid var(--line);
   border-radius: 4px;
-  background: var(--card);
+  background: rgba(13, 22, 36, 0.85);
   cursor: pointer;
-  padding: 4px 0;
+  padding: 0;
 }
 .cond.on .cond-box {
   border-color: var(--accent);
-  background: linear-gradient(180deg, rgba(47, 184, 236, 0.18), var(--card));
+  background: linear-gradient(180deg, rgba(47, 184, 236, 0.2), rgba(13, 22, 36, 0.88));
   box-shadow: 0 0 22px rgba(47, 184, 236, 0.45), inset 0 0 22px rgba(47, 184, 236, 0.14);
+}
+.cond-title {
+  position: absolute;
+  left: 12px;
+  bottom: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
 }
 .cond.on .cond-title {
   color: var(--accent);
+  text-shadow: 0 0 8px rgba(47, 184, 236, 0.6);
 }
 .cond-box .num {
-  font-size: 104px;
+  font-size: min(82cqh, 62cqw);
   font-weight: 900;
-  line-height: 0.9;
+  line-height: 1;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
   color: #9fb3c8;
+  margin-bottom: 6cqh;
 }
 .cond.on .cond-box .num {
   background: linear-gradient(180deg, #ffffff 15%, #8fe3ff 60%, #2fb8ec);

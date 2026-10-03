@@ -13,6 +13,7 @@ export function ScreenFrame({
   children,
   footer,
   className,
+  background,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
@@ -21,9 +22,12 @@ export function ScreenFrame({
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
+  /** Imagen de fondo a pantalla completa, detrás de la cabecera y el contenido. */
+  background?: ReactNode;
 }) {
   return (
     <section className={`screen ${className ?? ''}`}>
+      {background}
       <header className="screen-header">
         {onBack && (
           <button className="btn btn-ghost btn-icon" onClick={onBack} aria-label="Volver">

@@ -15,6 +15,8 @@ no hay que tocar código. Si falta una imagen se usa el diseño de respaldo actu
 - Botones − y + de la configuración del partido: triángulos neón con dos estados (`-off` en reposo, `-on` al pulsar):
   `boton-sumar-off/on` (verde, hacia arriba) y `boton-restar-off/on` (rojo, hacia abajo), 600 px de ancho, .webp
   transparente y recortados justo al borde del triángulo para que encajen a ras del recuadro.
+  Ahora no se usan: la configuración dibuja unas pestañas con flecha en SVG (se pueden volver a poner).
+- `fondo-configuracion`: fondo de la pantalla de configuración del partido (1280×768 .webp).
 - Pendientes (llegaron dañadas en el ZIP; mientras, se ve el icono de respaldo):
   - `categoria-diamond` (archivo vacío).
   - Fila inferior de `plantilla-logros-03` (imagen cortada): `logro-hat_trick`, `logro-scorer50`,
