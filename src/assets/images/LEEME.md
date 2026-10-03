@@ -9,6 +9,9 @@ no hay que tocar código. Si falta una imagen se usa el diseño de respaldo actu
   `logo`, `fondo-inicio`, `modo-rapido`, `modo-caos`, `modo-clasificatorio`, `trofeo` (transparente) y 49 de los
   54 `logro-*` (recortados de las plantillas, sin fondo magenta, 256×256 .webp).
   Las ilustraciones de modo también se usan como fondo tenue del partido; la del Clasificatorio, en la victoria.
+- Tarjetas del inicio a tamaño completo, con dos estados (`-off` en reposo, `-on` al activarla con el primer toque):
+  `tarjeta-caos-off/on` y `tarjeta-clasificatorio-off/on` (640 px de ancho, vertical). Si se añaden
+  `tarjeta-rapido-off/on`, la tarjeta Rápido las usa sola; mientras, sigue con `modo-rapido`.
 - Pendientes (llegaron dañadas en el ZIP; mientras, se ve el icono de respaldo):
   - `categoria-diamond` (archivo vacío).
   - Fila inferior de `plantilla-logros-03` (imagen cortada): `logro-hat_trick`, `logro-scorer50`,
