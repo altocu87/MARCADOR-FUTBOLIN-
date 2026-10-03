@@ -5,7 +5,7 @@ import { getScore, type MatchMode } from '../../match-engine';
 import type { ActiveMatchSnapshot } from '../../services/persistence';
 import { sound } from '../../services/sound/sound';
 import { useHardware } from '../../inputs/hardware/useHardware';
-import { AssetImage } from '../components/assets';
+import { AssetImage, assetUrl } from '../components/assets';
 import { MODE_LABEL, Modal, formatDate } from '../components/common';
 
 // Textos de una sola frase: se tienen que entender de un vistazo, de pie y jugando.
@@ -45,6 +45,12 @@ const MENU = [
   },
 ] as const;
 
+/** Sin tocar nada, la tarjeta elegida vuelve a reposo pasado este tiempo. */
+const SELECT_TIMEOUT_MS = 8000;
+
+/** Nombre del archivo de cada modo en src/assets/images. */
+const MODE_FILE: Record<MatchMode, string> = { quick: 'rapido', chaos: 'caos', ranked: 'clasificatorio' };
+
 /** Tiempo que la tarjeta se ve «pulsada» antes de cambiar de pantalla (confirma el toque). */
 const PRESS_FEEDBACK_MS = 180;
 
@@ -53,6 +59,7 @@ export function HomeScreen() {
   const [snapshot, setSnapshot] = useState<ActiveMatchSnapshot | null>(null);
   const [pressed, setPressed] = useState<string | null>(null);
   const pressTimer = useRef<number | undefined>(undefined);
+  const [selected, setSelected] = useState<MatchMode | null>(null);
   const hub = useHardware();
 
   useEffect(() => {
@@ -61,6 +68,13 @@ export function HomeScreen() {
 
   useEffect(() => () => window.clearTimeout(pressTimer.current), []);
 
+  // La tarjeta elegida se desactiva sola si nadie confirma.
+  useEffect(() => {
+    if (!selected) return;
+    const id = window.setTimeout(() => setSelected(null), SELECT_TIMEOUT_MS);
+    return () => window.clearTimeout(id);
+  }, [selected]);
+
   // El botón tocado resplandece y se hunde un instante antes de cambiar de pantalla; un segundo toque se ignora.
   const press = (key: string, go: () => void) => {
     if (pressed) return;
@@ -68,10 +82,15 @@ export function HomeScreen() {
     pressTimer.current = window.setTimeout(go, PRESS_FEEDBACK_MS);
   };
 
+  // Dos toques: el primero activa la tarjeta (se enciende) y el segundo, sobre la misma, entra en el modo.
   const start = (mode: MatchMode) => {
     if (pressed) return;
     sound.unlock();
     sound.play('ui');
+    if (selected !== mode) {
+      setSelected(mode);
+      return;
+    }
     press(mode, () => navigate({ name: 'setup', mode }));
   };
 
@@ -133,19 +152,28 @@ export function HomeScreen() {
         {MODES.map((m) => (
           <button
             key={m.mode}
-            className={`mode-card mode-${m.mode}${pressed === m.mode ? ' is-pressed' : ''}`}
+            className={`mode-card mode-${m.mode}${selected === m.mode ? ' is-selected' : ''}${pressed === m.mode ? ' is-pressed' : ''}`}
+            aria-pressed={selected === m.mode}
             onClick={() => start(m.mode)}
             aria-label={`Jugar ${m.title.toLowerCase()}: ${m.text}`}
           >
-            <AssetImage
-              name={`modo-${m.mode === 'quick' ? 'rapido' : m.mode === 'chaos' ? 'caos' : 'clasificatorio'}`}
-              className="mode-art"
-              fallback={
-                <span className="mode-icon" aria-hidden="true">
-                  {m.mode === 'quick' ? '⚡' : m.mode === 'chaos' ? '✦' : '♛'}
-                </span>
-              }
-            />
+            {assetUrl(`tarjeta-${MODE_FILE[m.mode]}-off`) ? (
+              // Ilustración a tarjeta completa con dos versiones: apagada y encendida (se funden al activar).
+              <>
+                <AssetImage name={`tarjeta-${MODE_FILE[m.mode]}-off`} className="mode-bg mode-bg-off" fallback={null} />
+                <AssetImage name={`tarjeta-${MODE_FILE[m.mode]}-on`} className="mode-bg mode-bg-on" fallback={null} />
+              </>
+            ) : (
+              <AssetImage
+                name={`modo-${MODE_FILE[m.mode]}`}
+                className="mode-art"
+                fallback={
+                  <span className="mode-icon" aria-hidden="true">
+                    {m.mode === 'quick' ? '⚡' : m.mode === 'chaos' ? '✦' : '♛'}
+                  </span>
+                }
+              />
+            )}
             <span className="mode-title">{m.title}</span>
             <span className="mode-text">{m.text}</span>
             <span className="mode-tag">{m.tag}</span>

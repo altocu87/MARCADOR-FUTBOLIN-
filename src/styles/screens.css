@@ -131,10 +131,9 @@
   background: radial-gradient(circle, var(--mc, var(--accent)) 0%, transparent 65%);
   opacity: 0.22;
 }
-/* Estado «pulsado»: la tarjeta se hunde y el marco se enciende. Se mantiene ~180 ms antes de navegar. */
-.mode-card:active,
+/* Tarjeta activada (primer toque): el marco se enciende y resplandece con su color. */
+.mode-card.is-selected,
 .mode-card.is-pressed {
-  transform: scale(0.96) translateY(2px);
   border-color: color-mix(in srgb, var(--mc) 55%, #fff);
   box-shadow:
     0 0 0 2px var(--mc),
@@ -142,7 +141,36 @@
     0 0 48px var(--mc),
     0 0 80px color-mix(in srgb, var(--mc) 60%, transparent),
     inset 0 0 36px var(--mc);
-  filter: brightness(1.25);
+}
+/* Pulsando (y segundo toque, ~180 ms antes de entrar): la tarjeta se hunde y brilla más. */
+.mode-card:active,
+.mode-card.is-pressed {
+  transform: scale(0.96) translateY(2px);
+  filter: brightness(1.2);
+}
+/* Ilustración a tarjeta completa: cubre la tarjeta sin deformarse (recorta lo que sobre por los lados)
+   y siempre deja la parte de arriba a la vista; abajo queda la zona oscura para el texto. */
+.mode-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+  transition: opacity 0.25s ease;
+}
+.mode-bg-on {
+  opacity: 0;
+}
+.mode-card.is-selected .mode-bg-on,
+.mode-card.is-pressed .mode-bg-on {
+  opacity: 1;
+}
+.mode-title,
+.mode-text,
+.mode-tag {
+  position: relative;
+  z-index: 1;
 }
 .mode-quick {
   --mc: var(--accent);
