@@ -114,6 +114,7 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
             max={CONFIG_LIMITS.goalsPerPeriod.max}
             unit="goles"
             disabled={!usesGoals}
+            neon
             onChange={(v) => set({ goalsPerPeriod: v })}
           />
         </div>
@@ -126,6 +127,7 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
             max={CONFIG_LIMITS.minutesPerPeriod.max}
             unit="min"
             disabled={!usesTime}
+            neon
             onChange={(v) => set({ minutesPerPeriod: v })}
           />
         </div>

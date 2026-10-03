@@ -2,6 +2,7 @@
 import { useEffect, type ReactNode } from 'react';
 import type { MatchMode } from '../../match-engine';
 import { initials } from '../../services/players';
+import { assetUrl } from './assets';
 import type { ResultLetter } from '../../services/statistics';
 
 export function ScreenFrame({
@@ -104,6 +105,7 @@ export function Stepper({
   onChange,
   label,
   disabled,
+  neon,
 }: {
   value: number;
   min: number;
@@ -113,16 +115,29 @@ export function Stepper({
   onChange: (v: number) => void;
   label: string;
   disabled?: boolean;
+  /** Botones con las imágenes neón (boton-restar/sumar, reposo y pulsado) si existen. */
+  neon?: boolean;
 }) {
+  const sign = (kind: 'restar' | 'sumar', text: string) => {
+    const off = neon ? assetUrl(`boton-${kind}-off`) : undefined;
+    const on = neon ? assetUrl(`boton-${kind}-on`) : undefined;
+    if (!off || !on) return text;
+    return (
+      <span className="neon-sign" aria-hidden="true">
+        <img className="off" src={off} alt="" draggable={false} />
+        <img className="on" src={on} alt="" draggable={false} />
+      </span>
+    );
+  };
   return (
-    <div className="stepper" role="group" aria-label={label} style={{ opacity: disabled ? 0.4 : 1 }}>
+    <div className={`stepper${neon ? ' stepper-neon' : ''}`} role="group" aria-label={label} style={{ opacity: disabled ? 0.4 : 1 }}>
       <button
         className="btn btn-icon btn-lg"
         aria-label={`Restar ${label}`}
         disabled={disabled || value <= min}
         onClick={() => onChange(Math.max(min, value - step))}
       >
-        −
+        {sign('restar', '−')}
       </button>
       <span className="value" aria-live="polite">
         {value}
@@ -134,7 +149,7 @@ export function Stepper({
         disabled={disabled || value >= max}
         onClick={() => onChange(Math.min(max, value + step))}
       >
-        +
+        {sign('sumar', '+')}
       </button>
     </div>
   );
