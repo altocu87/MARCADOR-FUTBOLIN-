@@ -34,7 +34,7 @@ function routeKey(route: object): number {
 }
 
 function Router() {
-  const { route, loaded, prefs, toastMessage } = useApp();
+  const { route, loaded, prefs, toastMessage, demoMode } = useApp();
 
   useEffect(() => {
     exposeDevInputs();
@@ -118,6 +118,11 @@ function Router() {
       {screen}
       {/* Reposo solo fuera de una partida activa. */}
       <SleepOverlay minutes={prefs.sleepMinutes} enabled={route.name !== 'match'} />
+      {demoMode && route.name !== 'match' && (
+        <div className="demo-badge" role="note" title="Datos ficticios: se borran al desactivar el modo en Ajustes → General">
+          DATOS DE PRUEBA
+        </div>
+      )}
       {toastMessage && (
         <div className="toast" role="status">
           {toastMessage}

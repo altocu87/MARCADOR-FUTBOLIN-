@@ -29,13 +29,22 @@ export class StorageError extends Error {
 }
 
 const PREFIX = `mfv3:v${STORAGE_FORMAT_VERSION}:`;
-export const KEYS = {
-  players: `${PREFIX}players`,
-  matches: `${PREFIX}matches`,
-  preferences: `${PREFIX}preferences`,
-  activeMatch: `${PREFIX}activeMatch`,
-  tournaments: `${PREFIX}tournaments`,
-} as const;
+
+/** Claves de un espacio de datos. Los datos de prueba viven en su propio espacio («demo:»). */
+export function storageKeys(namespace = '') {
+  const p = `${PREFIX}${namespace}`;
+  return {
+    players: `${p}players`,
+    matches: `${p}matches`,
+    preferences: `${p}preferences`,
+    activeMatch: `${p}activeMatch`,
+    tournaments: `${p}tournaments`,
+  } as const;
+}
+export const KEYS = storageKeys();
+export const DEMO_NAMESPACE = 'demo:';
+/** Marca de «datos de prueba activados» (fuera de ambos espacios para que el borrado no la toque). */
+export const DEMO_FLAG_KEY = `${PREFIX}demoMode`;
 
 export function createMemoryStore(): KeyValueStore & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -73,7 +82,8 @@ function upsert<T extends { id: string }>(list: T[], item: T): T[] {
   return copy;
 }
 
-export function createLocalRepositories(store: KeyValueStore): Repositories {
+export function createLocalRepositories(store: KeyValueStore, namespace = ''): Repositories {
+  const KEYS = storageKeys(namespace);
   return {
     players: {
       async list() {

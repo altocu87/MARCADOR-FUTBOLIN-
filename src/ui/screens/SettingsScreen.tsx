@@ -84,10 +84,56 @@ function usePrefs() {
   return { prefs, update };
 }
 
+function DemoDataCard() {
+  const { demoMode, setDemoMode, toast } = useApp();
+  const [confirmOff, setConfirmOff] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const apply = async (on: boolean) => {
+    setBusy(true);
+    try {
+      await setDemoMode(on);
+      toast(on ? 'Datos de prueba cargados' : 'Datos de prueba eliminados');
+    } catch {
+      toast('No se pudieron cambiar los datos de prueba');
+      setBusy(false);
+    }
+  };
+  return (
+    <div className={`card demo-card${demoMode ? ' on' : ''}`}>
+      <Toggle
+        checked={demoMode}
+        onChange={(v) => (busy ? undefined : v ? void apply(true) : setConfirmOff(true))}
+        label="Datos de prueba (demostración)"
+        description="Carga 12 jugadores, más de 100 partidos y 4 torneos ficticios para probar la app. Tus datos reales no se tocan y vuelven al desactivarlo."
+      />
+      {demoMode && (
+        <p className="dim" style={{ fontSize: 12, margin: '6px 0 0' }}>
+          Activo: todo lo que juegues ahora se guarda solo en los datos de prueba y se borrará al desactivarlo.
+        </p>
+      )}
+      {confirmOff && (
+        <Modal
+          title="¿Desactivar los datos de prueba?"
+          onClose={() => setConfirmOff(false)}
+          actions={
+            <>
+              <button className="btn btn-ghost" onClick={() => setConfirmOff(false)}>Cancelar</button>
+              <button className="btn btn-danger" onClick={() => { setConfirmOff(false); void apply(false); }}>Desactivar y borrar</button>
+            </>
+          }
+        >
+          <p style={{ margin: 0 }}>Desaparecerán los jugadores, partidos y torneos ficticios (y lo que hayas jugado con ellos). Tus datos reales vuelven tal cual estaban.</p>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 function General() {
   const { prefs, update } = usePrefs();
   return (
     <div className="settings-grid">
+      <DemoDataCard />
       <div className="card">
         <Toggle
           checked={prefs.testModeDefault}

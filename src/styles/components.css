@@ -529,3 +529,23 @@ button.row:active {
     transform: translate(-50%, 10px);
   }
 }
+
+/* Aviso permanente de datos de prueba (ficticios). */
+.demo-badge {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: #f5b301;
+  color: #1a1300;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+.demo-card.on {
+  border-color: #f5b301;
+}

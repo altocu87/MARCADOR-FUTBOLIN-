@@ -5,6 +5,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   DEFAULT_PREFERENCES,
+  DEMO_FLAG_KEY,
+  DEMO_NAMESPACE,
   browserStore,
   createLocalRepositories,
   type Player,
@@ -13,6 +15,7 @@ import {
   type StoredMatch,
   type Tournament,
 } from '../services/persistence';
+import { generateDemoData } from '../services/demo';
 import { computeProgression, type ProgressionSnapshot } from '../services/progression';
 import { sound } from '../services/sound/sound';
 import { voice } from '../services/sound/voice';
@@ -34,6 +37,10 @@ interface AppContextValue {
   deleteMatch(id: string): Promise<void>;
   saveTournament(tournament: Tournament): Promise<void>;
   savePrefs(prefs: Preferences): Promise<void>;
+  /** Datos de prueba activos: la app trabaja sobre jugadores/partidos ficticios. */
+  demoMode: boolean;
+  /** Activa (carga datos ficticios) o desactiva (los borra y vuelve a los reales). */
+  setDemoMode(on: boolean): Promise<void>;
   route: Route;
   navigate(route: Route): void;
   toast(message: string): void;
@@ -49,11 +56,20 @@ export function useApp(): AppContextValue {
 }
 
 export function AppProvider({ children, repos: injected }: { children: ReactNode; repos?: Repositories }) {
-  const [{ repos, persistent }] = useState(() => {
-    if (injected) return { repos: injected, persistent: true };
-    const { store, persistent } = browserStore();
-    return { repos: createLocalRepositories(store), persistent };
-  });
+  const [{ store, persistent }] = useState(() => browserStore());
+  const readDemoFlag = () => {
+    try {
+      return !injected && store.getItem(DEMO_FLAG_KEY) === '1';
+    } catch {
+      return false;
+    }
+  };
+  const [demoMode, setDemoFlag] = useState(readDemoFlag);
+  // Los datos de prueba usan su propio espacio: los reales quedan intactos.
+  const repos = useMemo(
+    () => injected ?? createLocalRepositories(store, demoMode ? DEMO_NAMESPACE : ''),
+    [injected, store, demoMode],
+  );
   const [loaded, setLoaded] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<StoredMatch[]>([]);
@@ -147,9 +163,32 @@ export function AppProvider({ children, repos: injected }: { children: ReactNode
 
   const navigate = useCallback((next: Route) => setRoute(next), []);
 
+  const setDemoMode = useCallback(
+    async (on: boolean) => {
+      const demoRepos = createLocalRepositories(store, DEMO_NAMESPACE);
+      if (on) {
+        const data = generateDemoData();
+        const realPrefs = await createLocalRepositories(store).preferences.load();
+        await demoRepos.wipe();
+        await demoRepos.players.saveAll(data.players);
+        await demoRepos.matches.saveAll(data.matches);
+        await demoRepos.tournaments.saveAll(data.tournaments);
+        await demoRepos.preferences.save(realPrefs);
+        store.setItem(DEMO_FLAG_KEY, '1');
+      } else {
+        await demoRepos.wipe();
+        store.removeItem(DEMO_FLAG_KEY);
+      }
+      setLoaded(false);
+      setDemoFlag(on);
+      setRoute({ name: 'home' });
+    },
+    [store],
+  );
+
   const value: AppContextValue = {
     repos,
-    persistent,
+    persistent: injected ? true : persistent,
     loaded,
     players,
     matches,
@@ -162,6 +201,8 @@ export function AppProvider({ children, repos: injected }: { children: ReactNode
     deleteMatch,
     saveTournament,
     savePrefs,
+    demoMode,
+    setDemoMode,
     route,
     navigate,
     toast,
