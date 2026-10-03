@@ -15,6 +15,36 @@ const MODES: { mode: MatchMode; title: string; text: string; tag: string }[] = [
   { mode: 'ranked', title: 'CLASIFICATORIO', text: 'Partido competitivo', tag: 'ELO + XP' },
 ];
 
+// Accesos de la cabecera: cada uno con su color e icono de trazo (mismo estilo que el engranaje).
+const MENU = [
+  {
+    route: 'tournament',
+    label: 'TORNEO',
+    icon: (
+      <>
+        <path d="M7 4h10v5a5 5 0 0 1-10 0z" />
+        <path d="M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 14v4M8 20.5h8M9.5 18h5" />
+      </>
+    ),
+  },
+  {
+    route: 'ranking',
+    label: 'RANKING',
+    icon: <path d="M3.5 20.5h17M6 20.5v-6h3v6M10.5 20.5V9h3v11.5M15 20.5v-9h3v9" />,
+  },
+  {
+    route: 'challenges',
+    label: 'RETOS',
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="8.5" />
+        <circle cx="12" cy="12" r="4.8" />
+        <circle cx="12" cy="12" r="1.2" />
+      </>
+    ),
+  },
+] as const;
+
 /** Tiempo que la tarjeta se ve «pulsada» antes de cambiar de pantalla (confirma el toque). */
 const PRESS_FEEDBACK_MS = 180;
 
@@ -59,18 +89,20 @@ export function HomeScreen() {
       <header className="home-top">
         <div className="brand">
           <AssetImage name="logo" alt="" className="brand-logo" fallback={<span className="brand-mark" aria-hidden="true" />} />
-          <div className="brand-name">MARCADOR FUTBOLÍN</div>
+          <div className="brand-name">
+            <span>MARCADOR</span>
+            <span>FUTBOLÍN</span>
+          </div>
         </div>
         <nav className="home-menu" aria-label="Menú principal">
-          <button className="menu-btn" onClick={() => navigate({ name: 'tournament' })}>
-            TORNEO
-          </button>
-          <button className="menu-btn" onClick={() => navigate({ name: 'ranking' })}>
-            RANKING
-          </button>
-          <button className="menu-btn" onClick={() => navigate({ name: 'challenges' })}>
-            RETOS
-          </button>
+          {MENU.map((item) => (
+            <button key={item.route} className={`menu-btn menu-${item.route}`} onClick={() => navigate({ name: item.route })}>
+              <svg className="menu-icon" viewBox="0 0 24 24" aria-hidden="true">
+                {item.icon}
+              </svg>
+              {item.label}
+            </button>
+          ))}
         </nav>
         {/* Solo se avisa del almacenamiento cuando hay un problema; el resto vive en Ajustes. */}
         {!persistent && (

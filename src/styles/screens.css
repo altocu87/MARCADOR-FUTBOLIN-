@@ -44,13 +44,15 @@
   border: 2px solid var(--accent);
   box-shadow: var(--glow);
 }
+/* Nombre en dos líneas (MARCADOR / FUTBOLÍN) para dejar sitio a los botones. */
 .brand-name {
+  display: flex;
+  flex-direction: column;
   font-size: 18px;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  line-height: 1.05;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 /* Ajustes: el icono se ve pequeño pero la zona táctil es de 60 × 60 px. */
 .home-icon-btn {
@@ -189,44 +191,74 @@
   justify-content: flex-end;
   gap: 12px;
 }
+/* Botones de la cabecera: grandes, con fondo del color de cada sección e icono. */
 .menu-btn {
-  min-width: 112px;
-  min-height: 58px;
-  padding: 0 14px;
+  --mb: var(--accent);
+  flex: 1;
+  max-width: 180px;
+  min-height: 64px;
+  padding: 0 12px;
   white-space: nowrap;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: rgba(17, 34, 59, 0.85);
-  font-size: 15px;
+  border-radius: 16px;
+  border: 2px solid color-mix(in srgb, var(--mb) 70%, transparent);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--mb) 32%, #0b1626), color-mix(in srgb, var(--mb) 10%, #0b1626) 70%);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--mb) 40%, transparent), inset 0 0 10px color-mix(in srgb, var(--mb) 18%, transparent);
+  color: var(--text);
+  font-size: 16px;
   font-weight: 900;
   letter-spacing: 0.08em;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.08s ease, background 0.15s ease;
+  gap: 10px;
+  transition: transform 0.08s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.menu-tournament {
+  --mb: var(--ranked);
+}
+.menu-ranking {
+  --mb: var(--accent);
+}
+.menu-challenges {
+  --mb: var(--chaos);
+}
+.menu-icon {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--mb);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px var(--mb));
 }
 .menu-btn:active {
-  background: var(--card-2);
-  border-color: var(--accent);
   transform: scale(0.95);
+  filter: brightness(1.25);
+  box-shadow: 0 0 22px var(--mb), inset 0 0 18px color-mix(in srgb, var(--mb) 40%, transparent);
 }
 /* Lienzo estrecho (800 px, pantalla de 7"): misma barra, un poco más compacta. */
 @container (max-width: 980px) {
   .brand-name {
-    font-size: 15px;
+    font-size: 16px;
   }
   .brand-logo {
-    height: 34px;
+    height: 44px;
   }
   .home-menu {
     gap: 10px;
   }
   .menu-btn {
-    min-width: 108px;
-    padding: 0 10px;
-    font-size: 14px;
-    letter-spacing: 0.06em;
+    padding: 0 8px;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    gap: 8px;
+  }
+  .menu-icon {
+    width: 26px;
+    height: 26px;
   }
 }
 
