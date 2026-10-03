@@ -1889,8 +1889,10 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  height: 120%;
-  aspect-ratio: 1;
+  /* Triángulos alargados: llenan el alto del botón sin pasar del ancho. */
+  height: 110%;
+  width: 92%;
+  object-fit: contain;
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
