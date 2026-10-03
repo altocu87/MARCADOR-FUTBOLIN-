@@ -1832,7 +1832,8 @@
 }
 
 /* ---------- Configuración: tarjetas de goles y tiempo ---------- */
-/* Ocupan todo el alto libre. + arriba, número en medio (activa/desactiva) y − abajo. */
+/* Ocupan todo el alto libre. ▲ arriba, número en medio (toca para activar/desactivar) y ▼ abajo.
+   La tarjeta activa se resalta con borde y brillo; la inactiva queda apagada. */
 .setup-conditions {
   flex: 1;
   min-height: 0;
@@ -1843,25 +1844,22 @@
   align-items: stretch;
   min-height: 0;
   padding: 8px 12px 10px;
-  gap: 6px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  gap: 4px;
+  opacity: 0.55;
+  filter: saturate(0.4);
+  transition: opacity 0.2s ease, filter 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .cond-card.on {
-  border-color: var(--accent);
-  box-shadow: 0 0 16px rgba(47, 184, 236, 0.25);
+  opacity: 1;
+  filter: none;
+  border: 2px solid var(--accent);
+  background: linear-gradient(180deg, rgba(47, 184, 236, 0.16), var(--card) 60%);
+  box-shadow: 0 0 24px rgba(47, 184, 236, 0.45), inset 0 0 22px rgba(47, 184, 236, 0.12);
 }
-.cond-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.cond-title {
+  text-align: center;
 }
-.cond-state {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: var(--text-2);
-}
-.cond-state.on {
+.cond-card.on .cond-title {
   color: var(--accent);
 }
 .cond-btn {
@@ -1877,7 +1875,9 @@
 }
 .cond-btn:disabled {
   cursor: default;
-  opacity: 0.25;
+}
+.cond-card.on .cond-btn:disabled {
+  opacity: 0.3;
 }
 .cond-btn .neon-sign {
   position: relative;
@@ -1906,39 +1906,33 @@
   opacity: 1;
   transform: translate(-50%, -50%) scale(1.06);
 }
+/* Número grande: toda la zona es el botón de activar/desactivar. */
 .cond-value {
-  flex: 1.3;
+  flex: 1.6;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-2);
+  border: 0;
+  background: transparent;
   cursor: pointer;
   padding: 0;
+  min-height: 0;
 }
 .cond-value .num {
-  font-size: 60px;
-  font-weight: 800;
-  line-height: 1.1;
+  font-size: 118px;
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
+  color: #9fb3c8;
 }
-.cond-value .unit {
-  font-size: 15px;
-  font-weight: 700;
+.cond-card.on .cond-value .num {
+  background: linear-gradient(180deg, #ffffff 15%, #8fe3ff 60%, #2fb8ec);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 14px rgba(47, 184, 236, 0.6));
 }
-.cond-card.on .cond-value {
-  border-style: solid;
-  border-color: var(--accent);
-  background: rgba(47, 184, 236, 0.1);
-  color: var(--text);
-}
-.cond-value:active {
-  transform: scale(0.98);
-}
-.cond-help {
-  font-size: 12px;
-  text-align: center;
+.cond-value:active .num {
+  transform: scale(0.96);
 }

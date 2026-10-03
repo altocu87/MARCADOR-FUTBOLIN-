@@ -10,12 +10,6 @@ import {
 } from '../../match-engine';
 import { MODE_LABEL, ModeBadge, NeonSign, ScreenFrame, TestModeBadge, Toggle } from '../components/common';
 
-const CONDITION_HELP: Record<EndCondition, string> = {
-  goals: 'Sin partes: el reloj corre hasta que un equipo llega a los goles y gana.',
-  time: 'Dos partes: gana quien sume más goles. Si hay empate, prórroga y después penaltis.',
-  both: 'Dos partes, pero quien llegue antes a los goles gana en ese momento. Empate al final: prórroga y penaltis.',
-};
-
 /** Las dos tarjetas activas a la vez equivalen a «ambas». */
 function conditionFrom(goals: boolean, time: boolean): EndCondition {
   return goals && time ? 'both' : time ? 'time' : 'goals';
@@ -48,10 +42,7 @@ function ConditionCard({
 }) {
   return (
     <div className={`card cond-card${active ? ' on' : ''}`} role="group" aria-label={title}>
-      <div className="cond-head">
-        <span className="label">{title}</span>
-        <span className={`cond-state${active ? ' on' : ''}`}>{active ? 'ACTIVA' : 'DESACTIVADA'}</span>
-      </div>
+      <div className="label cond-title">{title}</div>
       <button
         className="cond-btn"
         aria-label={`Sumar ${label}`}
@@ -67,7 +58,6 @@ function ConditionCard({
         onClick={onToggle}
       >
         <span className="num" aria-live="polite">{value}</span>
-        <span className="unit">{unit}</span>
       </button>
       <button
         className="cond-btn"
@@ -184,7 +174,6 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
           onChange={(v) => set({ minutesPerPeriod: v })}
         />
       </div>
-      <div className="muted cond-help">{CONDITION_HELP[config.endCondition]} Toca el número para activar o desactivar.</div>
     </ScreenFrame>
   );
 }
