@@ -8,16 +8,81 @@ import {
   type MatchConfig,
   type MatchMode,
 } from '../../match-engine';
-import { MODE_LABEL, ModeBadge, ScreenFrame, Stepper, TestModeBadge, Toggle } from '../components/common';
+import { MODE_LABEL, ModeBadge, NeonSign, ScreenFrame, TestModeBadge, Toggle } from '../components/common';
 
-const CONDITIONS: { id: EndCondition; label: string; help: string }[] = [
-  { id: 'goals', label: 'POR GOLES', help: 'La parte termina al sumar el objetivo de goles entre los dos equipos.' },
-  { id: 'time', label: 'POR TIEMPO', help: 'La parte termina al agotarse su tiempo.' },
-  { id: 'both', label: 'AMBAS', help: 'Termina con lo que ocurra primero: goles o tiempo.' },
-];
+const CONDITION_HELP: Record<EndCondition, string> = {
+  goals: 'Cada parte termina al sumar el objetivo de goles entre los dos equipos.',
+  time: 'Cada parte termina al agotarse su tiempo.',
+  both: 'Cada parte termina con lo que ocurra primero: goles o tiempo.',
+};
+
+/** Las dos tarjetas activas a la vez equivalen a «ambas». */
+function conditionFrom(goals: boolean, time: boolean): EndCondition {
+  return goals && time ? 'both' : time ? 'time' : 'goals';
+}
+
+/**
+ * Tarjeta de condición: + arriba, número en medio y − abajo.
+ * Tocar el número activa o desactiva la tarjeta (decide si la parte termina por goles, por tiempo o por ambos).
+ */
+function ConditionCard({
+  title,
+  label,
+  unit,
+  value,
+  min,
+  max,
+  active,
+  onToggle,
+  onChange,
+}: {
+  title: string;
+  label: string;
+  unit: string;
+  value: number;
+  min: number;
+  max: number;
+  active: boolean;
+  onToggle: () => void;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className={`card cond-card${active ? ' on' : ''}`} role="group" aria-label={title}>
+      <div className="cond-head">
+        <span className="label">{title}</span>
+        <span className={`cond-state${active ? ' on' : ''}`}>{active ? 'ACTIVA' : 'DESACTIVADA'}</span>
+      </div>
+      <button
+        className="cond-btn"
+        aria-label={`Sumar ${label}`}
+        disabled={!active || value >= max}
+        onClick={() => onChange(Math.min(max, value + 1))}
+      >
+        <NeonSign kind="sumar" fallback="+" />
+      </button>
+      <button
+        className="cond-value"
+        aria-pressed={active}
+        aria-label={`${value} ${unit}. ${active ? 'Toca para desactivar' : 'Toca para activar'}`}
+        onClick={onToggle}
+      >
+        <span className="num" aria-live="polite">{value}</span>
+        <span className="unit">{unit}</span>
+      </button>
+      <button
+        className="cond-btn"
+        aria-label={`Restar ${label}`}
+        disabled={!active || value <= min}
+        onClick={() => onChange(Math.max(min, value - 1))}
+      >
+        <NeonSign kind="restar" fallback="−" />
+      </button>
+    </div>
+  );
+}
 
 export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: MatchConfig }) {
-  const { navigate, prefs, demoMode } = useApp();
+  const { navigate, prefs, demoMode, toast } = useApp();
   const [config, setConfig] = useState<MatchConfig>(
     () =>
       initial ?? {
@@ -36,6 +101,16 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
   const errors = validateConfig(config);
   const usesGoals = config.endCondition !== 'time';
   const usesTime = config.endCondition !== 'goals';
+  // Siempre debe quedar al menos una de las dos tarjetas activa.
+  const toggle = (which: 'goals' | 'time') => {
+    const goals = which === 'goals' ? !usesGoals : usesGoals;
+    const time = which === 'time' ? !usesTime : usesTime;
+    if (!goals && !time) {
+      toast('Deja activa al menos una: goles o tiempo');
+      return;
+    }
+    set({ endCondition: conditionFrom(goals, time) });
+  };
 
   return (
     <ScreenFrame
@@ -85,54 +160,31 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
           </div>
         </div>
       )}
-      <div>
-        <div className="label" style={{ marginBottom: 6 }}>Condición de victoria · final de cada parte</div>
-        <div className="segmented" role="group" aria-label="Condición de final de periodo">
-          {CONDITIONS.map((c) => (
-            <button
-              key={c.id}
-              className="seg"
-              aria-pressed={config.endCondition === c.id}
-              onClick={() => set({ endCondition: c.id })}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-        <div className="muted" style={{ fontSize: 13, marginTop: 6 }}>
-          {CONDITIONS.find((c) => c.id === config.endCondition)?.help}
-        </div>
+      <div className="grid-2 setup-conditions">
+        <ConditionCard
+          title="Goles por parte"
+          label="goles por parte"
+          unit="goles"
+          value={config.goalsPerPeriod}
+          min={CONFIG_LIMITS.goalsPerPeriod.min}
+          max={CONFIG_LIMITS.goalsPerPeriod.max}
+          active={usesGoals}
+          onToggle={() => toggle('goals')}
+          onChange={(v) => set({ goalsPerPeriod: v })}
+        />
+        <ConditionCard
+          title="Tiempo por parte"
+          label="minutos por parte"
+          unit="min"
+          value={config.minutesPerPeriod}
+          min={CONFIG_LIMITS.minutesPerPeriod.min}
+          max={CONFIG_LIMITS.minutesPerPeriod.max}
+          active={usesTime}
+          onToggle={() => toggle('time')}
+          onChange={(v) => set({ minutesPerPeriod: v })}
+        />
       </div>
-
-      <div className="grid-2 setup-steppers">
-        <div className="card">
-          <div className="label">Objetivo de goles por parte</div>
-          <Stepper
-            label="goles por parte"
-            value={config.goalsPerPeriod}
-            min={CONFIG_LIMITS.goalsPerPeriod.min}
-            max={CONFIG_LIMITS.goalsPerPeriod.max}
-            unit="goles"
-            disabled={!usesGoals}
-            neon
-            onChange={(v) => set({ goalsPerPeriod: v })}
-          />
-        </div>
-        <div className="card">
-          <div className="label">Duración por parte</div>
-          <Stepper
-            label="minutos por parte"
-            value={config.minutesPerPeriod}
-            min={CONFIG_LIMITS.minutesPerPeriod.min}
-            max={CONFIG_LIMITS.minutesPerPeriod.max}
-            unit="min"
-            disabled={!usesTime}
-            neon
-            onChange={(v) => set({ minutesPerPeriod: v })}
-          />
-        </div>
-      </div>
-
+      <div className="muted cond-help">{CONDITION_HELP[config.endCondition]} Toca el número para activar o desactivar.</div>
     </ScreenFrame>
   );
 }

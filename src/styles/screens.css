@@ -1832,88 +1832,111 @@
 }
 
 /* ---------- Configuración: tarjetas de goles y tiempo ---------- */
-/* Las dos tarjetas ocupan todo el alto libre hasta el pie de la pantalla. */
-.setup-steppers {
+/* Ocupan todo el alto libre. + arriba, número en medio (activa/desactiva) y − abajo. */
+.setup-conditions {
   flex: 1;
   min-height: 0;
 }
-.setup-steppers .card {
+.cond-card {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   min-height: 0;
+  padding: 8px 12px 10px;
+  gap: 6px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-/* El selector se reparte el espacio: botón grande · número · botón grande. */
-.setup-steppers .stepper {
-  flex: 1;
-  gap: 12px;
+.cond-card.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(47, 184, 236, 0.25);
 }
-.setup-steppers .stepper .btn {
-  flex: 1;
-  align-self: stretch;
-  min-height: 72px;
-  font-size: 44px;
+.cond-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cond-state {
+  font-size: 11px;
   font-weight: 800;
-  line-height: 1;
-  border-width: 2px;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
 }
-.setup-steppers .stepper .btn:first-child {
-  color: #fff;
-  background: var(--danger);
-  border-color: var(--danger);
-  box-shadow: 0 0 18px rgba(255, 90, 110, 0.35);
+.cond-state.on {
+  color: var(--accent);
 }
-.setup-steppers .stepper .btn:last-child {
-  color: #04140c;
-  background: var(--ok);
-  border-color: var(--ok);
-  box-shadow: 0 0 18px rgba(61, 220, 151, 0.35);
-}
-.setup-steppers .stepper .btn:disabled {
-  box-shadow: none;
-  opacity: 0.45;
-}
-.setup-steppers .stepper .value {
-  flex: 1.2;
-  font-size: 56px;
-}
-
-/* Configuración: − y + con las imágenes neón (reposo y pulsado), con fondo transparente. */
-.setup-steppers .stepper-neon .btn,
-.setup-steppers .stepper-neon .btn:first-child,
-.setup-steppers .stepper-neon .btn:last-child {
+.cond-btn {
+  flex: 1;
+  min-height: 52px;
+  border: 0;
   background: transparent;
-  border-color: transparent;
-  box-shadow: none;
   padding: 0;
-  overflow: visible;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 40px;
+  font-weight: 800;
 }
-.stepper-neon .neon-sign {
+.cond-btn:disabled {
+  cursor: default;
+  opacity: 0.25;
+}
+.cond-btn .neon-sign {
   position: relative;
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 72px;
 }
-.stepper-neon .neon-sign img {
+.cond-btn .neon-sign img {
   position: absolute;
-  inset: 50% auto auto 50%;
-  height: 150%;
-  max-width: 150%;
+  left: 50%;
+  top: 50%;
+  height: 120%;
   aspect-ratio: 1;
-  object-fit: contain;
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
-.stepper-neon .neon-sign .on {
+.cond-btn .neon-sign .on {
   opacity: 0;
 }
-.stepper-neon .btn:not(:disabled):active .neon-sign .off {
+.cond-btn:not(:disabled):active .neon-sign .off {
   opacity: 0;
 }
-.stepper-neon .btn:not(:disabled):active .neon-sign .on {
+.cond-btn:not(:disabled):active .neon-sign .on {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1.06);
 }
-.stepper-neon .btn:disabled .neon-sign img {
-  filter: grayscale(0.7);
+.cond-value {
+  flex: 1.3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 0;
+}
+.cond-value .num {
+  font-size: 60px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.cond-value .unit {
+  font-size: 15px;
+  font-weight: 700;
+}
+.cond-card.on .cond-value {
+  border-style: solid;
+  border-color: var(--accent);
+  background: rgba(47, 184, 236, 0.1);
+  color: var(--text);
+}
+.cond-value:active {
+  transform: scale(0.98);
+}
+.cond-help {
+  font-size: 12px;
+  text-align: center;
 }
