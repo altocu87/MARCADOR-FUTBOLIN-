@@ -12,8 +12,8 @@ export const DEFAULT_PROGRESSION: ProgressionSettings = {
 
 export const DEFAULT_PREFERENCES: Preferences = {
   formatVersion: STORAGE_FORMAT_VERSION,
-  // Propuesta segura para desarrollo: modo prueba activado por defecto.
-  testModeDefault: true,
+  // Ya no se usa: el modo prueba es global (Ajustes → General). Se conserva por compatibilidad.
+  testModeDefault: false,
   volume: 0.7,
   muted: false,
   effects: 'full',

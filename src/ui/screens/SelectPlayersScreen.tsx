@@ -23,7 +23,7 @@ function fromParticipants(parts?: ParticipantRef[]): Partial<Record<SlotKey, str
 }
 
 export function SelectPlayersScreen({ config, initial }: { config: MatchConfig; initial?: ParticipantRef[] }) {
-  const { players, navigate, progression } = useApp();
+  const { players, navigate, progression, demoMode } = useApp();
   const [slots, setSlots] = useState<Partial<Record<SlotKey, string>>>(() => fromParticipants(initial));
   const [active, setActive] = useState<SlotKey>(() => ORDER.find((k) => !fromParticipants(initial)[k]) ?? 'white1');
   const [creating, setCreating] = useState(false);
@@ -138,7 +138,7 @@ export function SelectPlayersScreen({ config, initial }: { config: MatchConfig; 
       onBack={() => navigate({ name: 'setup', mode: config.mode, config })}
       right={
         <>
-          {config.testMode && <TestModeBadge />}
+          {demoMode && <TestModeBadge />}
           <button className="btn btn-sm" onClick={() => setCreating(true)}>
             + Nuevo
           </button>

@@ -17,7 +17,7 @@ const CONDITIONS: { id: EndCondition; label: string; help: string }[] = [
 ];
 
 export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: MatchConfig }) {
-  const { navigate, prefs } = useApp();
+  const { navigate, prefs, demoMode } = useApp();
   const [config, setConfig] = useState<MatchConfig>(
     () =>
       initial ?? {
@@ -27,7 +27,8 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
         goalsPerPeriod: prefs.defaultGoalsPerPeriod,
         minutesPerPeriod: prefs.defaultMinutesPerPeriod,
         penaltyFirstTeam: prefs.penaltyFirstTeam,
-        testMode: prefs.testModeDefault,
+        // Todos los partidos se guardan; en modo prueba van a los datos de prueba.
+        testMode: false,
         ...(mode === 'chaos' ? { chaos: { ...prefs.chaosRules } } : {}),
       },
   );
@@ -43,19 +44,13 @@ export function SetupScreen({ mode, initial }: { mode: MatchMode; initial?: Matc
       onBack={() => navigate({ name: 'home' })}
       right={
         <>
-          {config.testMode && <TestModeBadge />}
+          {demoMode && <TestModeBadge />}
           <ModeBadge mode={mode} />
         </>
       }
       footer={
         <>
           <div style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Toggle
-              checked={config.testMode}
-              onChange={(v) => set({ testMode: v })}
-              label="Modo prueba"
-              description={config.testMode ? 'No se guarda ni cuenta para estadísticas, XP ni ELO.' : 'Se guardará en el historial local.'}
-            />
             {errors.length > 0 && <span className="notice error">{errors[0]}</span>}
           </div>
           <button className="btn btn-ghost btn-lg" onClick={() => navigate({ name: 'home' })}>

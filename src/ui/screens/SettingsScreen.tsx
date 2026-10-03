@@ -84,7 +84,7 @@ function usePrefs() {
   return { prefs, update };
 }
 
-function DemoDataCard() {
+function TestModeCard() {
   const { demoMode, setDemoMode, toast } = useApp();
   const [confirmOff, setConfirmOff] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -92,9 +92,9 @@ function DemoDataCard() {
     setBusy(true);
     try {
       await setDemoMode(on);
-      toast(on ? 'Datos de prueba cargados' : 'Datos de prueba eliminados');
+      toast(on ? 'Modo prueba activado' : 'Modo prueba desactivado: datos de prueba borrados');
     } catch {
-      toast('No se pudieron cambiar los datos de prueba');
+      toast('No se pudo cambiar el modo prueba');
       setBusy(false);
     }
   };
@@ -103,17 +103,12 @@ function DemoDataCard() {
       <Toggle
         checked={demoMode}
         onChange={(v) => (busy ? undefined : v ? void apply(true) : setConfirmOff(true))}
-        label="Datos de prueba (demostración)"
-        description="Carga 12 jugadores, más de 100 partidos y 4 torneos ficticios para probar la app. Tus datos reales no se tocan y vuelven al desactivarlo."
+        label="Modo prueba"
+        description="Carga 12 jugadores, más de 100 partidos y 4 torneos ficticios. Todo lo que juegues o añadas se guarda en el modo prueba. Al desactivarlo se borra y vuelven tus datos reales intactos."
       />
-      {demoMode && (
-        <p className="dim" style={{ fontSize: 12, margin: '6px 0 0' }}>
-          Activo: todo lo que juegues ahora se guarda solo en los datos de prueba y se borrará al desactivarlo.
-        </p>
-      )}
       {confirmOff && (
         <Modal
-          title="¿Desactivar los datos de prueba?"
+          title="¿Desactivar el modo prueba?"
           onClose={() => setConfirmOff(false)}
           actions={
             <>
@@ -122,7 +117,7 @@ function DemoDataCard() {
             </>
           }
         >
-          <p style={{ margin: 0 }}>Desaparecerán los jugadores, partidos y torneos ficticios (y lo que hayas jugado con ellos). Tus datos reales vuelven tal cual estaban.</p>
+          <p style={{ margin: 0 }}>Se borrarán los jugadores, partidos y torneos de prueba, también los que hayas añadido. Tus datos reales vuelven tal cual estaban.</p>
         </Modal>
       )}
     </div>
@@ -133,18 +128,7 @@ function General() {
   const { prefs, update } = usePrefs();
   return (
     <div className="settings-grid">
-      <DemoDataCard />
-      <div className="card">
-        <Toggle
-          checked={prefs.testModeDefault}
-          onChange={(v) => update({ testModeDefault: v })}
-          label="Modo prueba activado por defecto"
-          description="Valor inicial del interruptor al preparar un partido. Se fija al empezar cada encuentro."
-        />
-        <p className="dim" style={{ fontSize: 12, margin: '6px 0 0' }}>
-          Editar jugadores o preferencias siempre se guarda: el modo prueba solo afecta a los resultados deportivos.
-        </p>
-      </div>
+      <TestModeCard />
       <div className="card">
         <div className="label">Condición por defecto</div>
         <div className="segmented" style={{ marginTop: 6 }}>

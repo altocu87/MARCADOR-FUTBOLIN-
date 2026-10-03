@@ -167,6 +167,7 @@ export function MatchScreen({
 // ---------------------------------------------------------------------------
 
 function ScoreboardView({ ctl, photos }: { ctl: MatchController; photos: Map<string, string | undefined> }) {
+  const { demoMode } = useApp();
   const { state, now, send } = ctl;
   const score = getScore(state);
   const clock = getClock(state, now);
@@ -256,7 +257,7 @@ function ScoreboardView({ ctl, photos }: { ctl: MatchController; photos: Map<str
         {lastMinute && <span className="badge badge-chaos">ÚLTIMO MINUTO · GOLES x2</span>}
         <span className="dim match-cond">{conditionText(state.config)}</span>
         <span style={{ flex: 1 }} />
-        {state.config.testMode && <TestModeBadge />}
+        {(demoMode || state.config.testMode) && <TestModeBadge />}
         <span className={`badge ${state.config.mode === 'chaos' ? 'badge-chaos' : state.config.mode === 'ranked' ? 'badge-ranked' : 'badge-accent'}`}>
           {MODE_LABEL[state.config.mode]}
         </span>
@@ -420,6 +421,7 @@ function VictoryOverlay({ state, save, onContinue }: { state: MatchState; save: 
 }
 
 function PenaltiesView({ ctl }: { ctl: MatchController }) {
+  const { demoMode } = useApp();
   const { state, send } = ctl;
   const pen = getPenaltyScore(state);
   const score = getScore(state);
@@ -476,7 +478,7 @@ function PenaltiesView({ ctl }: { ctl: MatchController }) {
         <span className="muted" style={{ fontSize: 13 }}>
           Marcador ordinario {score.white}–{score.blue}
         </span>
-        {state.config.testMode && <TestModeBadge />}
+        {(demoMode || state.config.testMode) && <TestModeBadge />}
       </header>
       <div className="pen-main">
         {column('white')}

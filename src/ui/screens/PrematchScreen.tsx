@@ -17,7 +17,7 @@ export function PrematchScreen({
   participants: ParticipantRef[];
   extras?: MatchExtras;
 }) {
-  const { navigate, matches, progression, players } = useApp();
+  const { navigate, matches, progression, players, demoMode } = useApp();
   // Pronósticos amistosos (sin dinero) de quien no juega: toque = Blanco → Azul → nada.
   const [picks, setPicks] = useState<MatchPick[]>([]);
   const spectators = sortPlayers(players.filter((p) => p.active && !participants.some((x) => x.playerId === p.id)));
@@ -76,7 +76,7 @@ export function PrematchScreen({
       title="Previsión"
       subtitle="Clasificatorio"
       onBack={() => (extras?.tournament ? navigate({ name: 'tournamentDetail', id: extras.tournament.id }) : navigate({ name: 'select', config, participants }))}
-      right={config.testMode ? <TestModeBadge /> : undefined}
+      right={demoMode ? <TestModeBadge /> : undefined}
       footer={
         <button className="btn btn-primary btn-lg" onClick={() => navigate({ name: 'match', config, participants, extras: { ...extras, picks } })}>
           Empezar partido

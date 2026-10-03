@@ -52,7 +52,7 @@ describe('Repositorio local', () => {
     store.setItem(KEYS.players, '{no json');
     const repos = createLocalRepositories(store);
     expect(await repos.players.list()).toEqual([]);
-    expect((await repos.preferences.load()).testModeDefault).toBe(true);
+    expect((await repos.preferences.load()).testModeDefault).toBe(false);
   });
   it('almacenamiento lleno: error explícito', async () => {
     const full: KeyValueStore = {

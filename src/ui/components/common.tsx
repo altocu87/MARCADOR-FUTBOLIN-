@@ -196,7 +196,7 @@ export function FormChips({ form, empty = '—' }: { form: ResultLetter[]; empty
 
 export function TestModeBadge() {
   return (
-    <span className="badge badge-danger" title="Modo prueba: no guarda historial ni progresión">
+    <span className="badge badge-danger" title="Modo prueba: se guarda aparte y se borra al desactivarlo en Ajustes">
       <span className="dot" /> Modo prueba
     </span>
   );

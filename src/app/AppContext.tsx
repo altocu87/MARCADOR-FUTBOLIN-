@@ -37,9 +37,9 @@ interface AppContextValue {
   deleteMatch(id: string): Promise<void>;
   saveTournament(tournament: Tournament): Promise<void>;
   savePrefs(prefs: Preferences): Promise<void>;
-  /** Datos de prueba activos: la app trabaja sobre jugadores/partidos ficticios. */
+  /** Modo prueba: la app trabaja sobre datos ficticios y guarda ahí lo que se juegue. */
   demoMode: boolean;
-  /** Activa (carga datos ficticios) o desactiva (los borra y vuelve a los reales). */
+  /** Activa (carga datos ficticios) o desactiva (borra todo lo de prueba y vuelve a los reales). */
   setDemoMode(on: boolean): Promise<void>;
   route: Route;
   navigate(route: Route): void;
@@ -65,11 +65,13 @@ export function AppProvider({ children, repos: injected }: { children: ReactNode
     }
   };
   const [demoMode, setDemoFlag] = useState(readDemoFlag);
-  // Los datos de prueba usan su propio espacio: los reales quedan intactos.
-  const repos = useMemo(
-    () => injected ?? createLocalRepositories(store, demoMode ? DEMO_NAMESPACE : ''),
-    [injected, store, demoMode],
-  );
+  // Modo prueba: jugadores, partidos y torneos en su propio espacio (los reales quedan intactos).
+  // Las preferencias son siempre las mismas en ambos modos.
+  const repos = useMemo<Repositories>(() => {
+    if (injected) return injected;
+    const real = createLocalRepositories(store);
+    return demoMode ? { ...createLocalRepositories(store, DEMO_NAMESPACE), preferences: real.preferences } : real;
+  }, [injected, store, demoMode]);
   const [loaded, setLoaded] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<StoredMatch[]>([]);
@@ -168,12 +170,10 @@ export function AppProvider({ children, repos: injected }: { children: ReactNode
       const demoRepos = createLocalRepositories(store, DEMO_NAMESPACE);
       if (on) {
         const data = generateDemoData();
-        const realPrefs = await createLocalRepositories(store).preferences.load();
         await demoRepos.wipe();
         await demoRepos.players.saveAll(data.players);
         await demoRepos.matches.saveAll(data.matches);
         await demoRepos.tournaments.saveAll(data.tournaments);
-        await demoRepos.preferences.save(realPrefs);
         store.setItem(DEMO_FLAG_KEY, '1');
       } else {
         await demoRepos.wipe();

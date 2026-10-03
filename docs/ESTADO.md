@@ -37,9 +37,10 @@ Fecha: 02/10/2026 · Versión 0.3.0 · Motor 1.0.0 (`reglas-partido-1`)
   Sin barras de desplazamiento en 800×480, 1280×720, 1024×768, 2560×1080, 844×390 y 390×844 (girado y sin girar),
   app servida comprimida como en el ESP32, y arranque sin conexión con el servidor apagado.
 
-- Datos de prueba (Ajustes → General): 12 jugadores, 137 partidos jugados con el motor real (1v1/2v2, Rápido,
-  Caos y Clasificatorio, prórrogas, penaltis, goleadores, pronósticos) y 4 torneos (3 terminados y 1 en juego).
-  Viven en un espacio aparte (`mfv3:v1:demo:`); al desactivarlo se borran y vuelven los datos reales intactos.
+- Modo prueba (Ajustes → General, interruptor único): carga 12 jugadores, 137 partidos jugados con el motor real
+  (1v1/2v2, Rápido, Caos y Clasificatorio, prórrogas, penaltis, goleadores, pronósticos) y 4 torneos (3 terminados y
+  1 en juego). Lo que se juegue o añada en modo prueba también se guarda ahí (`mfv3:v1:demo:`). Al desactivarlo se
+  borra todo lo de prueba y vuelven los datos reales intactos. Las preferencias son comunes a ambos modos.
 
 ## Web y compilación
 

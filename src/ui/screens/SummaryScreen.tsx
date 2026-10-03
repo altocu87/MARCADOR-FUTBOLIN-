@@ -26,7 +26,7 @@ export function SummaryScreen({
   live: MatchState;
   extras?: MatchExtras;
 }) {
-  const { navigate, repos, refresh, matches, progression, players, prefs } = useApp();
+  const { navigate, repos, refresh, matches, progression, players, prefs, demoMode } = useApp();
   const [status, setStatus] = useState<SaveStatus>(save);
   const [showCelebration, setShowCelebration] = useState(true);
 
@@ -53,7 +53,7 @@ export function SummaryScreen({
     status.kind === 'test' ? (
       <TestModeBadge />
     ) : status.kind === 'saved' ? (
-      <span className="badge badge-ok">✓ Guardado</span>
+      <span className="badge badge-ok">{demoMode ? '✓ Guardado en modo prueba' : '✓ Guardado'}</span>
     ) : (
       <span className="badge badge-danger">No guardado</span>
     );

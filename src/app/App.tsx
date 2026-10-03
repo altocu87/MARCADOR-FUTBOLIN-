@@ -118,9 +118,10 @@ function Router() {
       {screen}
       {/* Reposo solo fuera de una partida activa. */}
       <SleepOverlay minutes={prefs.sleepMinutes} enabled={route.name !== 'match'} />
-      {demoMode && route.name !== 'match' && (
-        <div className="demo-badge" role="note" title="Datos ficticios: se borran al desactivar el modo en Ajustes → General">
-          DATOS DE PRUEBA
+      {/* En las pantallas del partido ya se ve la etiqueta propia de modo prueba. */}
+      {demoMode && !['setup', 'select', 'prematch', 'match', 'summary'].includes(route.name) && (
+        <div className="demo-badge" role="note" title="Modo prueba: se borra al desactivarlo en Ajustes → General">
+          MODO PRUEBA
         </div>
       )}
       {toastMessage && (
